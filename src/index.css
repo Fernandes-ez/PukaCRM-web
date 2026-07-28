@@ -1,0 +1,261 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --radius: 0.5rem;
+
+  /* Marca — escala derivada de #C908F9 */
+  --brand-50: #faf3fb;
+  --brand-100: #f3e4f7;
+  --brand-200: #ebc2f5;
+  --brand-300: #e588fc;
+  --brand-400: #d84cfb;
+  --brand-500: #c908f9;
+  --brand-600: #b105db;
+  --brand-700: #9004b3;
+  --brand-800: #740490;
+  --brand-900: #600377;
+  --brand-950: #3a0547;
+
+  /* Acento — cyan, só pra detalhes pontuais (nunca compete com o roxo) */
+  --signal-400: #4cd9fb;
+  --signal-500: #17c4f4;
+  --signal-600: #0da4d0;
+
+  /* Neutros (tema claro) — leve matiz de roxo, nunca cinza puro */
+  --background: #ffffff;
+  --foreground: #1c1526;
+  --card: #ffffff;
+  --card-foreground: #1c1526;
+  --popover: #ffffff;
+  --popover-foreground: #1c1526;
+  --muted: #f6f1f9;
+  --muted-foreground: #6b6178;
+  --border: #e9ddf0;
+  --input: #e9ddf0;
+
+  --primary: var(--brand-600);
+  --primary-foreground: #ffffff;
+  --secondary: var(--brand-50);
+  --secondary-foreground: var(--brand-700);
+  --accent: var(--brand-100);
+  --accent-foreground: var(--brand-700);
+  --ring: var(--brand-500);
+
+  --success: #16a34a;
+  --success-foreground: #ffffff;
+  --warning: #b45309;
+  --warning-foreground: #451a03;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+
+  /* Sidebar sempre roxo-escuro — identidade de marca, independente do tema */
+  --sidebar: var(--brand-950);
+  --sidebar-foreground: #f1ecf6;
+  --sidebar-primary: var(--brand-400);
+  --sidebar-primary-foreground: var(--brand-950);
+  --sidebar-accent: #d84cfb29;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #ffffff14;
+
+  --shadow-glow: 0 8px 26px -8px rgb(176 5 219 / 55%);
+  /* Sem 4º valor (spread) — compatível com filter: drop-shadow(), usado em elementos com clip-path */
+  --shadow-glow-filter: 0 6px 16px rgb(176 5 219 / 45%);
+}
+
+.dark {
+  --background: #121016;
+  --foreground: #f1ecf6;
+  --card: #1a1620;
+  --card-foreground: #f1ecf6;
+  --popover: #1a1620;
+  --popover-foreground: #f1ecf6;
+  --muted: #211b29;
+  --muted-foreground: #a79bb3;
+  --border: #2c2434;
+  --input: #2c2434;
+
+  --primary: var(--brand-400);
+  --primary-foreground: #2a0433;
+  --secondary: #2a1f33;
+  --secondary-foreground: #ecd6f6;
+  --accent: #331f3d;
+  --accent-foreground: #f0d6f8;
+  --ring: var(--brand-400);
+
+  --success: #22c55e;
+  --success-foreground: #052e16;
+  --warning: #f59e0b;
+  --warning-foreground: #451a03;
+  --destructive: #f87171;
+  --destructive-foreground: #450a0a;
+
+  --sidebar: #250a2e;
+  --sidebar-foreground: #f1ecf6;
+  --sidebar-primary: var(--brand-400);
+  --sidebar-primary-foreground: #2a0433;
+  --sidebar-accent: #d84cfb24;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #ffffff12;
+
+  --shadow-glow: 0 8px 26px -8px rgb(216 76 251 / 45%);
+  --shadow-glow-filter: 0 6px 16px rgb(216 76 251 / 40%);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-800: var(--brand-800);
+  --color-brand-900: var(--brand-900);
+  --color-brand-950: var(--brand-950);
+
+  /* Acento cyan — nome "signal" pra não colidir com --accent (hover/seleção) */
+  --color-signal-400: var(--signal-400);
+  --color-signal-500: var(--signal-500);
+  --color-signal-600: var(--signal-600);
+
+  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-sans);
+  --font-mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 8px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    font-family: var(--font-sans);
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
+  }
+}
+
+/*
+ * Motivo de marca: "sinal diagonal". Cortes a 45° no lugar de cantos
+ * arredondados/pills — em @layer components pra ceder corretamente
+ * a utilitários do Tailwind aplicados no mesmo elemento (ex: className
+ * com "relative" ou "shadow-*" junto de ".btn-cut").
+ */
+@layer components {
+  .stripes-diag {
+    background-image: repeating-linear-gradient(135deg, var(--brand-500) 0 3px, transparent 3px 7px);
+  }
+  .stripes-diag-invert {
+    background-image: repeating-linear-gradient(135deg, rgb(255 255 255 / 70%) 0 3px, transparent 3px 7px);
+  }
+
+  .notch-tr {
+    position: relative;
+    clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 0 100%);
+  }
+  .notch-tr::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 26px;
+    height: 26px;
+    clip-path: polygon(100% 0, 0 0, 100% 100%);
+    background-image: repeating-linear-gradient(135deg, var(--brand-500) 0 3px, transparent 3px 7px);
+  }
+
+  .notch-bl {
+    position: relative;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 26px 100%, 0 calc(100% - 26px));
+  }
+  .notch-bl::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 26px;
+    height: 26px;
+    clip-path: polygon(0 0, 0 100%, 100% 100%);
+    background-image: repeating-linear-gradient(135deg, var(--brand-500) 0 3px, transparent 3px 7px);
+  }
+
+  .btn-cut {
+    clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+  }
+  .btn-cut-sm {
+    clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  }
+
+  .divider-stripes {
+    height: 8px;
+    background-image: repeating-linear-gradient(135deg, var(--brand-500) 0 2px, transparent 2px 10px);
+  }
+
+  .dot-grid {
+    background-image: radial-gradient(var(--brand-500) 1.6px, transparent 1.6px);
+    background-size: 22px 22px;
+  }
+  .dot-grid-invert {
+    background-image: radial-gradient(rgb(255 255 255 / 55%) 1.6px, transparent 1.6px);
+    background-size: 22px 22px;
+  }
+
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em];
+  }
+  .eyebrow-mark {
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    flex-shrink: 0;
+    background-image: repeating-linear-gradient(135deg, var(--brand-500) 0 2px, transparent 2px 5px);
+  }
+}
