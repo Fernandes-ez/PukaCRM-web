@@ -15,11 +15,19 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import type { Employee } from '@/types/employee'
+import { EMPLOYEE_STATUS_LABEL, type Employee, type EmployeeStatus } from '@/types/employee'
 import { displayRoleName } from '@/utils/roleDisplay'
 import { CreateEmployeeDialog } from '@/pages/employees/CreateEmployeeDialog'
 import { EditEmployeeDialog } from '@/pages/employees/EditEmployeeDialog'
 import { WorkSchedulesDialog } from '@/pages/employees/WorkSchedulesDialog'
+
+const statusVariant: Record<EmployeeStatus, 'success' | 'secondary' | 'warning' | 'destructive'> = {
+  ACTIVE: 'success',
+  VACATION: 'warning',
+  LEAVE: 'warning',
+  INACTIVE: 'secondary',
+  DISABLED: 'destructive',
+}
 
 export function EmployeesPage() {
   const { data: employees, isLoading } = useEmployees()
@@ -113,9 +121,7 @@ export function EmployeesPage() {
                       {displayRoleName(employee.role_name ?? roleNameById.get(employee.role_id) ?? '—')}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={employee.status === 'ACTIVE' ? 'success' : 'secondary'}>
-                        {employee.status === 'ACTIVE' ? 'Ativo' : 'Inativo'}
-                      </Badge>
+                      <Badge variant={statusVariant[employee.status]}>{EMPLOYEE_STATUS_LABEL[employee.status]}</Badge>
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -142,7 +148,7 @@ export function EmployeesPage() {
                               Desativar
                             </DropdownMenuItem>
                           )}
-                          {employee.status === 'INACTIVE' && (
+                          {employee.status !== 'ACTIVE' && (
                             <DropdownMenuItem onClick={() => handleReactivate(employee)}>
                               <UserCheck className="mr-2 h-4 w-4" />
                               Reativar

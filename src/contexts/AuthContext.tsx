@@ -18,6 +18,13 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<CompanyOption[] | null>
   selectCompany: (email: string, password: string, companyId: string) => Promise<void>
   logout: () => void
+  /**
+   * Motivo do logout automático quando é distinguível (hoje só o caso de empresa
+   * inativa/suspensa — 403 com mensagem própria do backend). `null` pros outros casos
+   * (token inválido/expirado etc.), que continuam com o tratamento genérico de sempre.
+   */
+  logoutReason: string | null
+  clearLogoutReason: () => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -25,6 +32,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
   const [hasToken, setHasToken] = useState(() => !!getStoredToken())
+  const [logoutReason, setLogoutReason] = useState<string | null>(null)
 
   const employeeQuery = useQuery({
     queryKey: ['auth', 'me'],
@@ -44,6 +52,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (employeeQuery.isError) {
       const error = employeeQuery.error
       if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+        // 403 aqui só acontece pela checagem de Company.status em get_current_employee (backend) —
+        // mensagem própria e distinguível do 401 genérico de token inválido/expirado.
+        if (error.status === 403) setLogoutReason(error.message)
         setStoredToken(null)
         setHasToken(false)
       }
@@ -91,6 +102,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     selectCompany,
     logout,
+    logoutReason,
+    clearLogoutReason: () => setLogoutReason(null),
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

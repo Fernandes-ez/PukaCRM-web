@@ -1,0 +1,36 @@
+export type SubscriptionPlan = 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE'
+export type SubscriptionStatus = 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED'
+
+export const SUBSCRIPTION_PLAN_LABEL: Record<SubscriptionPlan, string> = {
+  STARTER: 'Starter',
+  PROFESSIONAL: 'Professional',
+  ENTERPRISE: 'Enterprise',
+}
+
+export const SUBSCRIPTION_STATUS_LABEL: Record<SubscriptionStatus, string> = {
+  TRIALING: 'Em teste',
+  ACTIVE: 'Ativa',
+  PAST_DUE: 'Pagamento atrasado',
+  CANCELED: 'Cancelada',
+}
+
+export interface Subscription {
+  id: string
+  company_id: string
+  plan: SubscriptionPlan
+  status: SubscriptionStatus
+  trial_ends_at: string | null
+  current_period_end: string | null
+  /**
+   * Sempre `false` na prática hoje — nenhum endpoint do backend chega a marcar isso como `true`
+   * (nem o webhook, nem `PATCH /subscription/plan`). Exibir como informação, não construir ação
+   * de "cancelar assinatura" em cima disso, não existe endpoint pra acionar.
+   */
+  cancel_at_period_end: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface SubscriptionPlanChangeRequest {
+  plan: SubscriptionPlan
+}

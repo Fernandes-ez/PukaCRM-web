@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -30,7 +30,7 @@ const features = [
 ]
 
 export function LoginPage() {
-  const { login, selectCompany } = useAuth()
+  const { login, selectCompany, logoutReason, clearLogoutReason } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const from = (location.state as { from?: Location })?.from?.pathname ?? '/'
@@ -39,6 +39,13 @@ export function LoginPage() {
   const [pendingCredentials, setPendingCredentials] = useState<{ email: string; password: string } | null>(null)
   const [selectingCompanyId, setSelectingCompanyId] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
+  // Captura o motivo uma vez (o context limpa logo em seguida) pra não sumir antes do usuário ler.
+  const [sessionReason] = useState(() => logoutReason)
+
+  useEffect(() => {
+    if (logoutReason) clearLogoutReason()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const {
     register,
@@ -163,6 +170,11 @@ export function LoginPage() {
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSubmit(onSubmitCredentials)} className="space-y-4">
+                    {sessionReason && (
+                      <Alert variant="destructive">
+                        <AlertDescription>{sessionReason}</AlertDescription>
+                      </Alert>
+                    )}
                     {formError && (
                       <Alert variant="destructive">
                         <AlertDescription>{formError}</AlertDescription>

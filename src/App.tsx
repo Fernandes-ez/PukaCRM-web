@@ -11,6 +11,8 @@ import { WhatsappPage } from '@/pages/whatsapp/WhatsappPage'
 import { WhatsappHelpPage } from '@/pages/whatsapp/WhatsappHelpPage'
 import { LeadsPage } from '@/pages/leads/LeadsPage'
 import { ConversationsPage } from '@/pages/conversations/ConversationsPage'
+import { CompanyPage } from '@/pages/company/CompanyPage'
+import { SubscriptionPage } from '@/pages/subscription/SubscriptionPage'
 
 function App() {
   return (
@@ -37,6 +39,12 @@ function App() {
             <Route element={<RequirePermission module="WHATSAPP" resource="whatsapp_instance" action="VIEW" />}>
               <Route path="/whatsapp" element={<WhatsappPage />} />
               <Route path="/whatsapp/ajuda" element={<WhatsappHelpPage />} />
+            </Route>
+            <Route element={<RequirePermission module="COMPANY" resource="company" action="VIEW" />}>
+              <Route path="/empresa" element={<CompanyPage />} />
+            </Route>
+            <Route element={<RequirePermission module="SUBSCRIPTION" resource="subscription" action="VIEW" />}>
+              <Route path="/assinatura" element={<SubscriptionPage />} />
             </Route>
           </Route>
         </Route>

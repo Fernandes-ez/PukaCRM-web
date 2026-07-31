@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react'
 import { useUpdateEmployee } from '@/hooks/useEmployees'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
-import type { Employee } from '@/types/employee'
+import { EMPLOYEE_STATUS_LABEL, type Employee, type EmployeeStatus } from '@/types/employee'
 import type { Role } from '@/types/role'
 import { displayRoleName } from '@/utils/roleDisplay'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
@@ -16,10 +16,13 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
+const EMPLOYEE_STATUS_OPTIONS = Object.entries(EMPLOYEE_STATUS_LABEL) as [EmployeeStatus, string][]
+
 const schema = z.object({
   full_name: z.string().min(1, 'Informe o nome completo'),
   email: z.string().min(1, 'Informe o email').email('Email inválido'),
   role_id: z.string().min(1, 'Selecione um cargo'),
+  status: z.enum(['ACTIVE', 'INACTIVE', 'VACATION', 'LEAVE', 'DISABLED']),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -48,6 +51,7 @@ export function EditEmployeeDialog({ open, onOpenChange, employee, roles }: Edit
       full_name: employee.full_name,
       email: employee.email,
       role_id: employee.role_id,
+      status: employee.status,
     },
   })
 
@@ -62,6 +66,7 @@ export function EditEmployeeDialog({ open, onOpenChange, employee, roles }: Edit
         if (error.fieldErrors.full_name) setError('full_name', { message: error.fieldErrors.full_name })
         if (error.fieldErrors.email) setError('email', { message: error.fieldErrors.email })
         if (error.fieldErrors.role_id) setError('role_id', { message: error.fieldErrors.role_id })
+        if (error.fieldErrors.status) setError('status', { message: error.fieldErrors.status })
         if (Object.keys(error.fieldErrors).length === 0) setFormError(error.message)
       } else {
         setFormError('Ocorreu um erro inesperado. Tente novamente.')
@@ -113,6 +118,31 @@ export function EditEmployeeDialog({ open, onOpenChange, employee, roles }: Edit
               )}
             />
             {errors.role_id && <p className="text-xs text-destructive">{errors.role_id.message}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="edit_status">Status</Label>
+            <Controller
+              control={control}
+              name="status"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange} disabled={employee.is_owner}>
+                  <SelectTrigger id="edit_status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EMPLOYEE_STATUS_OPTIONS.map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {employee.is_owner && (
+              <p className="text-xs text-muted-foreground">O Owner da empresa não pode ter o status alterado.</p>
+            )}
+            {errors.status && <p className="text-xs text-destructive">{errors.status.message}</p>}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

@@ -17,3 +17,8 @@ export function compareDatesDesc(a: string | null | undefined, b: string | null 
 export function isValidDateString(value: string | null | undefined): boolean {
   return !!value && !Number.isNaN(new Date(value).getTime())
 }
+
+export function formatDate(value: string | null | undefined): string {
+  if (!isValidDateString(value)) return '—'
+  return new Date(value as string).toLocaleDateString('pt-BR')
+}

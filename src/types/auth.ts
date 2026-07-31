@@ -1,3 +1,5 @@
+import type { EmployeeStatus } from '@/types/employee'
+
 export interface LoginRequest {
   email: string
   password: string
@@ -42,5 +44,5 @@ export interface EmployeeMe {
   email: string
   is_owner: boolean
   must_change_password: boolean
-  status: 'ACTIVE' | 'INACTIVE'
+  status: EmployeeStatus
 }

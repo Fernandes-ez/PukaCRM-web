@@ -284,6 +284,8 @@ function UpdateInstanceForm({
     },
   })
 
+  const isDisconnected = instance.status === 'DISCONNECTED'
+
   async function onSubmit(data: UpdateFormValues) {
     setFormError(null)
     try {
@@ -292,8 +294,11 @@ function UpdateInstanceForm({
         phone_number_id: data.phone_number_id,
         label: data.label || undefined,
         ...(data.access_token ? { credentials: { access_token: data.access_token } } : {}),
+        // PATCH não muda status sozinho (backend só atualiza se vier explícito) -
+        // sem isso, depois de "Desconectar" não existia nenhum jeito de reativar pela tela.
+        ...(isDisconnected ? { status: 'PENDING' as const } : {}),
       })
-      toast({ title: 'Instância atualizada', variant: 'success' })
+      toast({ title: isDisconnected ? 'Instância reconectada' : 'Instância atualizada', variant: 'success' })
     } catch (error) {
       setFormError(error instanceof ApiError ? error.message : 'Ocorreu um erro inesperado. Tente novamente.')
     }
@@ -327,7 +332,7 @@ function UpdateInstanceForm({
       </div>
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-        Salvar alterações
+        {isDisconnected ? 'Salvar e reconectar' : 'Salvar alterações'}
       </Button>
     </form>
   )

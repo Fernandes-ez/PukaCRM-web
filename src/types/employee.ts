@@ -1,4 +1,12 @@
-export type EmployeeStatus = 'ACTIVE' | 'INACTIVE'
+export type EmployeeStatus = 'ACTIVE' | 'INACTIVE' | 'VACATION' | 'LEAVE' | 'DISABLED'
+
+export const EMPLOYEE_STATUS_LABEL: Record<EmployeeStatus, string> = {
+  ACTIVE: 'Ativo',
+  INACTIVE: 'Inativo',
+  VACATION: 'Em férias',
+  LEAVE: 'Afastado',
+  DISABLED: 'Desabilitado',
+}
 
 export interface Employee {
   id: string

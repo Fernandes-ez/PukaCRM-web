@@ -9,6 +9,8 @@ import {
   Contact,
   Smartphone,
   ShieldHalf,
+  Building2,
+  CreditCard,
   X,
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
@@ -38,6 +40,8 @@ const allAdminItems: AdminNavItem[] = [
   { to: '/roles', label: 'Cargos', icon: ShieldCheck, permission: { module: 'ROLES', resource: 'role', action: 'VIEW' } },
   { to: '/assistant', label: 'Assistente IA', icon: Bot, permission: { module: 'ASSISTANT', resource: 'assistant', action: 'VIEW' } },
   { to: '/whatsapp', label: 'WhatsApp', icon: Smartphone, permission: { module: 'WHATSAPP', resource: 'whatsapp_instance', action: 'VIEW' } },
+  { to: '/empresa', label: 'Minha empresa', icon: Building2, permission: { module: 'COMPANY', resource: 'company', action: 'VIEW' } },
+  { to: '/assinatura', label: 'Assinatura', icon: CreditCard, permission: { module: 'SUBSCRIPTION', resource: 'subscription', action: 'VIEW' } },
 ]
 
 type SidebarTab = 'general' | 'admin'
