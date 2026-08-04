@@ -328,6 +328,39 @@ página do deployment) — **diferente** do domínio de produção
 console mesmo com tudo certo. Login testado e confirmado funcionando em
 `https://puka-crm-web.vercel.app`.
 
+## ✅ Corrigido em 2026-08-04 — mensagens de conversa apareciam todas do mesmo lado/cor
+
+Reportado com print de produção: no detalhe de uma conversa, a mensagem
+recebida do Lead e a enviada pela empresa apareciam **as duas do lado
+direito, roxas** — indistinguíveis. Causa: mesmo padrão de drift já visto
+em outros módulos (Assistente, WhatsApp) — o tipo `Message` do frontend
+usava um campo/enum que nunca existiu no backend real:
+
+- Frontend tinha `sender: 'LEAD' | 'EMPLOYEE' | 'ASSISTANT'`. Backend
+  (`MessageRead` em `app/modules/message/schemas.py`) na verdade manda
+  `sender_type: 'LEAD' | 'AI' | 'EMPLOYEE'` — nome de campo diferente
+  (`sender_type`, não `sender`) **e** valor diferente pro terceiro caso
+  (`AI`, não `ASSISTANT`). Como `message.sender` nunca vinha preenchido
+  (o campo real se chama `sender_type`), a comparação
+  `message.sender === 'LEAD'` em `ConversationDetail.tsx` dava sempre
+  `false` — toda mensagem, de quem fosse, caía no branch "enviada por
+  nós" (right-aligned, cor primária).
+- `src/types/conversation.ts` corrigido pro schema real: `sender_type`
+  no lugar de `sender`, enum com `AI` no lugar de `ASSISTANT`, e dois
+  campos que nem existiam no tipo (`sender_employee_id`,
+  `external_message_id` — não usados na UI ainda, só documentados no
+  tipo pra não esquecer que existem).
+- `ConversationDetail.tsx` — todas as comparações trocadas pra
+  `message.sender_type`. Mensagens `AI` continuam do lado direito (é
+  "nós" do ponto de vista do Lead), mas ganharam uma etiqueta discreta
+  com ícone de robô + "IA" ao lado do horário, pra diferenciar de uma
+  resposta digitada por um humano — informação que o campo já trazia e
+  não tinha nenhum uso ainda.
+- Testado (screenshot, mock com as 3 combinações de `sender_type`):
+  Lead à esquerda em cinza, funcionário e IA à direita em roxo, com a
+  etiqueta "IA" só na mensagem da assistente — não testado contra o
+  backend real rodando (sem ambiente local disponível nesta sessão).
+
 ## Comandos úteis
 
 ```bash

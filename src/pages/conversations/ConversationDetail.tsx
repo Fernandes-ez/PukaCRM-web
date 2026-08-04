@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Send, UserPlus, Loader2, Clock } from 'lucide-react'
+import { Send, UserPlus, Loader2, Clock, Bot } from 'lucide-react'
 import { useConversation, useMessages, useSendMessage } from '@/hooks/useConversations'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
@@ -100,32 +100,36 @@ export function ConversationDetail({ conversationId }: { conversationId: string 
         ) : messages?.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground">Nenhuma mensagem ainda.</p>
         ) : (
-          messages?.map((message) => (
-            <div
-              key={message.id}
-              className={cn('flex', message.sender === 'LEAD' ? 'justify-start' : 'justify-end')}
-            >
-              <div
-                className={cn(
-                  'max-w-[75%] rounded-lg px-3 py-2 text-sm',
-                  message.sender === 'LEAD'
-                    ? 'bg-muted text-foreground'
-                    : 'bg-primary text-primary-foreground',
-                )}
-              >
-                <p className="whitespace-pre-wrap">{message.content}</p>
+          messages?.map((message) => {
+            const isFromLead = message.sender_type === 'LEAD'
+            return (
+              <div key={message.id} className={cn('flex', isFromLead ? 'justify-start' : 'justify-end')}>
                 <div
                   className={cn(
-                    'mt-1 flex items-center gap-1 text-[10px] opacity-70',
-                    message.sender === 'LEAD' ? '' : 'justify-end',
+                    'max-w-[75%] rounded-lg px-3 py-2 text-sm',
+                    isFromLead ? 'bg-muted text-foreground' : 'bg-primary text-primary-foreground',
                   )}
                 >
-                  {message.status === 'PENDING' && <Clock className="h-3 w-3" />}
-                  {new Date(message.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  <p className="whitespace-pre-wrap">{message.content}</p>
+                  <div
+                    className={cn(
+                      'mt-1 flex items-center gap-1 text-[10px] opacity-70',
+                      isFromLead ? '' : 'justify-end',
+                    )}
+                  >
+                    {message.status === 'PENDING' && <Clock className="h-3 w-3" />}
+                    {new Date(message.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    {message.sender_type === 'AI' && (
+                      <span className="flex items-center gap-0.5">
+                        <Bot className="h-3 w-3" />
+                        IA
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            )
+          })
         )}
       </div>
 

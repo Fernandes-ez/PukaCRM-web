@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { formatDate } from '@/utils/date'
 import {
   SUBSCRIPTION_PLAN_LABEL,
@@ -36,23 +37,20 @@ export function SubscriptionPage() {
   const { data: subscription, isLoading, isError, error } = useSubscription()
   const changePlan = useChangeSubscriptionPlan()
   const { toast } = useToast()
-  const [pendingPlan, setPendingPlan] = useState<SubscriptionPlan | null>(null)
+  const [confirmPlan, setConfirmPlan] = useState<SubscriptionPlan | null>(null)
 
-  async function handleChangePlan(plan: SubscriptionPlan) {
-    if (!subscription || plan === subscription.plan) return
-    if (!window.confirm(`Trocar para o plano ${SUBSCRIPTION_PLAN_LABEL[plan]}?`)) return
-    setPendingPlan(plan)
+  async function handleConfirmChangePlan() {
+    if (!confirmPlan) return
     try {
-      await changePlan.mutateAsync({ plan })
+      await changePlan.mutateAsync({ plan: confirmPlan })
       toast({ title: 'Plano atualizado', variant: 'success' })
+      setConfirmPlan(null)
     } catch (err) {
       toast({
         title: 'Não foi possível trocar de plano',
         description: err instanceof ApiError ? err.message : undefined,
         variant: 'destructive',
       })
-    } finally {
-      setPendingPlan(null)
     }
   }
 
@@ -88,7 +86,6 @@ export function SubscriptionPage() {
               <CardContent className="space-y-3">
                 {PLAN_ORDER.map((plan) => {
                   const isCurrent = plan === subscription.plan
-                  const isPending = pendingPlan === plan && changePlan.isPending
                   return (
                     <div
                       key={plan}
@@ -108,10 +105,9 @@ export function SubscriptionPage() {
                       <Button
                         type="button"
                         variant={isCurrent ? 'outline' : 'default'}
-                        disabled={isCurrent || changePlan.isPending}
-                        onClick={() => handleChangePlan(plan)}
+                        disabled={isCurrent}
+                        onClick={() => setConfirmPlan(plan)}
                       >
-                        {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                         {isCurrent ? 'Atual' : 'Selecionar'}
                       </Button>
                     </div>
@@ -122,6 +118,27 @@ export function SubscriptionPage() {
           </>
         )
       )}
+
+      <Dialog open={!!confirmPlan} onOpenChange={(open) => !open && !changePlan.isPending && setConfirmPlan(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Trocar de plano</DialogTitle>
+            <DialogDescription>
+              {confirmPlan &&
+                `Trocar para o plano ${SUBSCRIPTION_PLAN_LABEL[confirmPlan]}? A troca é aplicada imediatamente.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setConfirmPlan(null)} disabled={changePlan.isPending}>
+              Cancelar
+            </Button>
+            <Button type="button" onClick={handleConfirmChangePlan} disabled={changePlan.isPending}>
+              {changePlan.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Confirmar troca
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

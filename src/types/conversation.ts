@@ -1,5 +1,5 @@
 export type ConversationStatus = 'OPEN' | 'PENDING' | 'CLOSED'
-export type MessageSender = 'LEAD' | 'EMPLOYEE' | 'ASSISTANT'
+export type MessageSenderType = 'LEAD' | 'AI' | 'EMPLOYEE'
 export type MessageStatus = 'PENDING' | 'SENT' | 'DELIVERED' | 'READ' | 'FAILED'
 
 export interface ConversationRead {
@@ -19,9 +19,13 @@ export interface ConversationRead {
 export interface Message {
   id: string
   conversation_id: string
-  sender: MessageSender
+  sender_type: MessageSenderType
+  /** Preenchido só quando `sender_type === 'EMPLOYEE'`. */
+  sender_employee_id: string | null
   content: string
   status: MessageStatus
+  /** Id da mensagem no provedor (WhatsApp/Meta) — usado pro backend, não pra exibição. */
+  external_message_id: string | null
   created_at: string
 }
 
