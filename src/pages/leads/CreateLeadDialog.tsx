@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 const schema = z.object({
-  name: z.string().min(1, 'Informe o nome'),
+  full_name: z.string().optional(),
   phone: z.string().min(1, 'Informe o telefone'),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
 })
@@ -39,12 +39,12 @@ export function CreateLeadDialog({ open, onOpenChange }: CreateLeadDialogProps) 
   async function onSubmit(data: FormValues) {
     setFormError(null)
     try {
-      await createLead.mutateAsync({ ...data, email: data.email || undefined })
+      await createLead.mutateAsync({ ...data, full_name: data.full_name || undefined, email: data.email || undefined })
       reset()
       onOpenChange(false)
     } catch (error) {
       if (error instanceof ApiError) {
-        if (error.fieldErrors.name) setError('name', { message: error.fieldErrors.name })
+        if (error.fieldErrors.full_name) setError('full_name', { message: error.fieldErrors.full_name })
         if (error.fieldErrors.phone) setError('phone', { message: error.fieldErrors.phone })
         if (error.fieldErrors.email) setError('email', { message: error.fieldErrors.email })
         if (Object.keys(error.fieldErrors).length === 0) setFormError(error.message)
@@ -74,9 +74,9 @@ export function CreateLeadDialog({ open, onOpenChange }: CreateLeadDialogProps) 
             </Alert>
           )}
           <div className="space-y-1.5">
-            <Label htmlFor="lead_name">Nome</Label>
-            <Input id="lead_name" {...register('name')} />
-            {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+            <Label htmlFor="lead_name">Nome (opcional)</Label>
+            <Input id="lead_name" {...register('full_name')} />
+            {errors.full_name && <p className="text-xs text-destructive">{errors.full_name.message}</p>}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="lead_phone">Telefone</Label>

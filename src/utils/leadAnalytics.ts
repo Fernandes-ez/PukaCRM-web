@@ -10,14 +10,11 @@ export interface TrendPoint {
 }
 
 /** Ordem fixa do anel de cores (nunca reordenar — é o que garante a separação CVD validada). */
-export const LEAD_STATUS_ORDER: LeadStatus[] = ['NEW', 'IN_PROGRESS', 'QUALIFIED', 'ARCHIVED', 'LOST']
+export const LEAD_STATUS_ORDER: LeadStatus[] = ['ACTIVE', 'INACTIVE']
 
 export const LEAD_STATUS_COLOR: Record<LeadStatus, { light: string; dark: string }> = {
-  NEW: { light: '#2a78d6', dark: '#3987e5' },
-  IN_PROGRESS: { light: '#eda100', dark: '#c98500' },
-  QUALIFIED: { light: '#008300', dark: '#008300' },
-  ARCHIVED: { light: '#4a3aa7', dark: '#9085e9' },
-  LOST: { light: '#e34948', dark: '#e66767' },
+  ACTIVE: { light: '#008300', dark: '#008300' },
+  INACTIVE: { light: '#4a3aa7', dark: '#9085e9' },
 }
 
 const WINDOW: Record<Granularity, number> = { day: 14, week: 8, month: 6 }
@@ -136,11 +133,8 @@ export interface StatusSlice {
 /** Distribuição de leads por status, na ordem fixa validada (ver LEAD_STATUS_ORDER). */
 export function buildLeadsByStatus(leads: Lead[]): StatusSlice[] {
   const counts: Record<LeadStatus, number> = {
-    NEW: 0,
-    IN_PROGRESS: 0,
-    QUALIFIED: 0,
-    ARCHIVED: 0,
-    LOST: 0,
+    ACTIVE: 0,
+    INACTIVE: 0,
   }
   for (const lead of leads) counts[lead.status] += 1
 

@@ -6,14 +6,17 @@ export interface ConversationRead {
   id: string
   company_id: string
   lead_id: string
-  lead_name?: string
+  whatsapp_instance_id: string
+  /**
+   * O backend não faz join com Lead/Employee aqui (`ConversationRead` só tem os ids) —
+   * resolver `lead_id`/`assigned_employee_id` pro nome no cliente, cruzando com
+   * `useLeads()`/`useEmployees()` (mesmo padrão já usado em `LeadsPage.tsx`).
+   */
   assigned_employee_id?: string | null
-  assigned_employee_name?: string | null
   status: ConversationStatus
   needs_human_attention: boolean
   last_message_at?: string | null
   created_at: string
-  updated_at: string
 }
 
 export interface Message {

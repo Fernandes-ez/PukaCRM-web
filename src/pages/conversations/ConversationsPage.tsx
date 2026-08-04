@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { AlertCircle, MessageSquare } from 'lucide-react'
 import { useConversations } from '@/hooks/useConversations'
+import { useLeads } from '@/hooks/useLeads'
 import { cn } from '@/utils/cn'
 import { compareDatesDesc } from '@/utils/date'
 import { Badge } from '@/components/ui/badge'
@@ -29,6 +30,9 @@ export function ConversationsPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { data: conversations, isLoading } = useConversations()
+  const { data: leads } = useLeads()
+
+  const leadNameById = new Map((leads ?? []).map((lead) => [lead.id, lead.full_name]))
 
   return (
     <div className="flex h-[calc(100vh-6.5rem)] gap-4">
@@ -49,7 +53,7 @@ export function ConversationsPage() {
           ) : (
             conversations
               ?.slice()
-              .sort((a, b) => compareDatesDesc(a.last_message_at ?? a.updated_at, b.last_message_at ?? b.updated_at))
+              .sort((a, b) => compareDatesDesc(a.last_message_at ?? a.created_at, b.last_message_at ?? b.created_at))
               .map((conversation) => (
                 <button
                   key={conversation.id}
@@ -60,9 +64,9 @@ export function ConversationsPage() {
                   )}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">{conversation.lead_name ?? 'Lead sem nome'}</span>
+                    <span className="font-medium">{leadNameById.get(conversation.lead_id) ?? 'Lead sem nome'}</span>
                     <span className="text-[10px] text-muted-foreground">
-                      {relativeTime(conversation.last_message_at ?? conversation.updated_at)}
+                      {relativeTime(conversation.last_message_at ?? conversation.created_at)}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">

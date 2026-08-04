@@ -43,7 +43,7 @@ export function AssignLeadDialog({ open, onOpenChange, lead }: AssignLeadDialogP
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Atribuir responsável</DialogTitle>
-          <DialogDescription>{lead.name}</DialogDescription>
+          <DialogDescription>{lead.full_name ?? 'Lead sem nome'}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           {formError && (

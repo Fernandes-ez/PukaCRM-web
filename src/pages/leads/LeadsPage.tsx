@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { MoreHorizontal, Plus, Pencil, UserCheck, Archive } from 'lucide-react'
 import { useLeads, useArchiveLead } from '@/hooks/useLeads'
+import { useEmployees } from '@/hooks/useEmployees'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
@@ -21,16 +22,14 @@ import { AssignLeadDialog } from '@/pages/leads/AssignLeadDialog'
 
 const statusLabel = LEAD_STATUS_LABEL
 
-const statusVariant: Record<LeadStatus, 'default' | 'secondary' | 'success' | 'destructive' | 'outline'> = {
-  NEW: 'default',
-  IN_PROGRESS: 'secondary',
-  QUALIFIED: 'success',
-  LOST: 'destructive',
-  ARCHIVED: 'outline',
+const statusVariant: Record<LeadStatus, 'success' | 'secondary'> = {
+  ACTIVE: 'success',
+  INACTIVE: 'secondary',
 }
 
 export function LeadsPage() {
   const { data: leads, isLoading } = useLeads()
+  const { data: employees } = useEmployees()
   const archiveLead = useArchiveLead()
   const { toast } = useToast()
 
@@ -38,8 +37,10 @@ export function LeadsPage() {
   const [editLead, setEditLead] = useState<Lead | null>(null)
   const [assignLead, setAssignLead] = useState<Lead | null>(null)
 
+  const employeeNameById = new Map((employees ?? []).map((employee) => [employee.id, employee.full_name]))
+
   async function handleArchive(lead: Lead) {
-    if (!window.confirm(`Arquivar o lead "${lead.name}"?`)) return
+    if (!window.confirm(`Arquivar o lead "${lead.full_name ?? 'sem nome'}"?`)) return
     try {
       await archiveLead.mutateAsync(lead.id)
       toast({ title: 'Lead arquivado', variant: 'success' })
@@ -91,13 +92,13 @@ export function LeadsPage() {
               <TableBody>
                 {leads?.map((lead) => (
                   <TableRow key={lead.id}>
-                    <TableCell className="font-medium">{lead.name}</TableCell>
+                    <TableCell className="font-medium">{lead.full_name ?? 'Lead sem nome'}</TableCell>
                     <TableCell className="text-muted-foreground">{lead.phone}</TableCell>
                     <TableCell>
                       <Badge variant={statusVariant[lead.status]}>{statusLabel[lead.status]}</Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {lead.assigned_employee_name ?? 'Não atribuído'}
+                      {(lead.assigned_employee_id && employeeNameById.get(lead.assigned_employee_id)) ?? 'Não atribuído'}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>

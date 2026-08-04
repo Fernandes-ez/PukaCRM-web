@@ -4,6 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Send, UserPlus, Loader2, Clock, Bot } from 'lucide-react'
 import { useConversation, useMessages, useSendMessage } from '@/hooks/useConversations'
+import { useLeads } from '@/hooks/useLeads'
+import { useEmployees } from '@/hooks/useEmployees'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
 import { cn } from '@/utils/cn'
@@ -26,6 +28,8 @@ const statusLabel: Record<ConversationStatus, string> = {
 export function ConversationDetail({ conversationId }: { conversationId: string }) {
   const { data: conversation, isLoading: isLoadingConversation } = useConversation(conversationId)
   const { data: messages, isLoading: isLoadingMessages } = useMessages(conversationId)
+  const { data: leads } = useLeads()
+  const { data: employees } = useEmployees()
   const sendMessage = useSendMessage(conversationId)
   const { toast } = useToast()
   const [assignOpen, setAssignOpen] = useState(false)
@@ -70,17 +74,19 @@ export function ConversationDetail({ conversationId }: { conversationId: string 
 
   if (!conversation) return null
 
+  const leadName = leads?.find((lead) => lead.id === conversation.lead_id)?.full_name
+  const assignedEmployeeName = employees?.find((employee) => employee.id === conversation.assigned_employee_id)
+    ?.full_name
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b p-4">
         <div>
-          <h2 className="font-semibold">{conversation.lead_name ?? 'Lead sem nome'}</h2>
+          <h2 className="font-semibold">{leadName ?? 'Lead sem nome'}</h2>
           <div className="mt-1 flex items-center gap-1.5">
             <Badge variant="outline">{statusLabel[conversation.status]}</Badge>
             <span className="text-xs text-muted-foreground">
-              {conversation.assigned_employee_name
-                ? `Responsável: ${conversation.assigned_employee_name}`
-                : 'Sem responsável'}
+              {assignedEmployeeName ? `Responsável: ${assignedEmployeeName}` : 'Sem responsável'}
             </span>
           </div>
         </div>
@@ -151,7 +157,9 @@ export function ConversationDetail({ conversationId }: { conversationId: string 
         </Button>
       </form>
 
-      <AssignConversationDialog conversation={conversation} open={assignOpen} onOpenChange={setAssignOpen} />
+      {assignOpen && (
+        <AssignConversationDialog conversation={conversation} open={assignOpen} onOpenChange={setAssignOpen} />
+      )}
     </div>
   )
 }

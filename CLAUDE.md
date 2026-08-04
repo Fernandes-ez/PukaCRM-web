@@ -361,6 +361,97 @@ usava um campo/enum que nunca existiu no backend real:
   etiqueta "IA" só na mensagem da assistente — não testado contra o
   backend real rodando (sem ambiente local disponível nesta sessão).
 
+## ✅ Corrigido em 2026-08-04 — diálogo de atribuição de conversa ficava com estado velho
+
+Reportado pelo usuário ("como a IA não atribuiu, como prosseguir"), e ao
+investigar a exibição da atribuição achado um bug separado: em
+`ConversationDetail.tsx`, `<AssignConversationDialog>` era renderizado
+**sempre montado** (só `open`/`onOpenChange` controlando visibilidade) —
+diferente do padrão usado em todo o resto do app (`EditLeadDialog`,
+`AssignLeadDialog`, `EditEmployeeDialog`, todos condicionados por
+`{estado && <Dialog ... />}`). Como o `useState(conversation.
+assigned_employee_id ?? '')` dentro do diálogo só roda na primeira
+montagem, e o componente nunca desmontava (nem trocando de conversa na
+lista, nem depois de atribuir), o dropdown podia pré-selecionar o
+responsável **de outra conversa** ou um valor velho — risco real de
+atribuir a pessoa errada sem perceber. Corrigido: `ConversationDetail.tsx`
+agora só monta o diálogo quando `assignOpen` é `true`
+(`{assignOpen && <AssignConversationDialog .../>}`), forçando remontagem
+(e reseed do estado) a cada abertura.
+
+Nada relacionado a round-robin: distribuição automática **nunca** cobriu
+`Conversation.assigned_employee_id`, só `Lead.assigned_employee_id`
+(decisão #15 do `CLAUDE.MD` do backend, 2026-07-27) — atribuição de
+conversa sempre foi manual, por design.
+
+## ✅ Corrigido em 2026-08-04 — `Lead` com campos que nunca existiram no backend real
+
+Reportado com a resposta real de `GET /leads` colada pelo usuário: a
+tela de Leads mostrava nome em branco, o selo de status sem nenhum texto
+(só a forma colorida), e "Não atribuído" mesmo pra um lead com
+`assigned_employee_id` preenchido. Comparando com o schema real
+(`app/modules/lead/schemas.py` do backend), o tipo `Lead` do frontend
+tinha 3 problemas, todos do mesmo tipo de drift já visto em outros
+módulos (schema escrito sem acesso ao backend rodando):
+
+- **Campo errado**: frontend tinha `name: string` (obrigatório); o
+  backend é `full_name: str | None` — **opcional e pode vir `null`**
+  (lead que chega só com telefone via WhatsApp antes de dar o nome, daí
+  o "Lead sem nome" que já aparecia em Conversas). `name` nunca existiu
+  no JSON de resposta, então `{lead.name}` sempre renderizava `undefined`
+  → célula em branco.
+- **Enum errado**: frontend tinha `LeadStatus = 'NEW' | 'IN_PROGRESS' |
+  'QUALIFIED' | 'LOST' | 'ARCHIVED'` — um funil de vendas que nunca foi
+  implementado. O real (`app/shared/enums.py`) é só
+  `'ACTIVE' | 'INACTIVE'` (o mesmo padrão simples de soft-delete usado em
+  `WhatsAppInstance`/`Assistant` — `DELETE /leads/{id}` só arquiva,
+  `LeadStatus.INACTIVE`, não apaga). Como `"ACTIVE"` não batia com
+  nenhuma chave do `Record<LeadStatus, ...>` do frontend, o `Badge`
+  renderizava sem variante nem texto — só a forma cortada do componente,
+  sem cor nem label (era exatamente a "forminha rosa sem texto" da
+  imagem reportada).
+- **Campo que nunca existiu**: frontend tinha `assigned_employee_name`
+  no tipo `Lead`, mas `LeadRead` no backend **não faz join com
+  Employee** — só devolve `assigned_employee_id` (confirmado lendo
+  `schemas.py`). Por isso a coluna "Responsável" sempre mostrava "Não
+  atribuído", mesmo com o lead de fato atribuído (`assigned_employee_id`
+  preenchido, visível no `GET /leads` cru). Corrigido resolvendo o nome
+  no cliente: `LeadsPage.tsx` agora busca `useEmployees()` e monta um
+  `Map<id, full_name>` (mesmo padrão já usado pra Cargo em
+  `EmployeesPage.tsx`), em vez de esperar um campo que o backend nunca
+  vai mandar.
+
+Corrigido em `src/types/lead.ts` (schema real), `LeadsPage.tsx`
+(`statusVariant`/`LEAD_STATUS_LABEL` pros 2 valores reais, resolução de
+responsável via `useEmployees()`), `CreateLeadDialog.tsx`/
+`EditLeadDialog.tsx` (`name`→`full_name`, agora opcional na criação,
+`status` com os 2 valores reais), `AssignLeadDialog.tsx` e
+`DashboardPage.tsx` (mesma correção de campo no card "Últimos leads"),
+e `utils/leadAnalytics.ts` (o anel de cores do dashboard supunha 5
+categorias que nunca existiram — reduzido pra 2, reaproveitando duas das
+cores já validadas CVD do conjunto original em vez de invalidar a
+paleta). Testado (screenshot) com o payload real colado pelo usuário —
+nome, status e responsável todos corretos.
+
+**✅ Corrigido, mesmo dia**: `ConversationRead` no backend
+(`app/modules/conversation/schemas.py`) tinha exatamente o mesmo
+problema — **não tem** `lead_name`, `assigned_employee_name` nem
+`updated_at`, só `lead_id`/`assigned_employee_id` (ids crus) e
+`created_at`. Era a causa raiz do "Lead sem nome" que aparecia sempre na
+tela de Conversas, mesmo quando o lead tem nome — não era o lead que não
+tinha nome, era o campo que nunca chegava. Corrigido: `types/
+conversation.ts` (`ConversationRead` sem os 3 campos fantasmas, ganhou
+`whatsapp_instance_id` que existe de verdade) e nome de lead/responsável
+resolvidos no cliente cruzando `lead_id`/`assigned_employee_id` com
+`useLeads()`/`useEmployees()` (mesmo padrão do fix de `LeadsPage.tsx`
+acima) em `ConversationsPage.tsx`, `ConversationDetail.tsx`,
+`AssignConversationDialog.tsx` e no card "Conversas que precisam de
+atenção" do `DashboardPage.tsx`. Fallback de ordenação trocado de
+`a.updated_at` (não existe) pra `a.created_at` em `ConversationsPage.tsx`.
+Testado (screenshot, mock com o formato real de `ConversationRead`/
+`LeadRead`) — nome do lead e do responsável aparecendo certos na lista,
+no detalhe, no diálogo de atribuição e no dashboard.
+
 ## Comandos úteis
 
 ```bash

@@ -15,10 +15,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 const schema = z.object({
-  name: z.string().min(1, 'Informe o nome'),
+  full_name: z.string().optional(),
   phone: z.string().min(1, 'Informe o telefone'),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
-  status: z.enum(['NEW', 'IN_PROGRESS', 'QUALIFIED', 'LOST', 'ARCHIVED']),
+  status: z.enum(['ACTIVE', 'INACTIVE']),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -47,7 +47,7 @@ export function EditLeadDialog({ open, onOpenChange, lead }: EditLeadDialogProps
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      name: lead.name,
+      full_name: lead.full_name ?? '',
       phone: lead.phone,
       email: lead.email ?? '',
       status: lead.status,
@@ -57,12 +57,15 @@ export function EditLeadDialog({ open, onOpenChange, lead }: EditLeadDialogProps
   async function onSubmit(data: FormValues) {
     setFormError(null)
     try {
-      await updateLead.mutateAsync({ id: lead.id, payload: { ...data, email: data.email || undefined } })
+      await updateLead.mutateAsync({
+        id: lead.id,
+        payload: { ...data, full_name: data.full_name || undefined, email: data.email || undefined },
+      })
       toast({ title: 'Lead atualizado', variant: 'success' })
       onOpenChange(false)
     } catch (error) {
       if (error instanceof ApiError) {
-        if (error.fieldErrors.name) setError('name', { message: error.fieldErrors.name })
+        if (error.fieldErrors.full_name) setError('full_name', { message: error.fieldErrors.full_name })
         if (error.fieldErrors.phone) setError('phone', { message: error.fieldErrors.phone })
         if (error.fieldErrors.email) setError('email', { message: error.fieldErrors.email })
         if (Object.keys(error.fieldErrors).length === 0) setFormError(error.message)
@@ -77,7 +80,7 @@ export function EditLeadDialog({ open, onOpenChange, lead }: EditLeadDialogProps
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Editar lead</DialogTitle>
-          <DialogDescription>Atualize os dados de {lead.name}</DialogDescription>
+          <DialogDescription>Atualize os dados de {lead.full_name ?? 'lead sem nome'}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {formError && (
@@ -86,9 +89,9 @@ export function EditLeadDialog({ open, onOpenChange, lead }: EditLeadDialogProps
             </Alert>
           )}
           <div className="space-y-1.5">
-            <Label htmlFor="edit_lead_name">Nome</Label>
-            <Input id="edit_lead_name" {...register('name')} />
-            {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+            <Label htmlFor="edit_lead_name">Nome (opcional)</Label>
+            <Input id="edit_lead_name" {...register('full_name')} />
+            {errors.full_name && <p className="text-xs text-destructive">{errors.full_name.message}</p>}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="edit_lead_phone">Telefone</Label>
