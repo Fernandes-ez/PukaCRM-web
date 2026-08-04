@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { Building2, Loader2, Bot, CheckCircle2, Contact, ShieldCheck } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { ApiError } from '@/services/apiClient'
@@ -34,6 +34,8 @@ export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const from = (location.state as { from?: Location })?.from?.pathname ?? '/'
+  const [searchParams] = useSearchParams()
+  const emailFromQuery = searchParams.get('email') ?? ''
 
   const [companies, setCompanies] = useState<CompanyOption[] | null>(null)
   const [pendingCredentials, setPendingCredentials] = useState<{ email: string; password: string } | null>(null)
@@ -52,7 +54,10 @@ export function LoginPage() {
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<CredentialsForm>({ resolver: zodResolver(credentialsSchema) })
+  } = useForm<CredentialsForm>({
+    resolver: zodResolver(credentialsSchema),
+    defaultValues: { email: emailFromQuery },
+  })
 
   async function onSubmitCredentials(data: CredentialsForm) {
     setFormError(null)
