@@ -265,6 +265,28 @@ limpa em seguida) e mostra como Alert acima do form, só nesse caso
 específico — logout manual (botão Sair) ou token expirado continuam sem
 esse aviso extra.
 
+## ✅ Novo em 2026-08-05 — tela de Cobranças (histórico de pagamentos do Asaas)
+
+`SubscriptionPage.tsx` ganhou um card **"Cobranças"** abaixo do card de
+troca de plano, consumindo o endpoint novo `GET /subscription/charges`
+(proxy ao vivo pro Asaas — backend não duplica isso numa tabela local,
+ver `CLAUDE.MD` do backend). Cada linha mostra valor, status (badge:
+Paga/Pendente/Vencida/Estornada/Outro), vencimento, forma de pagamento,
+data de pagamento (se paga), e um botão **"Ver cobrança"** que abre
+`invoice_url` (página hospedada pelo próprio Asaas) numa aba nova —
+funciona igual pra boleto/PIX/cartão, não precisa diferenciar o tipo no
+frontend. Estado vazio ("Nenhuma cobrança ainda") pra empresas em
+`TRIALING` sem histórico. Lista ordenada por vencimento mais recente
+primeiro (`compareDatesDesc`, já existia em `utils/date.ts`).
+
+Sem ação de criar cobrança avulsa nessa v1 — fora de escopo (fica pra
+quando existir venda avulsa da IA, decisão #14 do `CLAUDE.MD` do
+backend). `types/subscription.ts` ganhou `Charge`/`ChargeStatus`/
+`CHARGE_STATUS_LABEL`; `subscriptionService.listCharges()` +
+`useCharges()` seguem o mesmo padrão de `get()`/`useSubscription()`
+já existentes. Testado com `tsc -b` limpo; não testado clicando de
+verdade contra o backend nesta sessão.
+
 ## ✅ Corrigido em 2026-07-30 — reconectar WhatsApp depois de "Desconectar" não funcionava
 
 Achado testando o modo manual de conexão de verdade (backend): `DELETE

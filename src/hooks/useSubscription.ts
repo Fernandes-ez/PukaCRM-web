@@ -15,3 +15,9 @@ export function useChangeSubscriptionPlan() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: subscriptionKey }),
   })
 }
+
+export const chargesKey = ['subscription', 'charges'] as const
+
+export function useCharges() {
+  return useQuery({ queryKey: chargesKey, queryFn: subscriptionService.listCharges })
+}

@@ -34,3 +34,22 @@ export interface Subscription {
 export interface SubscriptionPlanChangeRequest {
   plan: SubscriptionPlan
 }
+
+export type ChargeStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'REFUNDED' | 'OTHER'
+
+export const CHARGE_STATUS_LABEL: Record<ChargeStatus, string> = {
+  PENDING: 'Pendente',
+  PAID: 'Paga',
+  OVERDUE: 'Vencida',
+  REFUNDED: 'Estornada',
+  OTHER: 'Outro',
+}
+
+export interface Charge {
+  value: number
+  due_date: string
+  payment_date: string | null
+  status: ChargeStatus
+  billing_type: string
+  invoice_url: string
+}

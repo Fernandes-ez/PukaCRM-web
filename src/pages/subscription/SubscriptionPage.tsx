@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Loader2, CreditCard } from 'lucide-react'
-import { useSubscription, useChangeSubscriptionPlan } from '@/hooks/useSubscription'
+import { Loader2, CreditCard, ExternalLink, Receipt } from 'lucide-react'
+import { useSubscription, useChangeSubscriptionPlan, useCharges } from '@/hooks/useSubscription'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
@@ -9,14 +9,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { formatDate } from '@/utils/date'
+import { formatDate, compareDatesDesc } from '@/utils/date'
 import {
   SUBSCRIPTION_PLAN_LABEL,
   SUBSCRIPTION_STATUS_LABEL,
+  CHARGE_STATUS_LABEL,
+  type Charge,
+  type ChargeStatus,
   type Subscription,
   type SubscriptionPlan,
   type SubscriptionStatus,
 } from '@/types/subscription'
+
+const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+
+const chargeStatusVariant: Record<ChargeStatus, 'success' | 'warning' | 'destructive' | 'secondary'> = {
+  PAID: 'success',
+  PENDING: 'warning',
+  OVERDUE: 'destructive',
+  REFUNDED: 'secondary',
+  OTHER: 'secondary',
+}
+
+const BILLING_TYPE_LABEL: Record<string, string> = {
+  BOLETO: 'Boleto',
+  PIX: 'PIX',
+  CREDIT_CARD: 'Cartão de crédito',
+  DEBIT_CARD: 'Cartão de débito',
+  TRANSFER: 'Transferência',
+  DEPOSIT: 'Depósito',
+  UNDEFINED: 'A definir',
+}
 
 const statusVariant: Record<SubscriptionStatus, 'success' | 'secondary' | 'warning' | 'destructive'> = {
   TRIALING: 'warning',
@@ -115,6 +138,8 @@ export function SubscriptionPage() {
                 })}
               </CardContent>
             </Card>
+
+            <ChargesCard />
           </>
         )
       )}
@@ -165,5 +190,62 @@ function SubscriptionSummary({ subscription }: { subscription: Subscription }) {
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+function ChargesCard() {
+  const { data: charges, isLoading, isError, error } = useCharges()
+  const sorted = [...(charges ?? [])].sort((a, b) => compareDatesDesc(a.due_date, b.due_date))
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Cobranças</CardTitle>
+        <CardDescription>Histórico de cobranças da sua assinatura</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <Skeleton className="h-24 w-full" />
+        ) : isError ? (
+          <Alert variant="destructive">
+            <AlertDescription>{error instanceof ApiError ? error.message : 'Erro ao carregar.'}</AlertDescription>
+          </Alert>
+        ) : sorted.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-8 text-center text-sm text-muted-foreground">
+            <Receipt className="h-8 w-8" />
+            Nenhuma cobrança ainda
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {sorted.map((charge) => (
+              <ChargeRow key={`${charge.due_date}-${charge.invoice_url}`} charge={charge} />
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function ChargeRow({ charge }: { charge: Charge }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-md border p-4">
+      <div>
+        <div className="flex items-center gap-2">
+          <p className="font-medium">{currencyFormatter.format(charge.value)}</p>
+          <Badge variant={chargeStatusVariant[charge.status]}>{CHARGE_STATUS_LABEL[charge.status]}</Badge>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Vencimento {formatDate(charge.due_date)} · {BILLING_TYPE_LABEL[charge.billing_type] ?? charge.billing_type}
+          {charge.payment_date && ` · Paga em ${formatDate(charge.payment_date)}`}
+        </p>
+      </div>
+      <Button type="button" variant="outline" asChild>
+        <a href={charge.invoice_url} target="_blank" rel="noopener noreferrer">
+          Ver cobrança
+          <ExternalLink className="h-4 w-4" />
+        </a>
+      </Button>
+    </div>
   )
 }
