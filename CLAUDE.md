@@ -474,6 +474,65 @@ Testado (screenshot, mock com o formato real de `ConversationRead`/
 `LeadRead`) — nome do lead e do responsável aparecendo certos na lista,
 no detalhe, no diálogo de atribuição e no dashboard.
 
+## ✅ Corrigido em 2026-08-05 — auditoria de UI/UX e acessibilidade
+
+Reportado pelo usuário, uma lista de 6 pontos. Resultado, item por item:
+
+1. **✅ Corrigido — contraste da bolha de mensagem da IA/funcionário.**
+   Calculado manualmente (fórmula de luminância relativa do WCAG): o
+   texto normal da bolha (`bg-primary text-primary-foreground`, tema
+   escuro) já passava (~5.4:1), mas o horário/etiqueta "IA" usava
+   `opacity-70` por cima disso — a mistura com o fundo magenta derrubava
+   o contraste efetivo pra ~3.4:1, abaixo do mínimo de 4.5:1 do WCAG AA.
+   `ConversationDetail.tsx`: `opacity-70` → `opacity-90` nesse texto
+   (~4.8:1 calculado, dentro do padrão). Validado visualmente depois.
+2. **Textos secundários no tema escuro**: recalculado o contraste de
+   `--muted-foreground` (dark) contra `--background`/`--card` e de
+   `text-sidebar-foreground/55`/`/65` (usado na aba "Administrativo"
+   inativa e itens de menu) contra `--sidebar` (dark) — todos deram
+   entre 5.3:1 e 7.2:1 nas minhas contas, já dentro do AA. Não mexi
+   nessas cores pra não alterar a paleta de marca (já validada CVD) sem
+   um problema comprovado — se ainda parecer apagado na prática (poder
+   ser percepção subjetiva de tela/iluminação, não é incomum divergir
+   um pouco do cálculo), apontar o elemento exato que quer mais claro
+   pra eu recalcular em cima dele específico.
+3. **Não é bug — decisão de marca já registrada**: `index.css` comenta
+   explicitamente "Sidebar sempre roxo-escuro — identidade de marca,
+   independente do tema". Intencional, não alterna com o tema claro/
+   escuro do resto da aplicação. Avisar se quiser reabrir essa decisão.
+4. **✅ Corrigido — anel de foco fraco demais.** Confirmado: quase todo
+   componente interativo (`button`, `input`, `textarea`, `select`,
+   `switch`, `checkbox`, `tabs`) usava `focus-visible:ring-ring/50` (só
+   50% de opacidade) e a maioria sem `ring-offset` nenhum — só o botão
+   de fechar diálogo já usava o padrão mais forte
+   (`ring-ring` cheio + `ring-offset-2`). Padronizado esse padrão mais
+   visível nos 7 componentes acima (`src/components/ui/`). Itens de menu
+   dropdown/select (`focus:bg-accent`, roving focus por seta) não
+   mudaram — já têm contraste de fundo suficiente e não é o mesmo padrão
+   de navegação por Tab.
+5. **Não reproduzido**: tentei recriar a "aberração cromática" no número
+   do card "Conversas aguardando atenção" — testei com/sem
+   `needs_human_attention` (troca a cor do ícone e o glow do hover) e
+   com/sem hover, `deviceScaleFactor: 2`, várias combinações — o número
+   sempre renderizou sólido, sem fringing, nos meus screenshots. Hipótese
+   mais provável: artefato de compressão JPEG (chroma subsampling cria
+   franjas vermelho/azul em texto branco nítido sobre fundo escuro
+   quando a imagem é salva/comprimida como JPEG — muito comum em
+   screenshots) ou um frame capturado no meio da transição de hover
+   (`drop-shadow` + `translate` animando junto). Se continuar aparecendo
+   de forma consistente (não só em prints comprimidos), útil mandar o
+   arquivo de imagem original (PNG, sem recompressão) e/ou gravar em
+   qual navegador/zoom pra eu tentar de novo com esses parâmetros.
+6. **Não avaliado a fundo**: indicação de campo obrigatório e anúncio
+   acessível de erro de validação. Os forms usam React Hook Form + Zod
+   com mensagem de erro visível abaixo do campo (`<p
+   className="text-destructive">`), mas nenhum usa `aria-required` nem
+   asterisco visual, e as mensagens de erro não têm `role="alert"`/
+   `aria-live` pra leitor de tela anunciar automaticamente. Fora desta
+   entrega — é mudança em muitos formulários (Funcionário, Cargo, Lead,
+   Assistente, WhatsApp, Empresa...), melhor tratar como item à parte se
+   for prioridade agora.
+
 ## Comandos úteis
 
 ```bash

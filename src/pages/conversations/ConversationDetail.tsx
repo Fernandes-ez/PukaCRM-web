@@ -119,7 +119,7 @@ export function ConversationDetail({ conversationId }: { conversationId: string 
                   <p className="whitespace-pre-wrap">{message.content}</p>
                   <div
                     className={cn(
-                      'mt-1 flex items-center gap-1 text-[10px] opacity-70',
+                      'mt-1 flex items-center gap-1 text-[10px] opacity-90',
                       isFromLead ? '' : 'justify-end',
                     )}
                   >
