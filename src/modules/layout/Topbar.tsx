@@ -1,6 +1,7 @@
 import { Menu, LogOut, User } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { ThemeToggle } from '@/modules/layout/ThemeToggle'
+import { NotificationBell } from '@/modules/layout/NotificationBell'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -37,6 +38,7 @@ export function Topbar({ onOpenMobileMenu }: TopbarProps) {
       <div className="flex-1" />
 
       <div className="flex items-center gap-2">
+        <NotificationBell />
         <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

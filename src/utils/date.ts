@@ -22,3 +22,25 @@ export function formatDate(value: string | null | undefined): string {
   if (!isValidDateString(value)) return '—'
   return new Date(value as string).toLocaleDateString('pt-BR')
 }
+
+const RELATIVE_TIME_FORMATTER = new Intl.RelativeTimeFormat('pt-BR', { numeric: 'auto' })
+const RELATIVE_TIME_STEPS: Array<[Intl.RelativeTimeFormatUnit, number]> = [
+  ['year', 60 * 60 * 24 * 365],
+  ['month', 60 * 60 * 24 * 30],
+  ['day', 60 * 60 * 24],
+  ['hour', 60 * 60],
+  ['minute', 60],
+]
+
+/** "há 5 min", "há 2 h" etc. Cai pra "agora" abaixo de 1 minuto. */
+export function formatRelativeTime(value: string | null | undefined): string {
+  if (!isValidDateString(value)) return '—'
+  const diffSeconds = (new Date(value as string).getTime() - Date.now()) / 1000
+
+  for (const [unit, secondsInUnit] of RELATIVE_TIME_STEPS) {
+    if (Math.abs(diffSeconds) >= secondsInUnit) {
+      return RELATIVE_TIME_FORMATTER.format(Math.round(diffSeconds / secondsInUnit), unit)
+    }
+  }
+  return 'agora'
+}
