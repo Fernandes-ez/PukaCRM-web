@@ -79,11 +79,12 @@ Funcionários (+ diálogo de Horários de Trabalho), Cargos (+ diálogo de
 Permissões do cargo), Assistente de IA, WhatsApp (conexão), Leads (+
 diálogo de atribuição), Conversas (lista + detalhe + diálogo de
 atribuição), Minha empresa (dados cadastrais + encerramento de conta),
-Assinatura (ver plano + trocar de plano). Camada de `services/`
+Assinatura (ver plano + trocar de plano), Notificações em tempo real
+(sino na topbar, ver seção 2026-08-06 abaixo). Camada de `services/`
 espelhando 1:1 os módulos do backend (`employeeService`, `roleService`,
 `leadService`, `conversationService`, `assistantService`,
 `whatsappInstanceService`, `workScheduleService`, `companyService`,
-`subscriptionService`).
+`subscriptionService`, `notificationService`).
 
 ## ✅ Corrigido em 2026-07-23 — form de WhatsApp agora bate com o schema real do backend
 
@@ -532,6 +533,68 @@ Reportado pelo usuário, uma lista de 6 pontos. Resultado, item por item:
    entrega — é mudança em muitos formulários (Funcionário, Cargo, Lead,
    Assistente, WhatsApp, Empresa...), melhor tratar como item à parte se
    for prioridade agora.
+
+## ✅ Corrigido em 2026-08-05 — `window.confirm()` nativo (sem estilização) em 5 lugares
+
+Reportado com print (desativar funcionário mostrando o dialog cinza
+padrão do navegador, "puka-crm-web.vercel.app diz"). Já tinha sido
+corrigido caso a caso antes (troca de plano na Assinatura, encerrar
+conta), mas ainda restavam 5 `window.confirm()` espalhados: arquivar
+lead (`LeadsPage.tsx`), excluir cargo (`RolesPage.tsx`), desativar
+funcionário (`EmployeesPage.tsx`), e gerar nova chave de API / desconectar
+(`WhatsappPage.tsx`, os dois no mesmo arquivo). Criado
+`src/components/ui/confirm-dialog.tsx` — `ConfirmDialog` genérico
+(title/description/confirmLabel/variant/isPending/onConfirm) reaproveitando
+`Dialog` — e trocado nos 5 lugares por um estado (`useState<T | null>`
+guardando o item pendente, ou `useState<boolean>` nos dois casos do
+WhatsApp que não têm item associado) em vez do `if (!window.confirm(...))
+return` síncrono. Confirmado por grep que não sobra nenhum
+`window.confirm`/`alert`/`prompt` no `src/`. Testado (screenshot) o caso
+exato do print reportado (desativar funcionário) — mesmo texto, agora
+com o visual do site.
+
+## ✅ Novo em 2026-08-06 — sino de notificações em tempo real
+
+Pedido do usuário: alertar o atendente quando surge um lead novo
+atribuído a ele, ou uma conversa que precisa de atenção. Backend novo
+(`GET/PATCH /notifications*` + `GET /ws/notifications`, ver `CLAUDE.md`
+do backend, decisão #18) consumido do zero:
+
+- **`src/types/notification.ts`, `src/services/notificationService.ts`,
+  `src/hooks/useNotifications.ts`** — mesmo padrão de types/service/hooks
+  já usado em todo o resto do app. `useNotifications()`/`useUnreadCount()`
+  (REST, `enabled: isAuthenticated`), `useMarkNotificationRead()`/
+  `useMarkAllNotificationsRead()` (mutations, invalidam as duas queries).
+- **`useNotificationSocket()`** — hook à parte, sem `useQuery`: abre um
+  `WebSocket` puro (não é REST, TanStack Query não serve pra isso) contra
+  `/ws/notifications?token=<jwt>` (**mesmo token** do `localStorage`,
+  `getStoredToken()` — não existe endpoint separado pra gerar token de
+  socket). Cada mensagem recebida é escrita **direto no cache do
+  react-query** via `queryClient.setQueryData` nas mesmas chaves de
+  `useNotifications`/`useUnreadCount` — não existe um estado de
+  notificações separado, o cache é a única fonte da verdade, então o
+  sino sempre reflete o que chegou em tempo real sem precisar de
+  refetch. Reconecta sozinho com backoff (1s/2s/5s/10s/30s) se a conexão
+  cair; também mostra um toast (`useToast`) a cada notificação nova.
+  **Montado uma única vez em `AppLayout.tsx`** (não dentro do
+  `NotificationBell`) — de propósito, pra abrir/fechar o dropdown não
+  reconectar o socket.
+- **`src/modules/layout/NotificationBell.tsx`** — sino na `Topbar`, badge
+  com contador (`9+` acima de 9), dropdown com a lista (ícone diferente
+  por `type`, item não lido em destaque com ponto roxo). Clicar num item
+  marca como lido e navega: `related_conversation_id` → `/conversations/
+{id}` (rota já existe); `related_lead_id` → `/leads` (lista simples, não
+  existe rota de detalhe de lead ainda, então não dá pra linkar direto
+  pro lead específico).
+- `API_URL` (`http(s)://...`) é convertido pra `ws(s)://...` só trocando
+  o prefixo (`API_URL.replace(/^http/, 'ws')`) — mesma env var
+  `VITE_API_URL` já usada pro resto da API, não precisa de config nova.
+- Testado localmente com `tsc -b` + `npm run build` limpos — não testado
+  contra o WebSocket real do backend rodando nesta sessão (sem ambiente
+  local disponível). **Em produção, depende do ajuste de Nginx
+  documentado em `docs/deploy-oracle-vm.md` do backend** — sem os
+  headers de `Upgrade`/`Connection`, o handshake do WebSocket falha
+  atrás do reverse proxy mesmo com o resto funcionando.
 
 ## Comandos úteis
 
