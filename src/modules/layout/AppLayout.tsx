@@ -13,9 +13,9 @@ export function AppLayout() {
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
-      <div className="flex flex-1 flex-col lg:pl-0">
+      <div className="flex min-w-0 flex-1 flex-col lg:pl-0">
         <Topbar onOpenMobileMenu={() => setMobileOpen(true)} />
-        <main className="flex-1 p-4 sm:p-6">
+        <main className="min-w-0 flex-1 p-4 sm:p-6">
           <ErrorBoundary key={location.pathname}>
             <Outlet />
           </ErrorBoundary>

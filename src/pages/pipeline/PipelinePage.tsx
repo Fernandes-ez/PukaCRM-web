@@ -71,7 +71,7 @@ export function PipelinePage() {
   const noStageLeads = leadsByStage.get(NO_STAGE_COLUMN) ?? []
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-w-0 flex-col">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-semibold">Pipeline</h1>
         {canManage && (
@@ -83,7 +83,7 @@ export function PipelinePage() {
       </div>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="flex flex-1 gap-4 overflow-x-auto pb-2">
+        <div className="flex min-w-0 flex-1 gap-4 overflow-x-auto pb-2">
           {pipeline?.stages.map((stage) => (
             <PipelineColumn
               key={stage.id}
