@@ -18,6 +18,7 @@ export interface Lead {
    * Employee). Resolver o nome no frontend usando a lista de `useEmployees()`.
    */
   assigned_employee_id?: string | null
+  pipeline_stage_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -37,4 +38,8 @@ export interface LeadUpdateRequest {
 
 export interface LeadAssignRequest {
   employee_id: string
+}
+
+export interface LeadMoveStageRequest {
+  pipeline_stage_id: string
 }

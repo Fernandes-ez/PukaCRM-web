@@ -11,6 +11,7 @@ import {
   ShieldHalf,
   Building2,
   CreditCard,
+  Kanban,
   X,
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
@@ -33,6 +34,7 @@ const generalItems: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/conversations', label: 'Conversas', icon: MessageSquare },
   { to: '/leads', label: 'Leads', icon: Contact },
+  { to: '/pipeline', label: 'Pipeline', icon: Kanban },
 ]
 
 const allAdminItems: AdminNavItem[] = [

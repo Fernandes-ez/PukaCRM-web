@@ -1,4 +1,4 @@
-import { Bell, CheckCheck, UserPlus, MessageCircleWarning } from 'lucide-react'
+import { Bell, CheckCheck, UserPlus, MessageCircleWarning, ClipboardList, ClipboardX } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import {
   DropdownMenu,
@@ -17,6 +17,8 @@ import type { Notification } from '@/types/notification'
 const NOTIFICATION_ICON: Record<Notification['type'], typeof UserPlus> = {
   LEAD_ASSIGNED: UserPlus,
   CONVERSATION_NEEDS_ATTENTION: MessageCircleWarning,
+  TASK_ASSIGNED: ClipboardList,
+  TASK_DUE: ClipboardX,
 }
 
 export function NotificationBell() {
@@ -32,6 +34,8 @@ export function NotificationBell() {
     if (!notification.read_at) markRead.mutate(notification.id)
     if (notification.related_conversation_id) {
       navigate(`/conversations/${notification.related_conversation_id}`)
+    } else if (notification.related_task_id) {
+      navigate('/pipeline')
     } else if (notification.related_lead_id) {
       navigate('/leads')
     }

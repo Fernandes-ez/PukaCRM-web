@@ -1,5 +1,5 @@
 import { api, normalizeApiError } from '@/services/apiClient'
-import type { Lead, LeadAssignRequest, LeadCreateRequest, LeadUpdateRequest } from '@/types/lead'
+import type { Lead, LeadAssignRequest, LeadCreateRequest, LeadMoveStageRequest, LeadUpdateRequest } from '@/types/lead'
 
 export const leadService = {
   async list(): Promise<Lead[]> {
@@ -51,6 +51,16 @@ export const leadService = {
   async assign(id: string, payload: LeadAssignRequest): Promise<Lead> {
     try {
       const { data } = await api.patch<Lead>(`/leads/${id}/assign`, payload)
+      return data
+    } catch (error) {
+      throw normalizeApiError(error)
+    }
+  },
+
+  /** Mover no Pipeline (drag-and-drop do Kanban). */
+  async moveStage(id: string, payload: LeadMoveStageRequest): Promise<Lead> {
+    try {
+      const { data } = await api.patch<Lead>(`/leads/${id}/move-stage`, payload)
       return data
     } catch (error) {
       throw normalizeApiError(error)

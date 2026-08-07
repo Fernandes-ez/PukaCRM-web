@@ -10,6 +10,7 @@ import { AssistantPage } from '@/pages/assistant/AssistantPage'
 import { WhatsappPage } from '@/pages/whatsapp/WhatsappPage'
 import { WhatsappHelpPage } from '@/pages/whatsapp/WhatsappHelpPage'
 import { LeadsPage } from '@/pages/leads/LeadsPage'
+import { PipelinePage } from '@/pages/pipeline/PipelinePage'
 import { ConversationsPage } from '@/pages/conversations/ConversationsPage'
 import { CompanyPage } from '@/pages/company/CompanyPage'
 import { SubscriptionPage } from '@/pages/subscription/SubscriptionPage'
@@ -26,6 +27,10 @@ function App() {
             <Route path="/conversations" element={<ConversationsPage />} />
             <Route path="/conversations/:id" element={<ConversationsPage />} />
             <Route path="/leads" element={<LeadsPage />} />
+
+            <Route element={<RequirePermission module="PIPELINE" resource="pipeline" action="VIEW" />}>
+              <Route path="/pipeline" element={<PipelinePage />} />
+            </Route>
 
             <Route element={<RequirePermission module="EMPLOYEES" resource="employee" action="VIEW" />}>
               <Route path="/employees" element={<EmployeesPage />} />
