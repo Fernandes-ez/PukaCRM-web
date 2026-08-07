@@ -181,6 +181,31 @@
   h3 {
     letter-spacing: -0.02em;
   }
+
+  /* Barra de rolagem no tema do site (Firefox) — os tokens seguem o tema
+     claro/escuro automaticamente, sem precisar de regra separada pra .dark. */
+  * {
+    scrollbar-color: var(--border) transparent;
+    scrollbar-width: thin;
+  }
+
+  /* Idem pra Chrome/Edge/Safari (WebKit) — Firefox ignora essas regras. */
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--brand-500);
+  }
 }
 
 /*
