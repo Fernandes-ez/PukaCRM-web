@@ -27,6 +27,8 @@ export interface Company {
   country: string | null
   timezone: string
   language: string
+  auto_redistribution_enabled: boolean
+  redistribution_after_days: number
   status: CompanyStatus
   onboarding_completed: boolean
   created_at: string
@@ -49,4 +51,6 @@ export interface CompanyUpdateRequest {
   country?: string
   timezone?: string
   language?: string
+  auto_redistribution_enabled?: boolean
+  redistribution_after_days?: number
 }

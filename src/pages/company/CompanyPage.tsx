@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -50,6 +51,7 @@ export function CompanyPage() {
   const { toast } = useToast()
   const [formError, setFormError] = useState<string | null>(null)
   const [closeAccountOpen, setCloseAccountOpen] = useState(false)
+  const [redistributionDays, setRedistributionDays] = useState('7')
 
   const {
     register,
@@ -76,6 +78,38 @@ export function CompanyPage() {
         }
       : undefined,
   })
+
+  useEffect(() => {
+    if (company) setRedistributionDays(String(company.redistribution_after_days))
+  }, [company])
+
+  async function handleToggleRedistribution(enabled: boolean) {
+    try {
+      await updateCompany.mutateAsync({ auto_redistribution_enabled: enabled })
+      toast({ title: enabled ? 'Redistribuição automática ativada' : 'Redistribuição automática desativada' })
+    } catch (error) {
+      toast({
+        title: 'Não foi possível atualizar',
+        description: error instanceof ApiError ? error.message : undefined,
+        variant: 'destructive',
+      })
+    }
+  }
+
+  async function handleSaveRedistributionDays() {
+    const days = Number(redistributionDays)
+    if (!Number.isInteger(days) || days < 1 || days > 90) return
+    try {
+      await updateCompany.mutateAsync({ redistribution_after_days: days })
+      toast({ title: 'Prazo atualizado' })
+    } catch (error) {
+      toast({
+        title: 'Não foi possível atualizar',
+        description: error instanceof ApiError ? error.message : undefined,
+        variant: 'destructive',
+      })
+    }
+  }
 
   async function onSubmit(data: CompanyFormValues) {
     setFormError(null)
@@ -246,6 +280,50 @@ export function CompanyPage() {
                     Salvar alterações
                   </Button>
                 </form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Distribuição automática</CardTitle>
+                <CardDescription>
+                  Redistribui um lead pra outro atendente se a conversa continuar aberta com o mesmo responsável
+                  por muito tempo, contado desde o início da conversa (não da última mensagem).
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="auto_redistribution">Ativar redistribuição automática</Label>
+                  <Switch
+                    id="auto_redistribution"
+                    checked={company.auto_redistribution_enabled}
+                    onCheckedChange={handleToggleRedistribution}
+                    disabled={updateCompany.isPending}
+                  />
+                </div>
+                <div className="flex items-end gap-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="redistribution_after_days">Redistribuir após (dias)</Label>
+                    <Input
+                      id="redistribution_after_days"
+                      type="number"
+                      min={1}
+                      max={90}
+                      className="w-24"
+                      value={redistributionDays}
+                      onChange={(e) => setRedistributionDays(e.target.value)}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSaveRedistributionDays}
+                    disabled={updateCompany.isPending || redistributionDays === String(company.redistribution_after_days)}
+                  >
+                    Salvar
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 

@@ -1,5 +1,12 @@
 import { api, normalizeApiError } from '@/services/apiClient'
-import type { Lead, LeadAssignRequest, LeadCreateRequest, LeadMoveStageRequest, LeadUpdateRequest } from '@/types/lead'
+import type {
+  Lead,
+  LeadAssignRequest,
+  LeadCreateRequest,
+  LeadImportResult,
+  LeadMoveStageRequest,
+  LeadUpdateRequest,
+} from '@/types/lead'
 
 export const leadService = {
   async list(): Promise<Lead[]> {
@@ -61,6 +68,28 @@ export const leadService = {
   async moveStage(id: string, payload: LeadMoveStageRequest): Promise<Lead> {
     try {
       const { data } = await api.patch<Lead>(`/leads/${id}/move-stage`, payload)
+      return data
+    } catch (error) {
+      throw normalizeApiError(error)
+    }
+  },
+
+  async exportCsv(): Promise<Blob> {
+    try {
+      const { data } = await api.get<Blob>('/leads/export', { responseType: 'blob' })
+      return data
+    } catch (error) {
+      throw normalizeApiError(error)
+    }
+  },
+
+  async importCsv(file: File): Promise<LeadImportResult> {
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const { data } = await api.post<LeadImportResult>('/leads/import', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
       return data
     } catch (error) {
       throw normalizeApiError(error)

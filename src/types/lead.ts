@@ -43,3 +43,14 @@ export interface LeadAssignRequest {
 export interface LeadMoveStageRequest {
   pipeline_stage_id: string
 }
+
+export interface LeadImportSkipped {
+  row: number
+  phone: string | null
+  reason: string
+}
+
+export interface LeadImportResult {
+  created: number
+  skipped: LeadImportSkipped[]
+}

@@ -48,6 +48,18 @@ export function useAssignLead() {
   })
 }
 
+export function useExportLeads() {
+  return useMutation({ mutationFn: () => leadService.exportCsv() })
+}
+
+export function useImportLeads() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (file: File) => leadService.importCsv(file),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: leadsKey }),
+  })
+}
+
 /**
  * Atualização otimista pro drag-and-drop do Kanban — sem isso, o card
  * "voltaria" pra coluna antiga por um instante até a resposta do PATCH

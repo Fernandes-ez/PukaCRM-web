@@ -52,3 +52,11 @@ export function useUnassignConversation() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: conversationsKey }),
   })
 }
+
+export function useCloseConversation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => conversationService.close(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: conversationsKey }),
+  })
+}

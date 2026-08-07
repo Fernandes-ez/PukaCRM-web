@@ -63,6 +63,16 @@ export const conversationService = {
     }
   },
 
+  /** Não existe "reabrir" — a próxima mensagem do Lead cria uma Conversation nova automaticamente. */
+  async close(id: string): Promise<ConversationRead> {
+    try {
+      const { data } = await api.post<ConversationRead>(`/conversations/${id}/close`)
+      return data
+    } catch (error) {
+      throw normalizeApiError(error)
+    }
+  },
+
   /** Busca o áudio original (a Meta exige o access_token até pra baixar — só o backend tem, nunca o navegador). */
   async getAudio(conversationId: string, messageId: string): Promise<Blob> {
     try {

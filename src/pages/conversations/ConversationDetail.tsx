@@ -2,8 +2,14 @@ import { useState, useRef, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Send, UserPlus, UserX, Loader2, Clock, Bot } from 'lucide-react'
-import { useConversation, useMessages, useSendMessage, useUnassignConversation } from '@/hooks/useConversations'
+import { Send, UserPlus, UserX, CircleCheck, Loader2, Clock, Bot } from 'lucide-react'
+import {
+  useConversation,
+  useMessages,
+  useSendMessage,
+  useUnassignConversation,
+  useCloseConversation,
+} from '@/hooks/useConversations'
 import { useLeads } from '@/hooks/useLeads'
 import { useEmployees } from '@/hooks/useEmployees'
 import { ApiError } from '@/services/apiClient'
@@ -34,9 +40,11 @@ export function ConversationDetail({ conversationId }: { conversationId: string 
   const { data: employees } = useEmployees()
   const sendMessage = useSendMessage(conversationId)
   const unassignConversation = useUnassignConversation()
+  const closeConversation = useCloseConversation()
   const { toast } = useToast()
   const [assignOpen, setAssignOpen] = useState(false)
   const [unassignOpen, setUnassignOpen] = useState(false)
+  const [closeOpen, setCloseOpen] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const {
@@ -92,6 +100,21 @@ export function ConversationDetail({ conversationId }: { conversationId: string 
     }
   }
 
+  async function handleClose() {
+    try {
+      await closeConversation.mutateAsync(conversationId)
+      setCloseOpen(false)
+      toast({ title: 'Conversa fechada' })
+    } catch (error) {
+      toast({
+        title: 'Não foi possível fechar a conversa',
+        description: error instanceof ApiError ? error.message : undefined,
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const isClosed = conversation.status === 'CLOSED'
   const leadName = leads?.find((lead) => lead.id === conversation.lead_id)?.full_name
   const assignedEmployeeName = employees?.find((employee) => employee.id === conversation.assigned_employee_id)
     ?.full_name
@@ -119,6 +142,12 @@ export function ConversationDetail({ conversationId }: { conversationId: string 
             <UserPlus className="h-4 w-4" />
             Atribuir
           </Button>
+          {!isClosed && (
+            <Button variant="outline" size="sm" onClick={() => setCloseOpen(true)}>
+              <CircleCheck className="h-4 w-4" />
+              Fechar conversa
+            </Button>
+          )}
         </div>
       </div>
 
@@ -168,23 +197,29 @@ export function ConversationDetail({ conversationId }: { conversationId: string 
         )}
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex items-end gap-2 border-t p-3">
-        <Textarea
-          placeholder="Escreva uma mensagem..."
-          rows={1}
-          className="min-h-9 flex-1 resize-none"
-          {...register('content')}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              handleSubmit(onSubmit)()
-            }
-          }}
-        />
-        <Button type="submit" size="icon" disabled={isSubmitting}>
-          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-        </Button>
-      </form>
+      {isClosed ? (
+        <div className="border-t p-3 text-center text-sm text-muted-foreground">
+          Conversa fechada — envie uma mensagem nova pelo WhatsApp do Lead pra abrir outra.
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit(onSubmit)} className="flex items-end gap-2 border-t p-3">
+          <Textarea
+            placeholder="Escreva uma mensagem..."
+            rows={1}
+            className="min-h-9 flex-1 resize-none"
+            {...register('content')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                handleSubmit(onSubmit)()
+              }
+            }}
+          />
+          <Button type="submit" size="icon" disabled={isSubmitting}>
+            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          </Button>
+        </form>
+      )}
 
       {assignOpen && (
         <AssignConversationDialog conversation={conversation} open={assignOpen} onOpenChange={setAssignOpen} />
@@ -199,6 +234,18 @@ export function ConversationDetail({ conversationId }: { conversationId: string 
           confirmLabel="Devolver pra IA"
           isPending={unassignConversation.isPending}
           onConfirm={handleUnassign}
+        />
+      )}
+
+      {closeOpen && (
+        <ConfirmDialog
+          open={closeOpen}
+          onOpenChange={setCloseOpen}
+          title="Fechar esta conversa?"
+          description="Não dá pra reabrir manualmente — se o Lead mandar outra mensagem depois, uma conversa nova é criada automaticamente."
+          confirmLabel="Fechar conversa"
+          isPending={closeConversation.isPending}
+          onConfirm={handleClose}
         />
       )}
     </div>

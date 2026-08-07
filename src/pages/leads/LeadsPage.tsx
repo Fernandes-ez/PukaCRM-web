@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import { MoreHorizontal, Plus, Pencil, UserCheck, Archive } from 'lucide-react'
-import { useLeads, useArchiveLead } from '@/hooks/useLeads'
+import { useRef, useState } from 'react'
+import { MoreHorizontal, Plus, Pencil, UserCheck, Archive, Download, Upload, Loader2 } from 'lucide-react'
+import { useLeads, useArchiveLead, useExportLeads, useImportLeads } from '@/hooks/useLeads'
 import { useEmployees } from '@/hooks/useEmployees'
+import { useAuth } from '@/contexts/AuthContext'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
@@ -15,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { LEAD_STATUS_LABEL, type Lead, type LeadStatus } from '@/types/lead'
 import { CreateLeadDialog } from '@/pages/leads/CreateLeadDialog'
 import { EditLeadDialog } from '@/pages/leads/EditLeadDialog'
@@ -31,22 +33,67 @@ export function LeadsPage() {
   const { data: leads, isLoading } = useLeads()
   const { data: employees } = useEmployees()
   const archiveLead = useArchiveLead()
+  const exportLeads = useExportLeads()
+  const importLeads = useImportLeads()
+  const { hasPermission } = useAuth()
   const { toast } = useToast()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [createOpen, setCreateOpen] = useState(false)
   const [editLead, setEditLead] = useState<Lead | null>(null)
   const [assignLead, setAssignLead] = useState<Lead | null>(null)
+  const [archiveLeadTarget, setArchiveLeadTarget] = useState<Lead | null>(null)
 
   const employeeNameById = new Map((employees ?? []).map((employee) => [employee.id, employee.full_name]))
 
-  async function handleArchive(lead: Lead) {
-    if (!window.confirm(`Arquivar o lead "${lead.full_name ?? 'sem nome'}"?`)) return
+  async function handleArchive() {
+    if (!archiveLeadTarget) return
     try {
-      await archiveLead.mutateAsync(lead.id)
+      await archiveLead.mutateAsync(archiveLeadTarget.id)
       toast({ title: 'Lead arquivado', variant: 'success' })
+      setArchiveLeadTarget(null)
     } catch (error) {
       toast({
         title: 'Não foi possível arquivar',
+        description: error instanceof ApiError ? error.message : undefined,
+        variant: 'destructive',
+      })
+    }
+  }
+
+  async function handleExport() {
+    try {
+      const blob = await exportLeads.mutateAsync()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'leads.csv'
+      link.click()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      toast({
+        title: 'Não foi possível exportar',
+        description: error instanceof ApiError ? error.message : undefined,
+        variant: 'destructive',
+      })
+    }
+  }
+
+  async function handleImportFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    try {
+      const result = await importLeads.mutateAsync(file)
+      toast({
+        title: `${result.created} lead(s) importado(s)`,
+        description: result.skipped.length
+          ? `${result.skipped.length} linha(s) ignorada(s) — ex: ${result.skipped[0].reason}`
+          : undefined,
+      })
+    } catch (error) {
+      toast({
+        title: 'Não foi possível importar',
         description: error instanceof ApiError ? error.message : undefined,
         variant: 'destructive',
       })
@@ -60,10 +107,33 @@ export function LeadsPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Leads</h1>
           <p className="text-sm text-muted-foreground">Acompanhe e atribua os contatos recebidos</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4" />
-          Novo lead
-        </Button>
+        <div className="flex items-center gap-2">
+          {hasPermission('LEADS', 'lead', 'EXPORT') && (
+            <Button variant="outline" onClick={handleExport} disabled={exportLeads.isPending}>
+              {exportLeads.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              Exportar
+            </Button>
+          )}
+          {hasPermission('LEADS', 'lead', 'IMPORT') && (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={handleImportFile}
+              />
+              <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={importLeads.isPending}>
+                {importLeads.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                Importar
+              </Button>
+            </>
+          )}
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Novo lead
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -118,7 +188,7 @@ export function LeadsPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive focus:text-destructive"
-                            onClick={() => handleArchive(lead)}
+                            onClick={() => setArchiveLeadTarget(lead)}
                           >
                             <Archive className="mr-2 h-4 w-4" />
                             Arquivar
@@ -147,6 +217,18 @@ export function LeadsPage() {
       )}
       {assignLead && (
         <AssignLeadDialog lead={assignLead} open={!!assignLead} onOpenChange={(open) => !open && setAssignLead(null)} />
+      )}
+      {archiveLeadTarget && (
+        <ConfirmDialog
+          open={!!archiveLeadTarget}
+          onOpenChange={(open) => !open && setArchiveLeadTarget(null)}
+          title="Arquivar lead"
+          description={`Arquivar o lead "${archiveLeadTarget.full_name ?? 'sem nome'}"?`}
+          confirmLabel="Arquivar"
+          variant="destructive"
+          isPending={archiveLead.isPending}
+          onConfirm={handleArchive}
+        />
       )}
     </div>
   )
