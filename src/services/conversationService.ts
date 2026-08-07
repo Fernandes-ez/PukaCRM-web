@@ -52,4 +52,16 @@ export const conversationService = {
       throw normalizeApiError(error)
     }
   },
+
+  /** Busca o áudio original (a Meta exige o access_token até pra baixar — só o backend tem, nunca o navegador). */
+  async getAudio(conversationId: string, messageId: string): Promise<Blob> {
+    try {
+      const { data } = await api.get<Blob>(`/conversations/${conversationId}/messages/${messageId}/audio`, {
+        responseType: 'blob',
+      })
+      return data
+    } catch (error) {
+      throw normalizeApiError(error)
+    }
+  },
 }

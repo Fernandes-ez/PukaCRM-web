@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AssignConversationDialog } from '@/pages/conversations/AssignConversationDialog'
+import { AudioMessagePlayer } from '@/pages/conversations/AudioMessagePlayer'
 import type { ConversationStatus } from '@/types/conversation'
 
 const schema = z.object({ content: z.string().min(1) })
@@ -116,6 +117,9 @@ export function ConversationDetail({ conversationId }: { conversationId: string 
                     isFromLead ? 'bg-muted text-foreground' : 'bg-primary text-primary-foreground',
                   )}
                 >
+                  {message.content_type === 'AUDIO' && (
+                    <AudioMessagePlayer conversationId={conversationId} messageId={message.id} />
+                  )}
                   <p className="whitespace-pre-wrap">{message.content}</p>
                   <div
                     className={cn(

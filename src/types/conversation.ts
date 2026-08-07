@@ -1,6 +1,7 @@
 export type ConversationStatus = 'OPEN' | 'PENDING' | 'CLOSED'
 export type MessageSenderType = 'LEAD' | 'AI' | 'EMPLOYEE'
 export type MessageStatus = 'PENDING' | 'SENT' | 'DELIVERED' | 'READ' | 'FAILED'
+export type MessageContentType = 'TEXT' | 'AUDIO'
 
 export interface ConversationRead {
   id: string
@@ -26,9 +27,12 @@ export interface Message {
   /** Preenchido só quando `sender_type === 'EMPLOYEE'`. */
   sender_employee_id: string | null
   content: string
+  /** 'AUDIO' — `content` é a transcrição (ou um placeholder até ser transcrita). */
+  content_type: MessageContentType
   status: MessageStatus
   /** Id da mensagem no provedor (WhatsApp/Meta) — usado pro backend, não pra exibição. */
   external_message_id: string | null
+  external_media_id: string | null
   created_at: string
 }
 
