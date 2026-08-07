@@ -13,6 +13,8 @@ export interface WhatsAppInstance {
   phone_number: string
   /** ID do número na Meta (value.metadata.phone_number_id dos webhooks) — necessário pro envio/recebimento funcionarem de verdade. */
   phone_number_id: string | null
+  /** ID da WABA — necessário pra criar/gerenciar Message Templates (diferente do phone_number_id). */
+  waba_id: string | null
   label: string | null
   status: WhatsAppInstanceStatus
   created_at: string
@@ -25,6 +27,7 @@ export interface WhatsAppInstanceCreateRequest {
   phone_number: string
   label?: string
   phone_number_id?: string
+  waba_id?: string
   /** Convenção esperada pelo backend pro provider META_CLOUD_API. */
   credentials: { access_token: string }
 }
@@ -38,6 +41,7 @@ export interface WhatsAppInstanceUpdateRequest {
   phone_number?: string
   label?: string
   phone_number_id?: string
+  waba_id?: string
   /** Omitir se não for trocar o token — `credentials` nunca vem preenchido de volta pra reexibir. */
   credentials?: { access_token: string }
   status?: WhatsAppInstanceStatus

@@ -7,6 +7,12 @@ import type {
   LeadMoveStageRequest,
   LeadUpdateRequest,
 } from '@/types/lead'
+import type { ConversationRead } from '@/types/conversation'
+
+export interface StartConversationRequest {
+  template_id: string
+  variables: string[]
+}
 
 export const leadService = {
   async list(): Promise<Lead[]> {
@@ -105,6 +111,16 @@ export const leadService = {
         params: { format },
         responseType: 'blob',
       })
+      return data
+    } catch (error) {
+      throw normalizeApiError(error)
+    }
+  },
+
+  /** Único jeito de iniciar contato fora da janela de atendimento de 24h da Meta. */
+  async startConversation(id: string, payload: StartConversationRequest): Promise<ConversationRead> {
+    try {
+      const { data } = await api.post<ConversationRead>(`/leads/${id}/start-conversation`, payload)
       return data
     } catch (error) {
       throw normalizeApiError(error)

@@ -21,11 +21,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SecretRevealDialog } from '@/components/secret-reveal-dialog'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import type { WhatsAppInstanceStatus } from '@/types/whatsappInstance'
+import { MessageTemplatesCard } from '@/pages/whatsapp/MessageTemplatesCard'
 
 const createSchema = z.object({
   phone_number: z.string().min(8, 'Informe o número com DDI e DDD'),
   phone_number_id: z.string().min(1, 'Informe o Phone Number ID (vem do painel da Meta)'),
+  waba_id: z.string().optional(),
   access_token: z.string().min(1, 'Informe o token de acesso (vem do painel da Meta)'),
   label: z.string().optional(),
 })
@@ -34,6 +37,7 @@ type CreateFormValues = z.infer<typeof createSchema>
 const updateSchema = z.object({
   phone_number: z.string().min(8, 'Informe o número com DDI e DDD'),
   phone_number_id: z.string().min(1, 'Informe o Phone Number ID (vem do painel da Meta)'),
+  waba_id: z.string().optional(),
   access_token: z.string().optional(),
   label: z.string().optional(),
 })
@@ -62,8 +66,38 @@ export function WhatsappPage() {
   const { toast } = useToast()
 
   const [revealSecret, setRevealSecret] = useState<{ title: string; secret: string } | null>(null)
+  const [confirmRegenerate, setConfirmRegenerate] = useState(false)
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false)
 
   const notFound = isError && error instanceof ApiError && error.status === 404
+
+  async function handleRegenerateApiKey() {
+    try {
+      const result = await regenerateApiKey.mutateAsync()
+      setConfirmRegenerate(false)
+      setRevealSecret({ title: 'Nova chave gerada', secret: result.service_api_key })
+    } catch (err) {
+      toast({
+        title: 'Não foi possível gerar a chave',
+        description: err instanceof ApiError ? err.message : undefined,
+        variant: 'destructive',
+      })
+    }
+  }
+
+  async function handleDisconnect() {
+    try {
+      await disconnectInstance.mutateAsync()
+      toast({ title: 'Instância desconectada', variant: 'success' })
+      setConfirmDisconnect(false)
+    } catch (err) {
+      toast({
+        title: 'Não foi possível desconectar',
+        description: err instanceof ApiError ? err.message : undefined,
+        variant: 'destructive',
+      })
+    }
+  }
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -125,19 +159,7 @@ export function WhatsappPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={async () => {
-                    if (!window.confirm('Gerar uma nova chave de API? A chave atual deixará de funcionar imediatamente.')) return
-                    try {
-                      const result = await regenerateApiKey.mutateAsync()
-                      setRevealSecret({ title: 'Nova chave gerada', secret: result.service_api_key })
-                    } catch (err) {
-                      toast({
-                        title: 'Não foi possível gerar a chave',
-                        description: err instanceof ApiError ? err.message : undefined,
-                        variant: 'destructive',
-                      })
-                    }
-                  }}
+                  onClick={() => setConfirmRegenerate(true)}
                   disabled={regenerateApiKey.isPending}
                 >
                   {regenerateApiKey.isPending ? (
@@ -151,19 +173,7 @@ export function WhatsappPage() {
                   type="button"
                   variant="outline"
                   className="text-destructive hover:text-destructive"
-                  onClick={async () => {
-                    if (!window.confirm('Desconectar o WhatsApp? A empresa deixará de receber mensagens até reconectar.')) return
-                    try {
-                      await disconnectInstance.mutateAsync()
-                      toast({ title: 'Instância desconectada', variant: 'success' })
-                    } catch (err) {
-                      toast({
-                        title: 'Não foi possível desconectar',
-                        description: err instanceof ApiError ? err.message : undefined,
-                        variant: 'destructive',
-                      })
-                    }
-                  }}
+                  onClick={() => setConfirmDisconnect(true)}
                   disabled={disconnectInstance.isPending}
                 >
                   {disconnectInstance.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unplug className="h-4 w-4" />}
@@ -171,6 +181,8 @@ export function WhatsappPage() {
                 </Button>
               </CardContent>
             </Card>
+
+            <MessageTemplatesCard />
           </>
         )
       )}
@@ -184,6 +196,25 @@ export function WhatsappPage() {
           secret={revealSecret.secret}
         />
       )}
+      <ConfirmDialog
+        open={confirmRegenerate}
+        onOpenChange={setConfirmRegenerate}
+        title="Gerar nova chave de API"
+        description="A chave atual deixará de funcionar imediatamente."
+        confirmLabel="Gerar nova chave"
+        isPending={regenerateApiKey.isPending}
+        onConfirm={handleRegenerateApiKey}
+      />
+      <ConfirmDialog
+        open={confirmDisconnect}
+        onOpenChange={setConfirmDisconnect}
+        title="Desconectar WhatsApp"
+        description="A empresa deixará de receber mensagens até reconectar."
+        confirmLabel="Desconectar"
+        variant="destructive"
+        isPending={disconnectInstance.isPending}
+        onConfirm={handleDisconnect}
+      />
     </div>
   )
 }
@@ -209,6 +240,7 @@ function CreateInstanceCard({
         provider: 'META_CLOUD_API',
         phone_number: data.phone_number,
         phone_number_id: data.phone_number_id,
+        waba_id: data.waba_id || undefined,
         label: data.label || undefined,
         credentials: { access_token: data.access_token },
       })
@@ -240,6 +272,10 @@ function CreateInstanceCard({
             <Label htmlFor="phone_number_id">Phone Number ID</Label>
             <Input id="phone_number_id" placeholder="Fornecido pela nossa equipe" {...register('phone_number_id')} />
             {errors.phone_number_id && <p className="text-xs text-destructive">{errors.phone_number_id.message}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="waba_id">WABA ID (opcional)</Label>
+            <Input id="waba_id" placeholder="Necessário só pra criar Templates de mensagem" {...register('waba_id')} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="access_token">Token de acesso</Label>
@@ -279,6 +315,7 @@ function UpdateInstanceForm({
     values: {
       phone_number: instance.phone_number,
       phone_number_id: instance.phone_number_id ?? '',
+      waba_id: instance.waba_id ?? '',
       access_token: '',
       label: instance.label ?? '',
     },
@@ -292,6 +329,7 @@ function UpdateInstanceForm({
       await updateInstance.mutateAsync({
         phone_number: data.phone_number,
         phone_number_id: data.phone_number_id,
+        waba_id: data.waba_id || undefined,
         label: data.label || undefined,
         ...(data.access_token ? { credentials: { access_token: data.access_token } } : {}),
         // PATCH não muda status sozinho (backend só atualiza se vier explícito) -
@@ -320,6 +358,10 @@ function UpdateInstanceForm({
         <Label htmlFor="edit_phone_number_id">Phone Number ID</Label>
         <Input id="edit_phone_number_id" {...register('phone_number_id')} />
         {errors.phone_number_id && <p className="text-xs text-destructive">{errors.phone_number_id.message}</p>}
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="edit_waba_id">WABA ID (opcional)</Label>
+        <Input id="edit_waba_id" placeholder="Necessário só pra criar Templates de mensagem" {...register('waba_id')} />
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="edit_access_token">Token de acesso</Label>

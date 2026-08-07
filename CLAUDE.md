@@ -806,6 +806,39 @@ fechamento automático a 24h (ver decisão).
 - Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
   visualmente num navegador nesta sessão.
 
+## ✅ Novo em 2026-08-07 — Iniciar conversa via Message Template
+
+Consumido o backend (ver `CLAUDE.MD` do backend, decisão #25) — usuário
+perguntou se dava pra iniciar conversa com Lead fora da janela de 24h da
+Meta sem virar Tech Provider; a resposta foi sim, e a entrega ficou desse
+tamanho: gerenciar templates + iniciar conversa manualmente, 1 Lead por
+vez (campanha em massa fica pro roadmap).
+
+- **`WhatsappPage.tsx`** — campo `WABA ID` novo nos formulários de
+  criar/editar instância (opcional, só necessário pra templates), ao
+  lado do Phone Number ID já existente.
+- **`MessageTemplatesCard.tsx`** (novo, `pages/whatsapp/`) — lista de
+  templates com badge de status (`Em análise`/`Aprovado`/`Rejeitado`/
+  `Pausado`/`Desativado`, mostra o motivo quando rejeitado) + dialog
+  "Novo template" (nome, categoria, idioma - default `pt_BR`, corpo com
+  `{{1}}`/`{{2}}`, rodapé opcional) + exclusão com confirmação. Gates de
+  permissão (`WHATSAPP/message_template` `VIEW`/`CREATE`/`DELETE`) igual
+  ao resto do projeto.
+- **`StartConversationDialog.tsx`** (novo, `pages/leads/`) — aberto pelo
+  item "Iniciar conversa" no menu de ações do `LeadsPage.tsx` (gated por
+  `CONVERSATIONS/conversation/CREATE`). Só lista templates `APPROVED`;
+  ao escolher um, gera 1 campo de texto por variável posicional
+  (`body_variable_count`) com pré-visualização ao vivo do texto
+  renderizado. Ao enviar, navega pra `/conversations/{id}` da conversa
+  criada.
+- `MessageTemplate`/`MessageTemplateCreateRequest`
+  (`types/messageTemplate.ts`), `messageTemplateService.ts`,
+  `useMessageTemplates.ts` — CRUD padrão, mesmo formato de outros
+  módulos simples (`note`). `leadService.startConversation` +
+  `useStartConversation` novos em `leadService.ts`/`useLeads.ts`.
+- Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
+  visualmente num navegador nesta sessão.
+
 ## Comandos úteis
 
 ```bash

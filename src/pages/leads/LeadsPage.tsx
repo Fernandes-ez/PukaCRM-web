@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { MoreHorizontal, Plus, Pencil, UserCheck, Archive, Download, Upload, FileDown, Loader2 } from 'lucide-react'
+import { MoreHorizontal, Plus, Pencil, UserCheck, Archive, Download, Upload, FileDown, Loader2, MessageCircle } from 'lucide-react'
 import { useLeads, useArchiveLead, useExportLeads, useImportLeads, useDownloadImportTemplate } from '@/hooks/useLeads'
 import { useEmployees } from '@/hooks/useEmployees'
 import { useAuth } from '@/contexts/AuthContext'
@@ -22,6 +22,7 @@ import { LEAD_STATUS_LABEL, type Lead, type LeadStatus } from '@/types/lead'
 import { CreateLeadDialog } from '@/pages/leads/CreateLeadDialog'
 import { EditLeadDialog } from '@/pages/leads/EditLeadDialog'
 import { AssignLeadDialog } from '@/pages/leads/AssignLeadDialog'
+import { StartConversationDialog } from '@/pages/leads/StartConversationDialog'
 
 const statusLabel = LEAD_STATUS_LABEL
 
@@ -45,6 +46,7 @@ export function LeadsPage() {
   const [editLead, setEditLead] = useState<Lead | null>(null)
   const [assignLead, setAssignLead] = useState<Lead | null>(null)
   const [archiveLeadTarget, setArchiveLeadTarget] = useState<Lead | null>(null)
+  const [startConversationLead, setStartConversationLead] = useState<Lead | null>(null)
 
   const employeeNameById = new Map((employees ?? []).map((employee) => [employee.id, employee.full_name]))
 
@@ -241,6 +243,12 @@ export function LeadsPage() {
                             <UserCheck className="mr-2 h-4 w-4" />
                             Atribuir responsável
                           </DropdownMenuItem>
+                          {hasPermission('CONVERSATIONS', 'conversation', 'CREATE') && (
+                            <DropdownMenuItem onClick={() => setStartConversationLead(lead)}>
+                              <MessageCircle className="mr-2 h-4 w-4" />
+                              Iniciar conversa
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem
                             className="text-destructive focus:text-destructive"
                             onClick={() => setArchiveLeadTarget(lead)}
@@ -272,6 +280,13 @@ export function LeadsPage() {
       )}
       {assignLead && (
         <AssignLeadDialog lead={assignLead} open={!!assignLead} onOpenChange={(open) => !open && setAssignLead(null)} />
+      )}
+      {startConversationLead && (
+        <StartConversationDialog
+          lead={startConversationLead}
+          open={!!startConversationLead}
+          onOpenChange={(open) => !open && setStartConversationLead(null)}
+        />
       )}
       {archiveLeadTarget && (
         <ConfirmDialog

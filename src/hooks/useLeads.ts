@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { leadService } from '@/services/leadService'
+import { leadService, type StartConversationRequest } from '@/services/leadService'
 import type { Lead, LeadAssignRequest, LeadCreateRequest, LeadUpdateRequest } from '@/types/lead'
 
 export const leadsKey = ['leads'] as const
@@ -62,6 +62,13 @@ export function useImportLeads() {
 
 export function useDownloadImportTemplate() {
   return useMutation({ mutationFn: (format: 'csv' | 'xlsx') => leadService.downloadImportTemplate(format) })
+}
+
+export function useStartConversation() {
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: StartConversationRequest }) =>
+      leadService.startConversation(id, payload),
+  })
 }
 
 /**
