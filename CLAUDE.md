@@ -658,6 +658,59 @@ backend (ver `CLAUDE.md` do backend, decisão #20):
 - Testado com `tsc -b` + `npm run build` limpos; não clicado de verdade
   contra o backend rodando nesta sessão.
 
+## ✅ Novo em 2026-08-07 — Fase 4: Pipeline (Kanban), Tarefas e Observações
+
+Consumido o novo backend de CRM (ver `CLAUDE.md` do backend, decisão
+#21). Nova rota `/pipeline` (`RequirePermission module="PIPELINE"
+resource="pipeline" action="VIEW"`, item novo no `Sidebar.tsx` ao lado
+de "Leads", sem gate de permissão na aba do menu — mesmo padrão de
+Leads/Conversas, que também não são gated na sidebar mesmo a rota
+sendo protegida).
+
+- **`@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities`**
+  (novas dependências) — não existia nenhuma lib de drag-and-drop no
+  projeto. Escolhida por compatibilidade real com React 19 (diferente
+  de `react-beautiful-dnd`, que tem problemas conhecidos com
+  `findDOMNode`/legacy context nessa versão do React).
+- **`src/pages/pipeline/PipelinePage.tsx`** — quadro Kanban: colunas =
+  `PipelineStage` (+ coluna extra "Sem estágio" só como origem de
+  drag, nunca destino, pra leads criados antes da Fase 4 existir — sem
+  migração de backfill), cards = `Lead`. Usa `useDraggable`/
+  `useDroppable` do `@dnd-kit/core` direto (não o `SortableContext` do
+  pacote `sortable`, que é pra reordenar dentro de uma única lista —
+  aqui o card muda de container, é o padrão "multiple containers" da
+  doc do dnd-kit).
+- **`useMoveLeadStage()`** (`src/hooks/useLeads.ts`) — **primeira
+  atualização otimista do projeto** (`onMutate`/`onError`/`onSettled`
+  do TanStack Query). Todos os outros hooks de mutação só invalidam e
+  esperam o refetch; aqui isso deixaria o card "voltando" pra coluna
+  antiga por um instante a cada drag, então o cache é atualizado na
+  hora e só desfeito se o `PATCH /leads/{id}/move-stage` falhar de
+  verdade.
+- **`PipelineStagesDialog.tsx`** — configurar estágios (criar/excluir/
+  reordenar), só visível com `PIPELINE/pipeline/MANAGE`. Reordenar usa
+  `@dnd-kit/sortable` (`SortableContext` + `useSortable`) — esse sim é
+  o caso de uso "certo" pro pacote sortable, uma lista vertical única.
+- **`LeadDetailDialog.tsx`** (novo — não existia uma tela de detalhe
+  de Lead separada da tabela) — abre ao clicar num card do Kanban,
+  com abas **Tarefas** (criar/marcar concluída via `Checkbox`/excluir,
+  mostra responsável resolvido via `useEmployees()` e destaca vencidas
+  em vermelho) e **Observações** (criar/listar/excluir, sem edição —
+  reflete o backend, que não tem `PATCH /notes/{id}`).
+- **`NotificationBell.tsx`** ganha ícones pros 2 tipos novos
+  (`TASK_ASSIGNED`/`TASK_DUE`) e navega pra `/pipeline` ao clicar numa
+  notificação de tarefa (não existe deep-link pra abrir o
+  `LeadDetailDialog` de um lead específico direto da notificação —
+  fica só na página, o usuário encontra o card manualmente por
+  enquanto).
+- Testado com `tsc -b`, `oxlint` e `npm run build` limpos. **Não
+  testado visualmente num navegador** nesta sessão (sem ferramenta de
+  automação de navegador disponível) — o drag-and-drop, os dialogs e o
+  fluxo completo (criar tarefa, marcar concluída, arrastar card entre
+  colunas) não foram clicados de verdade contra o backend rodando.
+  Validar manualmente antes de considerar essa tela pronta pra uso
+  real.
+
 ## Comandos úteis
 
 ```bash
