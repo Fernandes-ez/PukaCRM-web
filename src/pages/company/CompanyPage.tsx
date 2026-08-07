@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
+import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -52,6 +53,7 @@ export function CompanyPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [closeAccountOpen, setCloseAccountOpen] = useState(false)
   const [redistributionDays, setRedistributionDays] = useState('7')
+  const [closingMessage, setClosingMessage] = useState('')
 
   const {
     register,
@@ -83,6 +85,10 @@ export function CompanyPage() {
     if (company) setRedistributionDays(String(company.redistribution_after_days))
   }, [company])
 
+  useEffect(() => {
+    if (company) setClosingMessage(company.closing_message ?? '')
+  }, [company])
+
   async function handleToggleRedistribution(enabled: boolean) {
     try {
       await updateCompany.mutateAsync({ auto_redistribution_enabled: enabled })
@@ -102,6 +108,19 @@ export function CompanyPage() {
     try {
       await updateCompany.mutateAsync({ redistribution_after_days: days })
       toast({ title: 'Prazo atualizado' })
+    } catch (error) {
+      toast({
+        title: 'Não foi possível atualizar',
+        description: error instanceof ApiError ? error.message : undefined,
+        variant: 'destructive',
+      })
+    }
+  }
+
+  async function handleSaveClosingMessage() {
+    try {
+      await updateCompany.mutateAsync({ closing_message: closingMessage })
+      toast({ title: 'Mensagem de encerramento atualizada' })
     } catch (error) {
       toast({
         title: 'Não foi possível atualizar',
@@ -324,6 +343,34 @@ export function CompanyPage() {
                     Salvar
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Mensagem de encerramento</CardTitle>
+                <CardDescription>
+                  Enviada ao Lead pelo WhatsApp quando a conversa é fechada (manualmente ou automaticamente por
+                  inatividade). Deixe em branco pra não mandar nada.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Textarea
+                  value={closingMessage}
+                  onChange={(e) => setClosingMessage(e.target.value)}
+                  maxLength={1000}
+                  rows={3}
+                  placeholder="Ex: Encerramos este atendimento por aqui. Se precisar de mais alguma coisa, é só nos chamar novamente."
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSaveClosingMessage}
+                  disabled={updateCompany.isPending || closingMessage === (company.closing_message ?? '')}
+                >
+                  Salvar
+                </Button>
               </CardContent>
             </Card>
 

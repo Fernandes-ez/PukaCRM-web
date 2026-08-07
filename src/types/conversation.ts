@@ -1,5 +1,5 @@
 export type ConversationStatus = 'OPEN' | 'PENDING' | 'CLOSED'
-export type MessageSenderType = 'LEAD' | 'AI' | 'EMPLOYEE'
+export type MessageSenderType = 'LEAD' | 'AI' | 'EMPLOYEE' | 'SYSTEM'
 export type MessageStatus = 'PENDING' | 'SENT' | 'DELIVERED' | 'READ' | 'FAILED'
 export type MessageContentType = 'TEXT' | 'AUDIO'
 

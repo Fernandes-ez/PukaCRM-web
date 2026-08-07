@@ -86,12 +86,24 @@ export const leadService = {
     }
   },
 
-  async importCsv(file: File): Promise<LeadImportResult> {
+  async importLeads(file: File): Promise<LeadImportResult> {
     try {
       const formData = new FormData()
       formData.append('file', file)
       const { data } = await api.post<LeadImportResult>('/leads/import', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      return data
+    } catch (error) {
+      throw normalizeApiError(error)
+    }
+  },
+
+  async downloadImportTemplate(format: 'csv' | 'xlsx'): Promise<Blob> {
+    try {
+      const { data } = await api.get<Blob>('/leads/import/template', {
+        params: { format },
+        responseType: 'blob',
       })
       return data
     } catch (error) {

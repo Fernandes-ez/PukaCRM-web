@@ -778,6 +778,34 @@ backend) como o outro.
 - Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
   visualmente num navegador nesta sessão.
 
+## ✅ Novo em 2026-08-07 — Modelo de import, mensagem de encerramento e fechamento automático de Conversation
+
+Consumido o backend (ver `CLAUDE.MD` do backend, decisão #24). Pesquisa
+na doc da Meta feita antes de implementar mostrou que mensagem de texto
+livre só sai dentro da janela de atendimento de 24h do Lead — isso não
+muda nada na tela em si, mas é por isso que o backend limita o
+fechamento automático a 24h (ver decisão).
+
+- **`LeadsPage.tsx`** — botão "Importar" virou `DropdownMenu`:
+  "Escolher arquivo (.csv ou .xlsx)" (mesmo file picker de antes, só
+  que `accept=".csv,.xlsx"` agora) + "Baixar modelo (.xlsx)"/"Baixar
+  modelo (.csv)", que baixam `GET /leads/import/template` via
+  `leadService.downloadImportTemplate(format)`/
+  `useDownloadImportTemplate()`. `leadService.importCsv` renomeado pra
+  `importLeads` (deixou de ser só CSV).
+- **`CompanyPage.tsx`** — novo card "Mensagem de encerramento"
+  (`Textarea` + botão "Salvar" isolado, mesmo padrão de patch pequeno e
+  imediato já usado no card de distribuição automática) — edita
+  `Company.closing_message` via `PATCH /companies/me`.
+  `Company`/`CompanyUpdateRequest` ganharam o campo.
+- **`ConversationDetail.tsx`** — mensagens com `sender_type: 'SYSTEM'`
+  (a mensagem de encerramento) não entram mais na bolha de chat
+  esquerda/direita — aparecem centralizadas, num pill discreto, mesmo
+  padrão visual de "aviso do sistema" usado por apps de chat em geral.
+  `MessageSenderType` (`types/conversation.ts`) ganhou o valor `SYSTEM`.
+- Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
+  visualmente num navegador nesta sessão.
+
 ## Comandos úteis
 
 ```bash

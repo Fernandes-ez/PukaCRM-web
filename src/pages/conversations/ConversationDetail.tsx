@@ -162,6 +162,15 @@ export function ConversationDetail({ conversationId }: { conversationId: string 
           <p className="text-center text-sm text-muted-foreground">Nenhuma mensagem ainda.</p>
         ) : (
           messages?.map((message) => {
+            if (message.sender_type === 'SYSTEM') {
+              return (
+                <div key={message.id} className="flex justify-center">
+                  <p className="max-w-[85%] rounded-full bg-muted px-3 py-1 text-center text-xs text-muted-foreground">
+                    {message.content}
+                  </p>
+                </div>
+              )
+            }
             const isFromLead = message.sender_type === 'LEAD'
             return (
               <div key={message.id} className={cn('flex', isFromLead ? 'justify-start' : 'justify-end')}>

@@ -29,6 +29,7 @@ export interface Company {
   language: string
   auto_redistribution_enabled: boolean
   redistribution_after_days: number
+  closing_message: string | null
   status: CompanyStatus
   onboarding_completed: boolean
   created_at: string
@@ -53,4 +54,5 @@ export interface CompanyUpdateRequest {
   language?: string
   auto_redistribution_enabled?: boolean
   redistribution_after_days?: number
+  closing_message?: string
 }

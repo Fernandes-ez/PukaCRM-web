@@ -55,9 +55,13 @@ export function useExportLeads() {
 export function useImportLeads() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (file: File) => leadService.importCsv(file),
+    mutationFn: (file: File) => leadService.importLeads(file),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: leadsKey }),
   })
+}
+
+export function useDownloadImportTemplate() {
+  return useMutation({ mutationFn: (format: 'csv' | 'xlsx') => leadService.downloadImportTemplate(format) })
 }
 
 /**

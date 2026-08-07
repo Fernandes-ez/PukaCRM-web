@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
-import { MoreHorizontal, Plus, Pencil, UserCheck, Archive, Download, Upload, Loader2 } from 'lucide-react'
-import { useLeads, useArchiveLead, useExportLeads, useImportLeads } from '@/hooks/useLeads'
+import { MoreHorizontal, Plus, Pencil, UserCheck, Archive, Download, Upload, FileDown, Loader2 } from 'lucide-react'
+import { useLeads, useArchiveLead, useExportLeads, useImportLeads, useDownloadImportTemplate } from '@/hooks/useLeads'
 import { useEmployees } from '@/hooks/useEmployees'
 import { useAuth } from '@/contexts/AuthContext'
 import { ApiError } from '@/services/apiClient'
@@ -13,6 +13,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -35,6 +36,7 @@ export function LeadsPage() {
   const archiveLead = useArchiveLead()
   const exportLeads = useExportLeads()
   const importLeads = useImportLeads()
+  const downloadTemplate = useDownloadImportTemplate()
   const { hasPermission } = useAuth()
   const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -73,6 +75,24 @@ export function LeadsPage() {
     } catch (error) {
       toast({
         title: 'Não foi possível exportar',
+        description: error instanceof ApiError ? error.message : undefined,
+        variant: 'destructive',
+      })
+    }
+  }
+
+  async function handleDownloadTemplate(format: 'csv' | 'xlsx') {
+    try {
+      const blob = await downloadTemplate.mutateAsync(format)
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `modelo-leads.${format}`
+      link.click()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      toast({
+        title: 'Não foi possível baixar o modelo',
         description: error instanceof ApiError ? error.message : undefined,
         variant: 'destructive',
       })
@@ -131,14 +151,37 @@ export function LeadsPage() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".csv"
+                accept=".csv,.xlsx"
                 className="hidden"
                 onChange={handleImportFile}
               />
-              <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={importLeads.isPending}>
-                {importLeads.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                Importar
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" disabled={importLeads.isPending}>
+                    {importLeads.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4" />
+                    )}
+                    Importar
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Escolher arquivo (.csv ou .xlsx)
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleDownloadTemplate('xlsx')}>
+                    <FileDown className="mr-2 h-4 w-4" />
+                    Baixar modelo (.xlsx)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDownloadTemplate('csv')}>
+                    <FileDown className="mr-2 h-4 w-4" />
+                    Baixar modelo (.csv)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           )}
           <Button onClick={() => setCreateOpen(true)}>
