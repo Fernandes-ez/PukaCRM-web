@@ -711,6 +711,53 @@ sendo protegida).
   Validar manualmente antes de considerar essa tela pronta pra uso
   real.
 
+## ✅ Novo em 2026-08-07 — Fechar conversa, import/export de Leads e distribuição automática
+
+Consumido o backend (ver `CLAUDE.MD` do backend, decisão #22) — 4 itens
+que ficaram pra trás desde fases anteriores, revisados junto com o
+usuário. Um 5º item cogitado (`transfer_rules`) não gerou nenhuma
+mudança aqui — investigado no backend e confirmado que já funcionava
+desde a Fase 2.
+
+- **Fechar conversa** — `conversationService.close()` +
+  `useCloseConversation()`, mesmo padrão de `unassign()` (seção acima).
+  Botão "Fechar conversa" no cabeçalho de `ConversationDetail.tsx`
+  (some quando `status === 'CLOSED'`), confirmado via `ConfirmDialog`.
+  Quando fechada, o formulário de resposta dá lugar a uma mensagem de
+  placeholder — não existe "reabrir" no frontend porque não existe no
+  backend: a próxima mensagem do Lead já nasce numa conversa nova
+  sozinha.
+- **Import/export de Leads** (`LeadsPage.tsx`) — botões "Exportar"/
+  "Importar", cada um só visível com a permissão correspondente
+  (`hasPermission('LEADS', 'lead', 'EXPORT'/'IMPORT')`).
+  `leadService.exportCsv()` busca o CSV como blob e dispara download via
+  um `<a>` temporário (`URL.createObjectURL`); `importCsv(file)` sobe
+  `multipart/form-data` por um `<input type="file" accept=".csv">`
+  escondido, acionado pelo botão visível. Resultado do import
+  (`created`/`skipped`, com motivo da primeira linha ignorada) mostrado
+  num toast — sem dialog de revisão linha a linha.
+- **Distribuição automática por inatividade** — `Company`/
+  `CompanyUpdateRequest` ganharam `auto_redistribution_enabled`/
+  `redistribution_after_days`. Nova seção "Distribuição automática" em
+  `CompanyPage.tsx`: um `Switch` que salva na hora ao alternar (PATCH
+  imediato, sem botão "Salvar" separado) + um campo de dias com botão
+  "Salvar" próprio — isolado do formulário grande de dados da empresa
+  (react-hook-form), mesmo raciocínio de "patch pequeno e imediato" já
+  usado em outras telas de configuração pontual.
+- **Auto-atribuição de Conversation** — mudança só de comportamento do
+  backend (`Conversation.assigned_employee_id` agora pode se preencher
+  sozinho quando a IA sinaliza necessidade de humano, não só quando
+  atribuído manualmente ou herdado do Lead) — nenhuma tela nova aqui,
+  mas explica por que uma conversa pode aparecer com responsável mesmo
+  sem ninguém ter clicado em "Atribuir": o sino de notificações
+  (`NotificationBell.tsx`) já cobre esse caso, já que
+  `CONVERSATION_NEEDS_ATTENTION` sempre teve ícone/rota prontos.
+- Testado com `tsc -b`, `oxlint` e `npm run build` limpos. **Não
+  testado visualmente num navegador** nesta sessão — validar os 3
+  fluxos de UI (fechar conversa, exportar/importar CSV, toggle de
+  distribuição automática) manualmente antes de considerar prontos pra
+  uso real.
+
 ## Comandos úteis
 
 ```bash
