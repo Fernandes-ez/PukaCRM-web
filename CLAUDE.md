@@ -638,6 +638,26 @@ ignoradas, ver `CLAUDE.md` do backend, decisão #19). Consumido:
   o botão "Ouvir áudio"/estado de erro foi verificado só por leitura de
   código, não clicando de fato contra o backend rodando.
 
+## ✅ Novo em 2026-08-07 — botão "Devolver pra IA" na tela de Conversas
+
+Achado testando a feature de áudio: uma conversa atribuída a um humano
+não tinha como voltar pra IA (só existia `/assign`, nunca um
+"desatribuir"). Consumido o `POST /conversations/{id}/unassign` novo do
+backend (ver `CLAUDE.md` do backend, decisão #20):
+
+- `conversationService.unassign()` + `useUnassignConversation()`, mesmo
+  padrão de `assign()`/`useAssignConversation()` já existentes.
+- Botão "Devolver pra IA" no cabeçalho de `ConversationDetail.tsx`, só
+  aparece quando `conversation.assigned_employee_id` já está
+  preenchido. Confirma antes com `ConfirmDialog`
+  (`src/components/ui/confirm-dialog.tsx` — já existia no projeto de
+  uma limpeza anterior de `window.confirm()`, primeira vez que uso
+  nesta tela), deixando claro no texto que **não gera resposta
+  retroativa da IA** — só vale a partir da próxima mensagem que o Lead
+  mandar.
+- Testado com `tsc -b` + `npm run build` limpos; não clicado de verdade
+  contra o backend rodando nesta sessão.
+
 ## Comandos úteis
 
 ```bash
