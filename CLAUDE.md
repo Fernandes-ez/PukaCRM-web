@@ -816,14 +816,30 @@ vez (campanha em massa fica pro roadmap).
 
 - **`WhatsappPage.tsx`** — campo `WABA ID` novo nos formulários de
   criar/editar instância (opcional, só necessário pra templates), ao
-  lado do Phone Number ID já existente.
-- **`MessageTemplatesCard.tsx`** (novo, `pages/whatsapp/`) — lista de
-  templates com badge de status (`Em análise`/`Aprovado`/`Rejeitado`/
-  `Pausado`/`Desativado`, mostra o motivo quando rejeitado) + dialog
-  "Novo template" (nome, categoria, idioma - default `pt_BR`, corpo com
-  `{{1}}`/`{{2}}`, rodapé opcional) + exclusão com confirmação. Gates de
-  permissão (`WHATSAPP/message_template` `VIEW`/`CREATE`/`DELETE`) igual
-  ao resto do projeto.
+  lado do Phone Number ID já existente. Ganhou também um card com link
+  "Gerenciar" pra `/whatsapp/templates`.
+- **`MessageTemplatesPage.tsx`** (novo, `pages/whatsapp/`, rota própria
+  `/whatsapp/templates`, item novo "Templates" na Sidebar ao lado de
+  "WhatsApp") — **Atualizado em 2026-08-07**: nasceu como um card dentro
+  de `WhatsappPage.tsx`, mas o usuário achou melhor página própria (fica
+  esquisito squeeze-ado dentro da tela de conexão) - virou página
+  separada, gated pela própria `RequirePermission` de rota
+  (`WHATSAPP/message_template/VIEW`), mesmo padrão das outras páginas
+  administrativas. Lista de templates com badge de status (`Em
+  análise`/`Aprovado`/`Rejeitado`/`Pausado`/`Desativado`, mostra o
+  motivo quando rejeitado) + dialog "Novo template" (nome, categoria,
+  idioma - default `pt_BR`, corpo com `{{1}}`/`{{2}}`, rodapé opcional)
+  + exclusão com confirmação. Gates de permissão
+  (`WHATSAPP/message_template` `VIEW`/`CREATE`/`DELETE`) igual ao resto
+  do projeto.
+  - **Achado testando em produção**: o card não aparecia pra nenhuma
+    empresa já existente (inclusive a piloto) mesmo o Owner tendo
+    "todas as permissões" - a permissão nova (`message_template`) só é
+    vinculada automaticamente ao Owner de empresas **criadas depois**
+    dela existir no catálogo (decisão #5 do `CLAUDE.MD` do backend, já
+    documentada, mas na prática nunca tinha mordido até agora). Fix é
+    do lado do backend: `scripts/sync_owner_permissions.py`, novo -
+    rodar sempre que uma permissão nova for adicionada ao catálogo.
 - **`StartConversationDialog.tsx`** (novo, `pages/leads/`) — aberto pelo
   item "Iniciar conversa" no menu de ações do `LeadsPage.tsx` (gated por
   `CONVERSATIONS/conversation/CREATE`). Só lista templates `APPROVED`;

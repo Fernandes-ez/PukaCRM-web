@@ -11,6 +11,7 @@ import {
   useDisconnectWhatsappInstance,
   useRegenerateApiKey,
 } from '@/hooks/useWhatsappInstance'
+import { useAuth } from '@/contexts/AuthContext'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
@@ -23,7 +24,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { SecretRevealDialog } from '@/components/secret-reveal-dialog'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import type { WhatsAppInstanceStatus } from '@/types/whatsappInstance'
-import { MessageTemplatesCard } from '@/pages/whatsapp/MessageTemplatesCard'
 
 const createSchema = z.object({
   phone_number: z.string().min(8, 'Informe o número com DDI e DDD'),
@@ -63,6 +63,7 @@ export function WhatsappPage() {
   const updateInstance = useUpdateWhatsappInstance()
   const disconnectInstance = useDisconnectWhatsappInstance()
   const regenerateApiKey = useRegenerateApiKey()
+  const { hasPermission } = useAuth()
   const { toast } = useToast()
 
   const [revealSecret, setRevealSecret] = useState<{ title: string; secret: string } | null>(null)
@@ -182,7 +183,22 @@ export function WhatsappPage() {
               </CardContent>
             </Card>
 
-            <MessageTemplatesCard />
+            {hasPermission('WHATSAPP', 'message_template', 'VIEW') && (
+              <Card>
+                <CardHeader className="flex-row items-center justify-between space-y-0">
+                  <div>
+                    <CardTitle className="text-base">Templates de Mensagem</CardTitle>
+                    <CardDescription>Iniciar conversa com um Lead fora da janela de atendimento de 24h</CardDescription>
+                  </div>
+                  <Button type="button" variant="outline" size="sm" asChild>
+                    <Link to="/whatsapp/templates">
+                      Gerenciar
+                      <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </Button>
+                </CardHeader>
+              </Card>
+            )}
           </>
         )
       )}

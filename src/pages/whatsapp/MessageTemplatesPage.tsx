@@ -46,7 +46,7 @@ const schema = z.object({
 })
 type FormValues = z.infer<typeof schema>
 
-export function MessageTemplatesCard() {
+export function MessageTemplatesPage() {
   const { data: templates, isLoading } = useMessageTemplates()
   const createTemplate = useCreateMessageTemplate()
   const deleteTemplate = useDeleteMessageTemplate()
@@ -71,66 +71,71 @@ export function MessageTemplatesCard() {
     }
   }
 
-  if (!hasPermission('WHATSAPP', 'message_template', 'VIEW')) return null
-
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between space-y-0">
-        <div>
-          <CardTitle className="text-base">Templates de Mensagem</CardTitle>
-          <CardDescription>
-            Únicos aprovados pela Meta que podem iniciar uma conversa fora da janela de 24h
-          </CardDescription>
-        </div>
-        {hasPermission('WHATSAPP', 'message_template', 'CREATE') && (
-          <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" />
-            Novo template
-          </Button>
-        )}
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {isLoading ? (
-          <div className="space-y-2">
-            {Array.from({ length: 2 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 w-full" />
-            ))}
+    <div className="space-y-6 max-w-2xl">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Templates de Mensagem</h1>
+        <p className="text-sm text-muted-foreground">
+          Únicos aprovados pela Meta que podem iniciar uma conversa com um Lead fora da janela de atendimento de 24h
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between space-y-0">
+          <div>
+            <CardTitle className="text-base">Seus templates</CardTitle>
+            <CardDescription>Precisam de um WABA ID configurado em WhatsApp pra poderem ser criados</CardDescription>
           </div>
-        ) : templates?.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum template cadastrado ainda.</p>
-        ) : (
-          templates?.map((template) => (
-            <div key={template.id} className="flex items-start justify-between gap-2 rounded-md border p-3">
-              <div className="min-w-0 space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-medium">{template.name}</span>
-                  <Badge variant={statusVariant[template.status]}>
-                    {MESSAGE_TEMPLATE_STATUS_LABEL[template.status]}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {MESSAGE_TEMPLATE_CATEGORY_LABEL[template.category]} · {template.language}
-                  </span>
+          {hasPermission('WHATSAPP', 'message_template', 'CREATE') && (
+            <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4" />
+              Novo template
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {isLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <Skeleton key={i} className="h-14 w-full" />
+              ))}
+            </div>
+          ) : templates?.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum template cadastrado ainda.</p>
+          ) : (
+            templates?.map((template) => (
+              <div key={template.id} className="flex items-start justify-between gap-2 rounded-md border p-3">
+                <div className="min-w-0 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium">{template.name}</span>
+                    <Badge variant={statusVariant[template.status]}>
+                      {MESSAGE_TEMPLATE_STATUS_LABEL[template.status]}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {MESSAGE_TEMPLATE_CATEGORY_LABEL[template.category]} · {template.language}
+                    </span>
+                  </div>
+                  <p className="whitespace-pre-wrap text-sm text-muted-foreground">{template.body_text}</p>
+                  {template.status === 'REJECTED' && template.rejected_reason && (
+                    <p className="text-xs text-destructive">Motivo: {template.rejected_reason}</p>
+                  )}
                 </div>
-                <p className="whitespace-pre-wrap text-sm text-muted-foreground">{template.body_text}</p>
-                {template.status === 'REJECTED' && template.rejected_reason && (
-                  <p className="text-xs text-destructive">Motivo: {template.rejected_reason}</p>
+                {hasPermission('WHATSAPP', 'message_template', 'DELETE') && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 text-destructive hover:text-destructive"
+                    onClick={() => setDeleteTarget(template)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 )}
               </div>
-              {hasPermission('WHATSAPP', 'message_template', 'DELETE') && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0 text-destructive hover:text-destructive"
-                  onClick={() => setDeleteTarget(template)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          ))
-        )}
-      </CardContent>
+            ))
+          )}
+        </CardContent>
+      </Card>
 
       <CreateTemplateDialog open={createOpen} onOpenChange={setCreateOpen} createTemplate={createTemplate} />
 
@@ -144,7 +149,7 @@ export function MessageTemplatesCard() {
         isPending={deleteTemplate.isPending}
         onConfirm={handleDelete}
       />
-    </Card>
+    </div>
   )
 }
 
