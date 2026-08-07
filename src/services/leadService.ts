@@ -74,9 +74,12 @@ export const leadService = {
     }
   },
 
-  async exportCsv(): Promise<Blob> {
+  async exportLeads(format: 'csv' | 'xlsx'): Promise<Blob> {
     try {
-      const { data } = await api.get<Blob>('/leads/export', { responseType: 'blob' })
+      const { data } = await api.get<Blob>('/leads/export', {
+        params: { format },
+        responseType: 'blob',
+      })
       return data
     } catch (error) {
       throw normalizeApiError(error)

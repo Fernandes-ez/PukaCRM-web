@@ -49,7 +49,7 @@ export function useAssignLead() {
 }
 
 export function useExportLeads() {
-  return useMutation({ mutationFn: () => leadService.exportCsv() })
+  return useMutation({ mutationFn: (format: 'csv' | 'xlsx') => leadService.exportLeads(format) })
 }
 
 export function useImportLeads() {

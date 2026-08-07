@@ -758,6 +758,26 @@ desde a Fase 2.
   distribuição automática) manualmente antes de considerar prontos pra
   uso real.
 
+## ✅ Novo em 2026-08-07 — Export de Leads em .xlsx, além de .csv
+
+Consumido o `format` novo do `GET /leads/export` (ver `CLAUDE.MD` do
+backend, decisão #23) — usuário achou o CSV "feio" e pediu pra
+estilizar; CSV não carrega formatação de verdade (cor, negrito), então
+a resposta foi oferecer `.xlsx` estilizado como opção nova, mantendo o
+`.csv` (agora com o bug de acento/emoji corrompido corrigido no
+backend) como o outro.
+
+- `leadService.exportCsv()` virou `exportLeads(format: 'csv' | 'xlsx')`
+  — manda `?format=` na query. `useExportLeads()` recebe o formato
+  como argumento do `mutateAsync`.
+- **Botão "Exportar" virou `DropdownMenu`** (`LeadsPage.tsx`), com
+  "Excel (.xlsx)" e "CSV (.csv)" — mesmo gate de permissão de antes
+  (`LEADS/lead/EXPORT`), só a UI do botão único mudou pra dropdown com
+  as duas opções. Nome do arquivo baixado usa a extensão certa
+  (`leads.xlsx`/`leads.csv`) conforme a escolha.
+- Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
+  visualmente num navegador nesta sessão.
+
 ## Comandos úteis
 
 ```bash

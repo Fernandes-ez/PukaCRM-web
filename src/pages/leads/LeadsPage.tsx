@@ -61,13 +61,13 @@ export function LeadsPage() {
     }
   }
 
-  async function handleExport() {
+  async function handleExport(format: 'csv' | 'xlsx') {
     try {
-      const blob = await exportLeads.mutateAsync()
+      const blob = await exportLeads.mutateAsync(format)
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = 'leads.csv'
+      link.download = `leads.${format}`
       link.click()
       URL.revokeObjectURL(url)
     } catch (error) {
@@ -109,10 +109,22 @@ export function LeadsPage() {
         </div>
         <div className="flex items-center gap-2">
           {hasPermission('LEADS', 'lead', 'EXPORT') && (
-            <Button variant="outline" onClick={handleExport} disabled={exportLeads.isPending}>
-              {exportLeads.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-              Exportar
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" disabled={exportLeads.isPending}>
+                  {exportLeads.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                  Exportar
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleExport('xlsx')}>Excel (.xlsx)</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('csv')}>CSV (.csv)</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           {hasPermission('LEADS', 'lead', 'IMPORT') && (
             <>
