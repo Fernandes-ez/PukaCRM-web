@@ -596,6 +596,48 @@ do backend, decisão #18) consumido do zero:
   headers de `Upgrade`/`Connection`, o handshake do WebSocket falha
   atrás do reverse proxy mesmo com o resto funcionando.
 
+## ✅ Novo em 2026-08-07 — player de áudio nas mensagens de voz do WhatsApp
+
+Backend passou a processar mensagens de voz (antes eram silenciosamente
+ignoradas, ver `CLAUDE.md` do backend, decisão #19). Consumido:
+
+- **`src/types/conversation.ts`** — `Message` ganha `content_type`
+  (`'TEXT' | 'AUDIO'`) e `external_media_id`. Quando `content_type ===
+  'AUDIO'`, `content` é a transcrição (gerada pelo n8n/Gemini) ou, até
+  ser transcrita (ou se a empresa não tem IA ativa), um placeholder
+  fixo ("🎤 Mensagem de áudio") que o próprio backend grava.
+- **`src/pages/conversations/AudioMessagePlayer.tsx`** (novo) — busca o
+  áudio **sob demanda** (só ao clicar em "Ouvir áudio", não pré-carrega
+  toda mensagem de uma conversa longa) via
+  `conversationService.getAudio()` (`api.get(..., { responseType:
+  'blob' })` — primeiro uso de blob/binário via axios neste repo),
+  converte com `URL.createObjectURL` e troca o botão por um
+  `<audio controls autoPlay>`; `URL.revokeObjectURL` no unmount. **De
+  propósito não é um `<audio src="...">` direto** apontando pro
+  endpoint do backend: a Meta exige o `access_token` até pra baixar o
+  arquivo, e uma tag HTML nativa não manda header `Authorization`
+  customizado — teria que expor o token na URL (padrão mais fraco, fica
+  em log/histórico do navegador) pra contornar isso. Buscar via `axios` (que já
+  anexa o Bearer normal) evita esse problema, diferente do
+  `/ws/notifications` (que usa token na URL só porque o WebSocket do
+  navegador força isso, sem alternativa).
+- Botão usa `border-current`/`bg-current` (opacidade via Tailwind v4)
+  em vez de uma cor fixa — se adapta sozinho tanto à bolha clara do
+  Lead quanto à escura da IA/funcionário, sem precisar de uma prop de
+  variante nem duplicar estilo.
+- **`ConversationDetail.tsx`** — bolha de mensagem ganhou uma checagem
+  `message.content_type === 'AUDIO'` que renderiza o player acima do
+  texto (que continua sendo a transcrição/placeholder) — mesmo padrão
+  já usado ali pra badge "IA" (`sender_type === 'AI'`).
+- **Não construído nesta entrega**: nenhuma indicação de duração do
+  áudio antes de tocar (a Meta não manda isso no webhook, só o
+  `media_id` — teria que baixar o arquivo só pra descobrir a duração, o
+  que anularia a vantagem de buscar sob demanda).
+- Testado com `tsc -b` + `npm run build` limpos; não testado tocando um
+  áudio de verdade nesta sessão (sem ambiente local/n8n disponível) —
+  o botão "Ouvir áudio"/estado de erro foi verificado só por leitura de
+  código, não clicando de fato contra o backend rodando.
+
 ## Comandos úteis
 
 ```bash
