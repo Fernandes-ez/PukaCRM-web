@@ -53,6 +53,16 @@ export const conversationService = {
     }
   },
 
+  /** Devolve a conversa pra IA — só vale pra próxima mensagem do Lead, não gera resposta retroativa. */
+  async unassign(id: string): Promise<ConversationRead> {
+    try {
+      const { data } = await api.post<ConversationRead>(`/conversations/${id}/unassign`)
+      return data
+    } catch (error) {
+      throw normalizeApiError(error)
+    }
+  },
+
   /** Busca o áudio original (a Meta exige o access_token até pra baixar — só o backend tem, nunca o navegador). */
   async getAudio(conversationId: string, messageId: string): Promise<Blob> {
     try {

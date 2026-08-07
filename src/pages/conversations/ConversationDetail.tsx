@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Send, UserPlus, Loader2, Clock, Bot } from 'lucide-react'
-import { useConversation, useMessages, useSendMessage } from '@/hooks/useConversations'
+import { Send, UserPlus, UserX, Loader2, Clock, Bot } from 'lucide-react'
+import { useConversation, useMessages, useSendMessage, useUnassignConversation } from '@/hooks/useConversations'
 import { useLeads } from '@/hooks/useLeads'
 import { useEmployees } from '@/hooks/useEmployees'
 import { ApiError } from '@/services/apiClient'
@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { AssignConversationDialog } from '@/pages/conversations/AssignConversationDialog'
 import { AudioMessagePlayer } from '@/pages/conversations/AudioMessagePlayer'
 import type { ConversationStatus } from '@/types/conversation'
@@ -32,8 +33,10 @@ export function ConversationDetail({ conversationId }: { conversationId: string 
   const { data: leads } = useLeads()
   const { data: employees } = useEmployees()
   const sendMessage = useSendMessage(conversationId)
+  const unassignConversation = useUnassignConversation()
   const { toast } = useToast()
   const [assignOpen, setAssignOpen] = useState(false)
+  const [unassignOpen, setUnassignOpen] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const {
@@ -75,6 +78,20 @@ export function ConversationDetail({ conversationId }: { conversationId: string 
 
   if (!conversation) return null
 
+  async function handleUnassign() {
+    try {
+      await unassignConversation.mutateAsync(conversationId)
+      setUnassignOpen(false)
+      toast({ title: 'Conversa devolvida pra IA' })
+    } catch (error) {
+      toast({
+        title: 'Não foi possível devolver a conversa',
+        description: error instanceof ApiError ? error.message : undefined,
+        variant: 'destructive',
+      })
+    }
+  }
+
   const leadName = leads?.find((lead) => lead.id === conversation.lead_id)?.full_name
   const assignedEmployeeName = employees?.find((employee) => employee.id === conversation.assigned_employee_id)
     ?.full_name
@@ -91,10 +108,18 @@ export function ConversationDetail({ conversationId }: { conversationId: string 
             </span>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={() => setAssignOpen(true)}>
-          <UserPlus className="h-4 w-4" />
-          Atribuir
-        </Button>
+        <div className="flex items-center gap-2">
+          {conversation.assigned_employee_id && (
+            <Button variant="outline" size="sm" onClick={() => setUnassignOpen(true)}>
+              <UserX className="h-4 w-4" />
+              Devolver pra IA
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={() => setAssignOpen(true)}>
+            <UserPlus className="h-4 w-4" />
+            Atribuir
+          </Button>
+        </div>
       </div>
 
       <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4">
@@ -163,6 +188,18 @@ export function ConversationDetail({ conversationId }: { conversationId: string 
 
       {assignOpen && (
         <AssignConversationDialog conversation={conversation} open={assignOpen} onOpenChange={setAssignOpen} />
+      )}
+
+      {unassignOpen && (
+        <ConfirmDialog
+          open={unassignOpen}
+          onOpenChange={setUnassignOpen}
+          title="Devolver conversa pra IA?"
+          description="O responsável atual deixa de estar atribuído. A IA volta a responder automaticamente na próxima mensagem do Lead (se estiver ativa) — não gera uma resposta agora, só a partir da próxima mensagem."
+          confirmLabel="Devolver pra IA"
+          isPending={unassignConversation.isPending}
+          onConfirm={handleUnassign}
+        />
       )}
     </div>
   )
