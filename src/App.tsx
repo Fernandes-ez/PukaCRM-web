@@ -10,6 +10,7 @@ import { AssistantPage } from '@/pages/assistant/AssistantPage'
 import { WhatsappPage } from '@/pages/whatsapp/WhatsappPage'
 import { WhatsappHelpPage } from '@/pages/whatsapp/WhatsappHelpPage'
 import { MessageTemplatesPage } from '@/pages/whatsapp/MessageTemplatesPage'
+import { TemplatesHelpPage } from '@/pages/whatsapp/TemplatesHelpPage'
 import { LeadsPage } from '@/pages/leads/LeadsPage'
 import { PipelinePage } from '@/pages/pipeline/PipelinePage'
 import { ConversationsPage } from '@/pages/conversations/ConversationsPage'
@@ -48,6 +49,7 @@ function App() {
             </Route>
             <Route element={<RequirePermission module="WHATSAPP" resource="message_template" action="VIEW" />}>
               <Route path="/whatsapp/templates" element={<MessageTemplatesPage />} />
+              <Route path="/whatsapp/templates/ajuda" element={<TemplatesHelpPage />} />
             </Route>
             <Route element={<RequirePermission module="COMPANY" resource="company" action="VIEW" />}>
               <Route path="/empresa" element={<CompanyPage />} />

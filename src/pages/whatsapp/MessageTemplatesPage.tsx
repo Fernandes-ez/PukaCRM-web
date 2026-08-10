@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, Plus, Trash2, Tag } from 'lucide-react'
+import { Loader2, Plus, Trash2, Tag, ArrowRight } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useMessageTemplates, useCreateMessageTemplate, useDeleteMessageTemplate } from '@/hooks/useMessageTemplates'
 import { ApiError } from '@/services/apiClient'
@@ -88,11 +89,21 @@ export function MessageTemplatesPage() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Templates de Mensagem</h1>
-        <p className="text-sm text-muted-foreground">
-          Únicos aprovados pela Meta que podem iniciar uma conversa com um Lead fora da janela de atendimento de 24h
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Templates de Mensagem</h1>
+          <p className="text-sm text-muted-foreground">
+            Únicos aprovados pela Meta que podem iniciar uma conversa com um Lead fora da janela de atendimento de
+            24h
+          </p>
+        </div>
+        <Link
+          to="/whatsapp/templates/ajuda"
+          className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+        >
+          Como evitar rejeição da Meta
+          <ArrowRight className="h-3 w-3" />
+        </Link>
       </div>
 
       <Card>

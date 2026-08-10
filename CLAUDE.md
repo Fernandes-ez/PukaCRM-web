@@ -933,6 +933,38 @@ variável, só o `template_id`.
 - Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
   visualmente num navegador nesta sessão.
 
+## ✅ Novo em 2026-08-10 — página de ajuda dos Templates (regras da Meta)
+
+Usuário pediu pra dar acesso à documentação da Meta sobre templates pra
+facilitar pros clientes. Mesmo padrão já usado no WhatsApp (decisão
+2026-07-23, `WhatsappHelpPage.tsx`/`metaTutorial.tsx`) - página própria
+escrita na nossa linguagem (não link cru pra doc técnica em inglês
+voltada a desenvolvedor), com link discreto pra fonte oficial só como
+referência extra.
+
+- **`TemplatesHelpPage.tsx`** (novo, rota `/whatsapp/templates/ajuda`,
+  mesma proteção `RequirePermission` de `/whatsapp/templates`) - 4
+  cards numerados (mesmo componente visual de `WhatsappHelpPage.tsx`):
+  categoria certa (Utilidade/Marketing/Autenticação e quando usar cada
+  uma), tamanho do corpo/rodapé (1024/60 caracteres - pesquisado na doc
+  oficial da Meta, bate com os `max_length` que o formulário de criar
+  template já validava), o que a Meta rejeita (dado sensível, preço
+  enganoso, produto proibido, texto genérico demais, template
+  duplicado), tempo de aprovação (minutos a 48h).
+  - **Alert específico sobre Marketing**: como nosso criador de
+    template não suporta botão ainda (fora de escopo, decisão #25 do
+    backend) e a Meta exige opt-out pra essa categoria, o texto
+    recomenda usar Utilidade pra reengajar Lead em vez de Marketing -
+    orientação prática, não só regra copiada da Meta.
+- **`metaTemplateGuidelines.tsx`** (novo) - `MetaTemplateGuidelinesLink`,
+  mesmo padrão de `metaTutorial.tsx`/`MetaTutorialLink`, aponta pra
+  `developers.facebook.com/.../templates/overview`.
+- **`MessageTemplatesPage.tsx`** ganhou o link "Como evitar rejeição da
+  Meta" no cabeçalho, mesmo lugar/estilo do link "Ver passo a passo" já
+  usado em `WhatsappPage.tsx`.
+- Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
+  visualmente num navegador nesta sessão.
+
 ## Comandos úteis
 
 ```bash
