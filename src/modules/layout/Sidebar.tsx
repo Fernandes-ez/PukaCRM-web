@@ -220,34 +220,48 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                   >
                     <Icon className={cn('h-4 w-4 shrink-0', groupActive && 'text-sidebar-primary')} />
                     <span className="flex-1 text-left">{item.label}</span>
-                    <ChevronDown className={cn('h-3.5 w-3.5 shrink-0 transition-transform', expanded && 'rotate-180')} />
+                    <ChevronDown className={cn('h-3.5 w-3.5 shrink-0 transition-transform duration-200', expanded && 'rotate-180')} />
                   </button>
-                  {expanded && (
-                    <div className="ml-4 space-y-0.5 border-l border-sidebar-border pl-3 pt-0.5">
-                      {item.children.map(({ to, label, icon: ChildIcon }) => (
-                        <NavLink
-                          key={to}
-                          to={to}
-                          onClick={onCloseMobile}
-                          className={({ isActive }) =>
-                            cn(
-                              'flex items-center gap-2.5 rounded-md py-1.5 pl-3 pr-3 text-sm font-medium transition-all',
-                              isActive
-                                ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_0_0_1px_var(--sidebar-border)]'
-                                : 'text-sidebar-foreground/65 hover:bg-white/5 hover:text-sidebar-foreground',
-                            )
-                          }
-                        >
-                          {({ isActive }) => (
-                            <>
-                              <ChildIcon className={cn('h-3.5 w-3.5 shrink-0', isActive && 'text-sidebar-primary')} />
-                              {label}
-                            </>
-                          )}
-                        </NavLink>
-                      ))}
+                  {/* Truque de grid-template-rows 0fr→1fr: anima a altura de verdade (sem chutar
+                      max-height) e some suave em vez de sumir seco com o if condicional de antes. */}
+                  <div
+                    className={cn(
+                      'grid transition-[grid-template-rows] duration-200 ease-out',
+                      expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+                    )}
+                  >
+                    <div className="overflow-hidden">
+                      <div
+                        className={cn(
+                          'ml-4 space-y-0.5 border-l border-sidebar-border pl-3 pt-0.5 transition-opacity duration-150',
+                          expanded ? 'opacity-100 delay-75' : 'opacity-0',
+                        )}
+                      >
+                        {item.children.map(({ to, label, icon: ChildIcon }) => (
+                          <NavLink
+                            key={to}
+                            to={to}
+                            onClick={onCloseMobile}
+                            className={({ isActive }) =>
+                              cn(
+                                'flex items-center gap-2.5 rounded-md py-1.5 pl-3 pr-3 text-sm font-medium transition-all',
+                                isActive
+                                  ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_0_0_1px_var(--sidebar-border)]'
+                                  : 'text-sidebar-foreground/65 hover:bg-white/5 hover:text-sidebar-foreground',
+                              )
+                            }
+                          >
+                            {({ isActive }) => (
+                              <>
+                                <ChildIcon className={cn('h-3.5 w-3.5 shrink-0', isActive && 'text-sidebar-primary')} />
+                                {label}
+                              </>
+                            )}
+                          </NavLink>
+                        ))}
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               )
             }
