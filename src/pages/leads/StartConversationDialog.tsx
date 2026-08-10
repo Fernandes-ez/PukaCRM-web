@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { Lead } from '@/types/lead'
+import { variableLabelOrFallback } from '@/types/messageTemplate'
 
 interface StartConversationDialogProps {
   lead: Lead
@@ -113,7 +114,9 @@ export function StartConversationDialog({ lead, open, onOpenChange }: StartConve
               <>
                 {variables.map((value, index) => (
                   <div key={index} className="space-y-1.5">
-                    <Label htmlFor={`variable_${index}`}>Variável {index + 1}</Label>
+                    <Label htmlFor={`variable_${index}`}>
+                      {variableLabelOrFallback(selectedTemplate.variable_labels, index)}
+                    </Label>
                     <Input
                       id={`variable_${index}`}
                       value={value}

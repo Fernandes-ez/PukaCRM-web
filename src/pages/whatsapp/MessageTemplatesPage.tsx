@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, Plus, Trash2 } from 'lucide-react'
+import { Loader2, Plus, Trash2, Tag } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useMessageTemplates, useCreateMessageTemplate, useDeleteMessageTemplate } from '@/hooks/useMessageTemplates'
 import { ApiError } from '@/services/apiClient'
@@ -21,6 +21,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import {
   MESSAGE_TEMPLATE_CATEGORY_LABEL,
   MESSAGE_TEMPLATE_STATUS_LABEL,
+  variableLabelOrFallback,
   type MessageTemplate,
   type MessageTemplateCategory,
   type MessageTemplateStatus,
@@ -123,6 +124,15 @@ export function MessageTemplatesPage() {
                     </span>
                   </div>
                   <p className="whitespace-pre-wrap text-sm text-muted-foreground">{template.body_text}</p>
+                  {template.body_variable_count > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {Array.from({ length: template.body_variable_count }).map((_, index) => (
+                        <Badge key={index} variant="outline" className="text-[10px] font-normal">
+                          {`{{${index + 1}}}`} {variableLabelOrFallback(template.variable_labels, index)}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                   {template.status === 'REJECTED' && template.rejected_reason && (
                     <p className="text-xs text-destructive">Motivo: {template.rejected_reason}</p>
                   )}
@@ -171,6 +181,9 @@ function CreateTemplateDialog({
 }) {
   const { toast } = useToast()
   const [formError, setFormError] = useState<string | null>(null)
+  const [variableLabels, setVariableLabels] = useState<string[]>([])
+  const bodyRef = useRef<HTMLTextAreaElement | null>(null)
+  const labelInputRefs = useRef<(HTMLInputElement | null)[]>([])
   const {
     register,
     handleSubmit,
@@ -182,18 +195,53 @@ function CreateTemplateDialog({
     resolver: zodResolver(schema),
     defaultValues: { language: 'pt_BR', category: 'UTILITY' },
   })
+  const { ref: bodyRegisterRef, ...bodyRegisterRest } = register('body_text')
 
   const category = watch('category')
   const bodyText = watch('body_text') ?? ''
   const variableNumbers = useMemo(() => detectVariables(bodyText), [bodyText])
   const isSequential = variableNumbers.every((n, i) => n === i + 1)
+  const maxVariableNumber = variableNumbers.length > 0 ? Math.max(...variableNumbers) : 0
+
+  // Mantém 1 rótulo por variável detectada no texto, preservando o que já
+  // foi digitado quando o número de variáveis muda.
+  useEffect(() => {
+    setVariableLabels((prev) => {
+      const next = prev.slice(0, maxVariableNumber)
+      while (next.length < maxVariableNumber) next.push('')
+      return next
+    })
+  }, [maxVariableNumber])
+
+  function insertVariable() {
+    const nextNumber = maxVariableNumber + 1
+    const token = `{{${nextNumber}}}`
+    const el = bodyRef.current
+    const start = el?.selectionStart ?? bodyText.length
+    const end = el?.selectionEnd ?? bodyText.length
+    const newText = bodyText.slice(0, start) + token + bodyText.slice(end)
+    setValue('body_text', newText, { shouldValidate: true, shouldDirty: true })
+    if (el) {
+      requestAnimationFrame(() => {
+        el.focus()
+        const cursor = start + token.length
+        el.setSelectionRange(cursor, cursor)
+      })
+    }
+    setTimeout(() => labelInputRefs.current[nextNumber - 1]?.focus(), 0)
+  }
 
   async function onSubmit(data: FormValues) {
     setFormError(null)
     try {
-      await createTemplate.mutateAsync({ ...data, footer_text: data.footer_text || undefined })
+      await createTemplate.mutateAsync({
+        ...data,
+        footer_text: data.footer_text || undefined,
+        variable_labels: maxVariableNumber > 0 ? variableLabels.map((label) => label.trim()) : undefined,
+      })
       toast({ title: 'Template enviado pra aprovação da Meta', variant: 'success' })
       reset({ language: 'pt_BR', category: 'UTILITY', name: '', body_text: '', footer_text: '' })
+      setVariableLabels([])
       onOpenChange(false)
     } catch (error) {
       setFormError(error instanceof ApiError ? error.message : 'Ocorreu um erro inesperado. Tente novamente.')
@@ -250,28 +298,59 @@ function CreateTemplateDialog({
             <Textarea
               id="template_body"
               rows={4}
-              placeholder="Ex: Olá {{1}}, notamos que você não respondeu. Podemos ajudar com {{2}}?"
-              {...register('body_text')}
+              placeholder="Ex: Olá, notamos que você não respondeu. Podemos ajudar?"
+              {...bodyRegisterRest}
+              ref={(el) => {
+                bodyRegisterRef(el)
+                bodyRef.current = el
+              }}
             />
-            <p className="text-xs text-muted-foreground">
-              Use {'{{1}}'}, {'{{2}}'}... nos pontos que devem mudar por Lead (nome, produto, data...).
-              Quem for iniciar a conversa com um Lead vai ver 1 campo de texto pra cada variável, na
-              ordem, e preenche na hora.
-            </p>
-            {variableNumbers.length > 0 &&
-              (isSequential ? (
-                <p className="text-xs text-emerald-500">
-                  {variableNumbers.length} variável{variableNumbers.length > 1 ? 'eis' : ''} detectada
-                  {variableNumbers.length > 1 ? 's' : ''}: {variableNumbers.map((n) => `{{${n}}}`).join(', ')}
-                </p>
-              ) : (
-                <p className="text-xs text-destructive">
-                  As variáveis precisam ser sequenciais a partir de {'{{1}}'} (achei:{' '}
-                  {variableNumbers.map((n) => `{{${n}}}`).join(', ')} — falta alguma no meio).
-                </p>
-              ))}
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-xs text-muted-foreground">
+                Uma parte da mensagem muda pra cada Lead? (nome, produto, data...) Clique em "Adicionar
+                variável" e dê um nome pra ela.
+              </p>
+              <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={insertVariable}>
+                <Tag className="h-3.5 w-3.5" />
+                Adicionar variável
+              </Button>
+            </div>
+            {!isSequential && (
+              <p className="text-xs text-destructive">
+                As variáveis do texto pularam um número (achei {variableNumbers.map((n) => `{{${n}}}`).join(', ')}
+                ) — apague a de número mais alto e adicione de novo pelo botão.
+              </p>
+            )}
             {errors.body_text && <p className="text-xs text-destructive">{errors.body_text.message}</p>}
           </div>
+          {maxVariableNumber > 0 && (
+            <div className="space-y-2 rounded-md border p-3">
+              <p className="text-xs font-medium text-muted-foreground">
+                O que cada variável representa? (aparece assim pra quem for iniciar uma conversa)
+              </p>
+              {Array.from({ length: maxVariableNumber }).map((_, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Badge variant="secondary" className="shrink-0 font-mono">
+                    {`{{${index + 1}}}`}
+                  </Badge>
+                  <Input
+                    ref={(el) => {
+                      labelInputRefs.current[index] = el
+                    }}
+                    placeholder="Ex: Nome do Lead"
+                    value={variableLabels[index] ?? ''}
+                    onChange={(e) =>
+                      setVariableLabels((prev) => {
+                        const next = [...prev]
+                        next[index] = e.target.value
+                        return next
+                      })
+                    }
+                  />
+                </div>
+              ))}
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label htmlFor="template_footer">Rodapé (opcional)</Label>
             <Input id="template_footer" maxLength={60} {...register('footer_text')} />

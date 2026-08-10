@@ -891,25 +891,45 @@ administrativa futura com múltiplas páginas usar sem duplicar código.
 - Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
   visualmente num navegador nesta sessão.
 
-## ✅ Novo em 2026-08-10 — feedback ao vivo de variáveis no dialog de criar Template
+## ✅ Novo em 2026-08-10 — variáveis nomeadas no template (não só {{1}}/{{2}})
 
-Usuário testando o dialog "Novo template" achou pouco claro como
-`{{1}}`/`{{2}}` funciona - só tinha uma legenda estática abaixo do
-campo. `MessageTemplatesPage.tsx` (`CreateTemplateDialog`) ganhou:
+Primeira versão só tinha uma legenda estática explicando `{{1}}`/
+`{{2}}`. Usuário testou e continuou achando confuso ("como funcionaria
+a parte de mencionar variáveis... isso não fica claro, oq significa 1
+ou 2") - pediu pra pensar em UX de verdade: digitar sintaxe de API
+(`{{1}}`) é abstração vazando pra tela, ninguém de fora sabe o que
+"variável 1" quer dizer. Resolvido consumindo `variable_labels` novo do
+backend (ver `CLAUDE.MD` do backend, decisão #27) - cada variável ganha
+um **nome** dado pelo usuário (ex: "Nome do Lead"), não só um número.
 
-- `detectVariables(bodyText)` (novo, local) - extrai os números de
-  `{{N}}` via regex enquanto a pessoa digita (`watch('body_text')`).
-- Legenda reescrita explicando a ponta a ponta (não só "use {{1}}",
-  mas o que acontece depois: "quem for iniciar a conversa vai ver 1
-  campo de texto pra cada variável, na ordem").
-- Feedback ao vivo abaixo do textarea: lista as variáveis detectadas
-  (`{{1}}, {{2}}`) em verde se estiverem sequenciais a partir de 1, ou
-  avisa em vermelho se faltar algum número no meio (ex: `{{1}}` e
-  `{{3}}` sem `{{3}}` - a Meta espera sequência contínua, e
-  `StartConversationDialog` já assume isso pra gerar 1 campo por
-  variável). Só aviso visual, não bloqueia o envio - a Meta valida o
-  resto do lado dela mesmo.
-- Testado com `tsc -b`, `oxlint` e `npm run build` limpos.
+- **`MessageTemplatesPage.tsx` (`CreateTemplateDialog`)** reformulado:
+  - Botão **"Adicionar variável"** ao lado do corpo da mensagem - insere
+    `{{N}}` na posição do cursor do textarea (usa um `ref` combinado com
+    o `ref` do `register('body_text')` do react-hook-form pra ler/setar
+    `selectionStart`/`selectionEnd`) e foca automaticamente o campo de
+    rótulo correspondente, recém-criado. Ainda dá pra digitar `{{1}}`
+    manualmente no texto também - os dois jeitos convivem, o app só
+    sincroniza a lista de rótulos com o que detectar no texto
+    (`detectVariables`, regex).
+  - Logo abaixo, uma seção **"O que cada variável representa?"** - 1
+    campo de texto por `{{N}}` detectado, com o próprio `{{N}}` como
+    badge do lado (`{{1}} [Nome do Lead____]`) - responde a pergunta
+    "o que significa 1" diretamente na tela, no momento em que faz
+    sentido, em vez de só numa legenda separada.
+  - Aviso continua existindo se a numeração pular (`{{1}}` e `{{3}}`
+    sem `{{2}}`), mas não bloqueia o envio.
+  - `variable_labels` (`string[]`, na ordem) só é mandado no payload se
+    existir pelo menos 1 variável no corpo.
+- **`StartConversationDialog.tsx`** e a lista de `MessageTemplatesPage.tsx`
+  usam `variableLabelOrFallback(labels, index)` (novo, `types/
+messageTemplate.ts`) - mostra o rótulo dado na criação (ex: "Nome do
+  Lead" como `Label` do campo, em vez de "Variável 1"); cai pro genérico
+  `"Variável N"` só se o template não tiver rótulo (criado antes desse
+  campo existir, ou deixado em branco). A lista de templates também
+  ganhou badges pequenos mostrando `{{1}} Nome do Lead` embaixo do corpo
+  de cada template, pra bater o olho sem precisar abrir nada.
+- Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
+  visualmente num navegador nesta sessão.
 
 ## Comandos úteis
 
