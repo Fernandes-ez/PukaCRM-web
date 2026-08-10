@@ -891,58 +891,45 @@ administrativa futura com múltiplas páginas usar sem duplicar código.
 - Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
   visualmente num navegador nesta sessão.
 
-## ✅ Novo em 2026-08-10 — variáveis nomeadas E vinculadas a dado do CRM (não só {{1}}/{{2}})
+## ✅ Novo em 2026-08-10 — variáveis de template nomeadas, sem "Personalizado", zero digitação
 
-Primeira versão só tinha uma legenda estática explicando `{{1}}`/
-`{{2}}`. Usuário testou e continuou achando confuso - pediu pra pensar
-em UX de verdade: digitar sintaxe de API (`{{1}}`) é abstração vazando
-pra tela. Primeira correção deu só um **nome** livre pra cada variável
-(`variable_labels`); usuário perguntou então "como o sistema vai ler
-essa variável" e "como mandamos pra Meta o que o usuário quer" - viu
-que digitar de novo um dado que o CRM já tem (nome do Lead) não fazia
-sentido, e pediu a versão final: variável **vinculada a um campo real**.
-Consome `variables` (substituiu `variable_labels` no mesmo dia, antes
-de deploy - ver `CLAUDE.MD` do backend, decisão #27).
+Passou por 3 versões no mesmo dia (nenhuma delas foi a produção -
+sempre substituídas antes de deploy): legenda estática → rótulo livre
+por variável (`variable_labels`) → rótulo + fonte com opção
+"Personalizado" (`variables: {label, source}[]`). Usuário pediu a
+versão final: **remover "Personalizado"** de vez ("não faz sentido") e
+perguntou se a Meta suporta nome em vez de número pra ficar mais claro
+visualmente - resposta: sim, parâmetro nomeado de verdade
+(`{{nome_lead}}`, não `{{1}}`). Como só sobraram os 4 campos fixos do
+CRM, o **backend passou a resolver tudo sozinho** (ver `CLAUDE.MD` do
+backend, decisão #27) - o frontend não manda mais nenhum valor de
+variável, só o `template_id`.
 
-- **`MessageTemplatesPage.tsx` (`CreateTemplateDialog`)**:
-  - **Atualizado ainda no mesmo dia**: a primeira versão tinha 1 botão
-    genérico "Adicionar variável" + configurar rótulo/fonte à parte
-    numa lista abaixo - usuário sugeriu direto: por que não já ter
-    **botões prontos** pra cada tipo de variável, acima do texto?
-    `VARIABLE_PRESETS` (novo, `{label, source}[]` fixo) vira uma
-    fileira de botões - "Nome do Lead", "Telefone do Lead", "Quem está
-    enviando", "Nome da empresa", "Personalizado" - **acima do
-    textarea**. Clicar em um já insere `{{N}}` na posição do cursor
-    (`ref` combinado com o `ref` do `register('body_text')` do
-    react-hook-form pra ler/setar `selectionStart`/`selectionEnd`) **e**
-    preenche rótulo + fonte de uma vez só - só "Personalizado" ainda
-    foca o campo de rótulo pra pessoa descrever (não tem nome natural).
-    Ainda dá pra digitar `{{1}}` manual no texto - os dois jeitos
-    convivem, sincronizados por `detectVariables` (regex).
-  - A lista **"Variáveis inseridas"** abaixo do texto continua existindo,
-    agora como revisão/ajuste (rótulo + `Select` de origem por variável,
-    `MESSAGE_TEMPLATE_VARIABLE_SOURCE_LABEL`) - útil se a pessoa clicou
-    no botão errado ou quer refinar o rótulo, mas o caminho comum
-    (clicar no botão certo) já não precisa tocar nela.
-  - `variables: {label, source}[]` só é mandado no payload se existir
-    pelo menos 1 variável no corpo; `label` vazio cai pro fallback
-    `"Variável N"` só no envio (nunca bloqueia o submit).
-- **`StartConversationDialog.tsx`** - `resolveVariableValue(source)`
-  (novo, local) resolve o valor inicial de cada campo a partir de dado
-  que **já está disponível no componente** - `lead.full_name`/
-  `lead.phone` (prop já recebida), `useAuth().employee.full_name`
-  (quem está logado, é quem vai "enviar"), `useCompany().data.name`
-  (hook novo importado aqui). **Resolução 100% no frontend** - o
-  backend só recebe a lista final de valores (`variables: string[]`),
-  igual sempre recebeu; não muda nada no contrato do `POST /leads/{id}/
-  start-conversation`. O campo nasce preenchido mas continua editável -
-  não é travado, é só um ponto de partida.
-  - `variableLabelOrFallback(variables, index)` (`types/
-messageTemplate.ts`) continua resolvendo o rótulo exibido, agora a
-    partir de `MessageTemplateVariable.label` em vez de string solta.
-  - A lista de templates (`MessageTemplatesPage.tsx`) também ganhou
-    badges pequenos mostrando `{{1}} Nome do Lead` embaixo do corpo de
-    cada template.
+- **`MessageTemplatesPage.tsx` (`CreateTemplateDialog`)** bem mais
+  simples que as versões anteriores: 4 botões fixos acima do textarea -
+  "Nome do Lead", "Telefone do Lead", "Quem está enviando", "Nome da
+  empresa" (`VARIABLE_SOURCES`, sem "Personalizado"). Clicar insere o
+  token fixo (`{{nome_lead}}` etc, `MESSAGE_TEMPLATE_VARIABLE_TOKEN` -
+  espelha `VARIABLE_TOKEN` do backend) na posição do cursor (mesmo
+  mecanismo de `ref` combinado de antes). Botão de uma fonte já usada
+  no texto fica desabilitado (`detectVariableSources`, regex local
+  espelhando `detect_variable_sources` do backend) - não faz sentido
+  repetir a mesma variável duas vezes. **Sumiu**: a lista "Variáveis
+  inseridas" (rótulo + `Select` de origem) - não existe mais nada pra
+  configurar depois de inserir, o botão já define tudo.
+  - Lista de templates mostra badges com o nome fixo de cada fonte
+    usada (`template.variables_used`, vem pronto do backend - não
+    precisa mais calcular nada no frontend).
+- **`StartConversationDialog.tsx`** fica só **escolher o template e
+  clicar em Enviar** - sem nenhum campo de texto pra preencher.
+  `resolveVariableValue(source)` existe só pra montar a
+  **pré-visualização** (usa `lead`/`useAuth().employee`/`useCompany()`,
+  já disponíveis no componente) - **não é mais isso que é enviado pro
+  backend**, é só cosmético/preview; o backend resolve os valores de
+  novo, com o dado mais atual, na hora de mandar de verdade. `POST
+  /leads/{id}/start-conversation` perdeu o campo `variables` do corpo -
+  o `startConversation` (`useLeads.ts`/`leadService.ts`) manda só
+  `{template_id}`.
 - Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
   visualmente num navegador nesta sessão.
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -22,11 +22,10 @@ import {
   MESSAGE_TEMPLATE_CATEGORY_LABEL,
   MESSAGE_TEMPLATE_STATUS_LABEL,
   MESSAGE_TEMPLATE_VARIABLE_SOURCE_LABEL,
-  variableLabelOrFallback,
+  MESSAGE_TEMPLATE_VARIABLE_TOKEN,
   type MessageTemplate,
   type MessageTemplateCategory,
   type MessageTemplateStatus,
-  type MessageTemplateVariable,
   type MessageTemplateVariableSource,
 } from '@/types/messageTemplate'
 
@@ -50,24 +49,16 @@ const schema = z.object({
 })
 type FormValues = z.infer<typeof schema>
 
-/**
- * Botões prontos pra inserir variável - clicar já define rótulo e fonte
- * juntos, sem precisar configurar separado depois (só "Personalizado"
- * ainda pede pra descrever o que é, já que não tem um nome natural).
- */
-const VARIABLE_PRESETS: { label: string; source: MessageTemplateVariableSource }[] = [
-  { label: 'Nome do Lead', source: 'LEAD_NAME' },
-  { label: 'Telefone do Lead', source: 'LEAD_PHONE' },
-  { label: 'Quem está enviando', source: 'EMPLOYEE_NAME' },
-  { label: 'Nome da empresa', source: 'COMPANY_NAME' },
-  { label: 'Personalizado', source: 'CUSTOM' },
-]
+/** Toda variável é um campo fixo do CRM - sem opção "digitar na hora" de propósito. */
+const VARIABLE_SOURCES: MessageTemplateVariableSource[] = ['LEAD_NAME', 'LEAD_PHONE', 'EMPLOYEE_NAME', 'COMPANY_NAME']
 
-/** Números detectados em {{1}}, {{2}}... no corpo do template, em ordem. */
-function detectVariables(bodyText: string): number[] {
-  const numbers = new Set<number>()
-  for (const match of bodyText.matchAll(/\{\{(\d+)\}\}/g)) numbers.add(Number(match[1]))
-  return [...numbers].sort((a, b) => a - b)
+/** Quais fontes já aparecem no texto - espelha detect_variable_sources do backend. */
+function detectVariableSources(bodyText: string): Set<MessageTemplateVariableSource> {
+  const used = new Set<MessageTemplateVariableSource>()
+  for (const source of VARIABLE_SOURCES) {
+    if (bodyText.includes(`{{${MESSAGE_TEMPLATE_VARIABLE_TOKEN[source]}}}`)) used.add(source)
+  }
+  return used
 }
 
 export function MessageTemplatesPage() {
@@ -140,11 +131,11 @@ export function MessageTemplatesPage() {
                     </span>
                   </div>
                   <p className="whitespace-pre-wrap text-sm text-muted-foreground">{template.body_text}</p>
-                  {template.body_variable_count > 0 && (
+                  {template.variables_used.length > 0 && (
                     <div className="flex flex-wrap items-center gap-1.5">
-                      {Array.from({ length: template.body_variable_count }).map((_, index) => (
-                        <Badge key={index} variant="outline" className="text-[10px] font-normal">
-                          {`{{${index + 1}}}`} {variableLabelOrFallback(template.variables, index)}
+                      {template.variables_used.map((source) => (
+                        <Badge key={source} variant="outline" className="text-[10px] font-normal">
+                          {MESSAGE_TEMPLATE_VARIABLE_SOURCE_LABEL[source]}
                         </Badge>
                       ))}
                     </div>
@@ -197,9 +188,7 @@ function CreateTemplateDialog({
 }) {
   const { toast } = useToast()
   const [formError, setFormError] = useState<string | null>(null)
-  const [variables, setVariables] = useState<MessageTemplateVariable[]>([])
   const bodyRef = useRef<HTMLTextAreaElement | null>(null)
-  const labelInputRefs = useRef<(HTMLInputElement | null)[]>([])
   const {
     register,
     handleSubmit,
@@ -215,36 +204,15 @@ function CreateTemplateDialog({
 
   const category = watch('category')
   const bodyText = watch('body_text') ?? ''
-  const variableNumbers = useMemo(() => detectVariables(bodyText), [bodyText])
-  const isSequential = variableNumbers.every((n, i) => n === i + 1)
-  const maxVariableNumber = variableNumbers.length > 0 ? Math.max(...variableNumbers) : 0
+  const usedSources = detectVariableSources(bodyText)
 
-  // Mantém 1 entrada (rótulo + fonte) por variável detectada no texto,
-  // preservando o que já foi preenchido quando o número de variáveis muda.
-  useEffect(() => {
-    setVariables((prev) => {
-      const next = prev.slice(0, maxVariableNumber)
-      while (next.length < maxVariableNumber) next.push({ label: '', source: 'CUSTOM' })
-      return next
-    })
-  }, [maxVariableNumber])
-
-  function insertVariable(preset: (typeof VARIABLE_PRESETS)[number]) {
-    const nextNumber = maxVariableNumber + 1
-    const token = `{{${nextNumber}}}`
+  function insertVariable(source: MessageTemplateVariableSource) {
+    const token = `{{${MESSAGE_TEMPLATE_VARIABLE_TOKEN[source]}}}`
     const el = bodyRef.current
     const start = el?.selectionStart ?? bodyText.length
     const end = el?.selectionEnd ?? bodyText.length
     const newText = bodyText.slice(0, start) + token + bodyText.slice(end)
     setValue('body_text', newText, { shouldValidate: true, shouldDirty: true })
-    // Já nasce com o rótulo/fonte do botão clicado - o useEffect que
-    // sincroniza `variables` com maxVariableNumber só completa o que
-    // ainda não existir, então isso não é sobrescrito depois.
-    setVariables((prev) => {
-      const next = [...prev]
-      next[nextNumber - 1] = { label: preset.label, source: preset.source }
-      return next
-    })
     if (el) {
       requestAnimationFrame(() => {
         el.focus()
@@ -252,25 +220,14 @@ function CreateTemplateDialog({
         el.setSelectionRange(cursor, cursor)
       })
     }
-    // "Personalizado" não tem um rótulo natural - foca o campo pra pessoa
-    // descrever o que é. Fontes conhecidas já têm rótulo pronto, não precisa.
-    if (preset.source === 'CUSTOM') {
-      setTimeout(() => labelInputRefs.current[nextNumber - 1]?.focus(), 0)
-    }
   }
 
   async function onSubmit(data: FormValues) {
     setFormError(null)
     try {
-      await createTemplate.mutateAsync({
-        ...data,
-        footer_text: data.footer_text || undefined,
-        variables:
-          maxVariableNumber > 0 ? variables.map((v) => ({ ...v, label: v.label.trim() || 'Variável' })) : undefined,
-      })
+      await createTemplate.mutateAsync({ ...data, footer_text: data.footer_text || undefined })
       toast({ title: 'Template enviado pra aprovação da Meta', variant: 'success' })
       reset({ language: 'pt_BR', category: 'UTILITY', name: '', body_text: '', footer_text: '' })
-      setVariables([])
       onOpenChange(false)
     } catch (error) {
       setFormError(error instanceof ApiError ? error.message : 'Ocorreu um erro inesperado. Tente novamente.')
@@ -325,20 +282,21 @@ function CreateTemplateDialog({
           <div className="space-y-1.5">
             <Label htmlFor="template_body">Corpo da mensagem</Label>
             <p className="text-xs text-muted-foreground">
-              Uma parte da mensagem muda pra cada Lead? Clique pra inserir - o valor já vem pronto na
-              hora de iniciar a conversa (menos "Personalizado", que você digita na hora).
+              Uma parte da mensagem muda pra cada Lead? Clique pra inserir - o valor vem pronto sozinho na
+              hora de iniciar a conversa, sem precisar digitar nada.
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {VARIABLE_PRESETS.map((preset) => (
+              {VARIABLE_SOURCES.map((source) => (
                 <Button
-                  key={preset.label}
+                  key={source}
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => insertVariable(preset)}
+                  disabled={usedSources.has(source)}
+                  onClick={() => insertVariable(source)}
                 >
                   <Tag className="h-3.5 w-3.5" />
-                  {preset.label}
+                  {MESSAGE_TEMPLATE_VARIABLE_SOURCE_LABEL[source]}
                 </Button>
               ))}
             </div>
@@ -352,70 +310,8 @@ function CreateTemplateDialog({
                 bodyRef.current = el
               }}
             />
-            {!isSequential && (
-              <p className="text-xs text-destructive">
-                As variáveis do texto pularam um número (achei {variableNumbers.map((n) => `{{${n}}}`).join(', ')}
-                ) — apague a de número mais alto e adicione de novo pelo botão.
-              </p>
-            )}
             {errors.body_text && <p className="text-xs text-destructive">{errors.body_text.message}</p>}
           </div>
-          {maxVariableNumber > 0 && (
-            <div className="space-y-3 rounded-md border p-3">
-              <p className="text-xs font-medium text-muted-foreground">
-                Variáveis inseridas - revise o rótulo ou troque a origem se precisar.
-              </p>
-              {Array.from({ length: maxVariableNumber }).map((_, index) => (
-                <div key={index} className="space-y-1.5 border-b pb-3 last:border-b-0 last:pb-0">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="shrink-0 font-mono">
-                      {`{{${index + 1}}}`}
-                    </Badge>
-                    <Input
-                      ref={(el) => {
-                        labelInputRefs.current[index] = el
-                      }}
-                      placeholder="Ex: Nome do Lead"
-                      value={variables[index]?.label ?? ''}
-                      onChange={(e) =>
-                        setVariables((prev) =>
-                          prev.map((v, i) => (i === index ? { ...v, label: e.target.value } : v)),
-                        )
-                      }
-                    />
-                  </div>
-                  <Select
-                    value={variables[index]?.source ?? 'CUSTOM'}
-                    onValueChange={(value) =>
-                      setVariables((prev) =>
-                        prev.map((v, i) =>
-                          i === index ? { ...v, source: value as MessageTemplateVariableSource } : v,
-                        ),
-                      )
-                    }
-                  >
-                    <SelectTrigger className="ml-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(Object.keys(MESSAGE_TEMPLATE_VARIABLE_SOURCE_LABEL) as MessageTemplateVariableSource[]).map(
-                        (value) => (
-                          <SelectItem key={value} value={value}>
-                            {MESSAGE_TEMPLATE_VARIABLE_SOURCE_LABEL[value]}
-                          </SelectItem>
-                        ),
-                      )}
-                    </SelectContent>
-                  </Select>
-                  {variables[index]?.source !== 'CUSTOM' && (
-                    <p className="ml-9 text-xs text-muted-foreground">
-                      Preenche sozinho ao iniciar a conversa - continua editável se precisar ajustar.
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
           <div className="space-y-1.5">
             <Label htmlFor="template_footer">Rodapé (opcional)</Label>
             <Input id="template_footer" maxLength={60} {...register('footer_text')} />

@@ -11,7 +11,6 @@ import type { ConversationRead } from '@/types/conversation'
 
 export interface StartConversationRequest {
   template_id: string
-  variables: string[]
 }
 
 export const leadService = {

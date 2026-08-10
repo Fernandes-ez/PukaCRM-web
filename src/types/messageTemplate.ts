@@ -1,13 +1,8 @@
 export type MessageTemplateCategory = 'MARKETING' | 'UTILITY' | 'AUTHENTICATION'
 export type MessageTemplateStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAUSED' | 'DISABLED'
 
-/** CUSTOM = atendente digita na hora. Os demais são resolvidos sozinhos a partir de dado que o CRM já tem. */
-export type MessageTemplateVariableSource = 'CUSTOM' | 'LEAD_NAME' | 'LEAD_PHONE' | 'EMPLOYEE_NAME' | 'COMPANY_NAME'
-
-export interface MessageTemplateVariable {
-  label: string
-  source: MessageTemplateVariableSource
-}
+/** Toda variável é amarrada a um campo real do CRM - resolvida pelo backend, nunca digitada. */
+export type MessageTemplateVariableSource = 'LEAD_NAME' | 'LEAD_PHONE' | 'EMPLOYEE_NAME' | 'COMPANY_NAME'
 
 export const MESSAGE_TEMPLATE_CATEGORY_LABEL: Record<MessageTemplateCategory, string> = {
   MARKETING: 'Marketing',
@@ -24,11 +19,18 @@ export const MESSAGE_TEMPLATE_STATUS_LABEL: Record<MessageTemplateStatus, string
 }
 
 export const MESSAGE_TEMPLATE_VARIABLE_SOURCE_LABEL: Record<MessageTemplateVariableSource, string> = {
-  CUSTOM: 'Personalizado (digitar na hora)',
   LEAD_NAME: 'Nome do Lead',
   LEAD_PHONE: 'Telefone do Lead',
-  EMPLOYEE_NAME: 'Nome de quem está enviando',
+  EMPLOYEE_NAME: 'Quem está enviando',
   COMPANY_NAME: 'Nome da empresa',
+}
+
+/** Nome do parâmetro nomeado da Meta - espelha VARIABLE_TOKEN do backend (schemas.py). Fixo, nunca muda por template. */
+export const MESSAGE_TEMPLATE_VARIABLE_TOKEN: Record<MessageTemplateVariableSource, string> = {
+  LEAD_NAME: 'nome_lead',
+  LEAD_PHONE: 'telefone_lead',
+  EMPLOYEE_NAME: 'atendente',
+  COMPANY_NAME: 'empresa',
 }
 
 export interface MessageTemplate {
@@ -39,11 +41,10 @@ export interface MessageTemplate {
   category: MessageTemplateCategory
   body_text: string
   footer_text: string | null
-  /** 1 entrada por variável, na ordem ({{1}}, {{2}}...) — nunca vai pra Meta, só uso nosso. */
-  variables: MessageTemplateVariable[] | null
+  /** Quais variáveis o corpo usa, na ordem em que aparecem - sempre derivado do body_text, nunca guardado à parte. */
+  variables_used: MessageTemplateVariableSource[]
   status: MessageTemplateStatus
   rejected_reason: string | null
-  body_variable_count: number
   created_at: string
   updated_at: string
 }
@@ -54,11 +55,4 @@ export interface MessageTemplateCreateRequest {
   category: MessageTemplateCategory
   body_text: string
   footer_text?: string
-  variables?: MessageTemplateVariable[]
-}
-
-/** Rótulo de exibição de uma variável — usa o nome dado na criação, ou cai pro genérico. */
-export function variableLabelOrFallback(variables: MessageTemplateVariable[] | null | undefined, index: number): string {
-  const label = variables?.[index]?.label?.trim()
-  return label ? label : `Variável ${index + 1}`
 }

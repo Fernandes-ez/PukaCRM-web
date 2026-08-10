@@ -9,12 +9,11 @@ import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { Lead } from '@/types/lead'
-import { variableLabelOrFallback, type MessageTemplateVariableSource } from '@/types/messageTemplate'
+import { MESSAGE_TEMPLATE_VARIABLE_TOKEN, type MessageTemplateVariableSource } from '@/types/messageTemplate'
 
 interface StartConversationDialogProps {
   lead: Lead
@@ -31,50 +30,42 @@ export function StartConversationDialog({ lead, open, onOpenChange }: StartConve
   const navigate = useNavigate()
 
   const [templateId, setTemplateId] = useState<string>('')
-  const [variables, setVariables] = useState<string[]>([])
   const [formError, setFormError] = useState<string | null>(null)
 
   const approvedTemplates = useMemo(() => templates?.filter((t) => t.status === 'APPROVED') ?? [], [templates])
   const selectedTemplate = approvedTemplates.find((t) => t.id === templateId)
 
-  // Fontes conhecidas já preenchem sozinhas com dado que o CRM já tem -
-  // continua editável, só poupa digitar de novo o que já existe. CUSTOM
-  // (ou fonte desconhecida, ex: template antigo sem esse metadado) fica vazio.
-  function resolveVariableValue(source: MessageTemplateVariableSource | undefined): string {
+  // Todo valor vem de um campo real do CRM, resolvido pelo próprio
+  // backend no envio - isso aqui é só pra mostrar a pré-visualização,
+  // não é enviado (o backend resolve de novo, com os dados mais atuais).
+  function resolveVariableValue(source: MessageTemplateVariableSource): string {
     switch (source) {
       case 'LEAD_NAME':
-        return lead.full_name ?? ''
+        return lead.full_name || lead.phone
       case 'LEAD_PHONE':
-        return lead.phone ?? ''
+        return lead.phone
       case 'EMPLOYEE_NAME':
         return employee?.full_name ?? ''
       case 'COMPANY_NAME':
         return company?.name ?? ''
-      default:
-        return ''
     }
-  }
-
-  function handleSelectTemplate(id: string) {
-    setTemplateId(id)
-    const template = approvedTemplates.find((t) => t.id === id)
-    const count = template?.body_variable_count ?? 0
-    setVariables(Array.from({ length: count }, (_, index) => resolveVariableValue(template?.variables?.[index]?.source)))
   }
 
   const preview = useMemo(() => {
     if (!selectedTemplate) return ''
-    return variables.reduce<string>(
-      (text, value, index) => text.replaceAll(`{{${index + 1}}}`, value || `{{${index + 1}}}`),
-      selectedTemplate.body_text,
-    )
-  }, [selectedTemplate, variables])
+    let text = selectedTemplate.body_text
+    for (const source of selectedTemplate.variables_used) {
+      text = text.replaceAll(`{{${MESSAGE_TEMPLATE_VARIABLE_TOKEN[source]}}}`, resolveVariableValue(source))
+    }
+    return text
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTemplate, lead, employee, company])
 
   async function handleSend() {
     if (!templateId) return
     setFormError(null)
     try {
-      const conversation = await startConversation.mutateAsync({ id: lead.id, payload: { template_id: templateId, variables } })
+      const conversation = await startConversation.mutateAsync({ id: lead.id, payload: { template_id: templateId } })
       toast({ title: 'Conversa iniciada', variant: 'success' })
       onOpenChange(false)
       navigate(`/conversations/${conversation.id}`)
@@ -90,7 +81,6 @@ export function StartConversationDialog({ lead, open, onOpenChange }: StartConve
         onOpenChange(next)
         if (!next) {
           setTemplateId('')
-          setVariables([])
           setFormError(null)
         }
       }}
@@ -119,7 +109,7 @@ export function StartConversationDialog({ lead, open, onOpenChange }: StartConve
             )}
             <div className="space-y-1.5">
               <Label>Template</Label>
-              <Select value={templateId} onValueChange={handleSelectTemplate}>
+              <Select value={templateId} onValueChange={setTemplateId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Escolha um template aprovado" />
                 </SelectTrigger>
@@ -134,26 +124,10 @@ export function StartConversationDialog({ lead, open, onOpenChange }: StartConve
             </div>
 
             {selectedTemplate && (
-              <>
-                {variables.map((value, index) => (
-                  <div key={index} className="space-y-1.5">
-                    <Label htmlFor={`variable_${index}`}>
-                      {variableLabelOrFallback(selectedTemplate.variables, index)}
-                    </Label>
-                    <Input
-                      id={`variable_${index}`}
-                      value={value}
-                      onChange={(e) =>
-                        setVariables((prev) => prev.map((v, i) => (i === index ? e.target.value : v)))
-                      }
-                    />
-                  </div>
-                ))}
-                <div className="space-y-1.5">
-                  <Label>Pré-visualização</Label>
-                  <p className="whitespace-pre-wrap rounded-md border bg-muted p-3 text-sm">{preview}</p>
-                </div>
-              </>
+              <div className="space-y-1.5">
+                <Label>Pré-visualização</Label>
+                <p className="whitespace-pre-wrap rounded-md border bg-muted p-3 text-sm">{preview}</p>
+              </div>
             )}
 
             <DialogFooter>
