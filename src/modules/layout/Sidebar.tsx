@@ -13,6 +13,7 @@ import {
   CreditCard,
   Kanban,
   FileText,
+  ChevronDown,
   X,
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
@@ -27,8 +28,25 @@ interface NavItem {
   end?: boolean
 }
 
-interface AdminNavItem extends NavItem {
+interface AdminLeafItem {
+  to: string
+  label: string
+  icon: typeof LayoutDashboard
+  end?: boolean
   permission: { module: PermissionModule; resource: string; action: PermissionAction }
+}
+
+/** Grupo expansível — sub-páginas de uma mesma seção administrativa (ex: WhatsApp: Conexão + Templates). */
+interface AdminGroupItem {
+  label: string
+  icon: typeof LayoutDashboard
+  children: AdminLeafItem[]
+}
+
+type AdminNavEntry = AdminLeafItem | AdminGroupItem
+
+function isGroup(entry: AdminNavEntry): entry is AdminGroupItem {
+  return 'children' in entry
 }
 
 const generalItems: NavItem[] = [
@@ -38,20 +56,35 @@ const generalItems: NavItem[] = [
   { to: '/pipeline', label: 'Pipeline', icon: Kanban },
 ]
 
-const allAdminItems: AdminNavItem[] = [
+const allAdminItems: AdminNavEntry[] = [
   { to: '/employees', label: 'Funcionários', icon: Users, permission: { module: 'EMPLOYEES', resource: 'employee', action: 'VIEW' } },
   { to: '/roles', label: 'Cargos', icon: ShieldCheck, permission: { module: 'ROLES', resource: 'role', action: 'VIEW' } },
   { to: '/assistant', label: 'Assistente IA', icon: Bot, permission: { module: 'ASSISTANT', resource: 'assistant', action: 'VIEW' } },
-  { to: '/whatsapp', label: 'WhatsApp', icon: Smartphone, permission: { module: 'WHATSAPP', resource: 'whatsapp_instance', action: 'VIEW' } },
-  { to: '/whatsapp/templates', label: 'Templates', icon: FileText, permission: { module: 'WHATSAPP', resource: 'message_template', action: 'VIEW' } },
+  {
+    label: 'WhatsApp',
+    icon: Smartphone,
+    children: [
+      { to: '/whatsapp', label: 'Conexão', icon: Smartphone, permission: { module: 'WHATSAPP', resource: 'whatsapp_instance', action: 'VIEW' } },
+      { to: '/whatsapp/templates', label: 'Templates', icon: FileText, permission: { module: 'WHATSAPP', resource: 'message_template', action: 'VIEW' } },
+    ],
+  },
   { to: '/empresa', label: 'Minha empresa', icon: Building2, permission: { module: 'COMPANY', resource: 'company', action: 'VIEW' } },
   { to: '/assinatura', label: 'Assinatura', icon: CreditCard, permission: { module: 'SUBSCRIPTION', resource: 'subscription', action: 'VIEW' } },
 ]
 
+/** Achata grupos em sub-itens — usado pra checar permissão/rota atual sem duplicar a lógica de percurso. */
+function flattenAdminItems(items: AdminNavEntry[]): AdminLeafItem[] {
+  return items.flatMap((item) => (isGroup(item) ? item.children : [item]))
+}
+
 type SidebarTab = 'general' | 'admin'
 
+function matchesPath(pathname: string, to: string) {
+  return pathname === to || pathname.startsWith(`${to}/`)
+}
+
 function isAdminPath(pathname: string) {
-  return allAdminItems.some((item) => pathname === item.to || pathname.startsWith(`${item.to}/`))
+  return flattenAdminItems(allAdminItems).some((item) => matchesPath(pathname, item.to))
 }
 
 interface SidebarProps {
@@ -63,8 +96,21 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
   const location = useLocation()
   const { hasPermission } = useAuth()
 
+  function canSee(item: AdminLeafItem) {
+    return hasPermission(item.permission.module, item.permission.resource, item.permission.action)
+  }
+
   const adminItems = useMemo(
-    () => allAdminItems.filter((item) => hasPermission(item.permission.module, item.permission.resource, item.permission.action)),
+    () =>
+      allAdminItems.reduce<AdminNavEntry[]>((acc, item) => {
+        if (isGroup(item)) {
+          const children = item.children.filter(canSee)
+          if (children.length > 0) acc.push({ ...item, children })
+        } else if (canSee(item)) {
+          acc.push(item)
+        }
+        return acc
+      }, []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [hasPermission],
   )
@@ -75,6 +121,28 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
   useEffect(() => {
     setTab(isAdminPath(location.pathname) ? 'admin' : 'general')
   }, [location.pathname])
+
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+    () => new Set(adminItems.filter((item) => isGroup(item) && item.children.some((c) => matchesPath(location.pathname, c.to))).map((item) => item.label)),
+  )
+
+  useEffect(() => {
+    for (const item of adminItems) {
+      if (isGroup(item) && item.children.some((c) => matchesPath(location.pathname, c.to))) {
+        setExpandedGroups((prev) => (prev.has(item.label) ? prev : new Set(prev).add(item.label)))
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname])
+
+  function toggleGroup(label: string) {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(label)) next.delete(label)
+      else next.add(label)
+      return next
+    })
+  }
 
   const items = tab === 'admin' && hasAdminAccess ? adminItems : generalItems
 
@@ -132,35 +200,89 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
         )}
 
         <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
-          {items.map(({ to, label, icon: Icon, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              onClick={onCloseMobile}
-              className={({ isActive }) =>
-                cn(
-                  'group relative flex items-center gap-3 rounded-md py-2 pl-4 pr-3 text-sm font-medium transition-all',
-                  isActive
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_0_0_1px_var(--sidebar-border)]'
-                    : 'text-sidebar-foreground/65 hover:bg-white/5 hover:text-sidebar-foreground',
-                )
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <span
+          {items.map((item) => {
+            if ('children' in item) {
+              const expanded = expandedGroups.has(item.label)
+              const groupActive = item.children.some((c) => matchesPath(location.pathname, c.to))
+              const Icon = item.icon
+              return (
+                <div key={item.label}>
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(item.label)}
+                    aria-expanded={expanded}
                     className={cn(
-                      'absolute left-0 top-1/2 h-4 w-1 -translate-y-1/2 transition-opacity',
-                      isActive ? 'bg-sidebar-primary opacity-100' : 'opacity-0',
+                      'flex w-full items-center gap-3 rounded-md py-2 pl-4 pr-3 text-sm font-medium transition-all',
+                      groupActive
+                        ? 'text-sidebar-accent-foreground'
+                        : 'text-sidebar-foreground/65 hover:bg-white/5 hover:text-sidebar-foreground',
                     )}
-                  />
-                  <Icon className={cn('h-4 w-4 shrink-0', isActive && 'text-sidebar-primary')} />
-                  {label}
-                </>
-              )}
-            </NavLink>
-          ))}
+                  >
+                    <Icon className={cn('h-4 w-4 shrink-0', groupActive && 'text-sidebar-primary')} />
+                    <span className="flex-1 text-left">{item.label}</span>
+                    <ChevronDown className={cn('h-3.5 w-3.5 shrink-0 transition-transform', expanded && 'rotate-180')} />
+                  </button>
+                  {expanded && (
+                    <div className="ml-4 space-y-0.5 border-l border-sidebar-border pl-3 pt-0.5">
+                      {item.children.map(({ to, label, icon: ChildIcon }) => (
+                        <NavLink
+                          key={to}
+                          to={to}
+                          onClick={onCloseMobile}
+                          className={({ isActive }) =>
+                            cn(
+                              'flex items-center gap-2.5 rounded-md py-1.5 pl-3 pr-3 text-sm font-medium transition-all',
+                              isActive
+                                ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_0_0_1px_var(--sidebar-border)]'
+                                : 'text-sidebar-foreground/65 hover:bg-white/5 hover:text-sidebar-foreground',
+                            )
+                          }
+                        >
+                          {({ isActive }) => (
+                            <>
+                              <ChildIcon className={cn('h-3.5 w-3.5 shrink-0', isActive && 'text-sidebar-primary')} />
+                              {label}
+                            </>
+                          )}
+                        </NavLink>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            }
+
+            const { to, label, icon: Icon, end } = item
+            return (
+              <NavLink
+                key={to}
+                to={to}
+                end={end}
+                onClick={onCloseMobile}
+                className={({ isActive }) =>
+                  cn(
+                    'group relative flex items-center gap-3 rounded-md py-2 pl-4 pr-3 text-sm font-medium transition-all',
+                    isActive
+                      ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_0_0_1px_var(--sidebar-border)]'
+                      : 'text-sidebar-foreground/65 hover:bg-white/5 hover:text-sidebar-foreground',
+                  )
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <span
+                      className={cn(
+                        'absolute left-0 top-1/2 h-4 w-1 -translate-y-1/2 transition-opacity',
+                        isActive ? 'bg-sidebar-primary opacity-100' : 'opacity-0',
+                      )}
+                    />
+                    <Icon className={cn('h-4 w-4 shrink-0', isActive && 'text-sidebar-primary')} />
+                    {label}
+                  </>
+                )}
+              </NavLink>
+            )
+          })}
         </nav>
 
         <div className="p-3">

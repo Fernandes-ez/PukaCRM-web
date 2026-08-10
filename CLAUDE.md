@@ -855,6 +855,42 @@ vez (campanha em massa fica pro roadmap).
 - Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
   visualmente num navegador nesta sessão.
 
+## ✅ Novo em 2026-08-10 — grupos expansíveis na Sidebar (WhatsApp: Conexão + Templates)
+
+Usuário achou estranho "WhatsApp" e "Templates" como dois itens soltos
+lado a lado na sidebar - pediu um "alternante" que abre com as
+sub-páginas dentro. Confirmado com o usuário: padrão genérico e
+reutilizável (não só um hack pro WhatsApp), pra qualquer seção
+administrativa futura com múltiplas páginas usar sem duplicar código.
+
+- **`Sidebar.tsx`** — `allAdminItems` (antes `AdminNavItem[]` plano)
+  virou `AdminNavEntry[]`, união de `AdminLeafItem` (item de sempre,
+  com `to`) e `AdminGroupItem` (`label`/`icon`/`children:
+  AdminLeafItem[]`, sem `to` próprio - não é navegável, só expande/
+  colapsa). "WhatsApp" é o primeiro grupo: `children` = "Conexão"
+  (`/whatsapp`) + "Templates" (`/whatsapp/templates`).
+  `flattenAdminItems` achata grupos em sub-itens - reaproveitado por
+  `isAdminPath` (decidir aba Geral/Administrativo) sem duplicar a
+  lógica de percurso.
+  - Filtragem por permissão: `adminItems` (`useMemo`) filtra cada
+    `child` individualmente e só mantém o grupo se sobrar pelo menos 1
+    filho permitido - cargo com permissão só de `message_template` (não
+    `whatsapp_instance`) vê o grupo "WhatsApp" com só "Templates" dentro.
+  - Grupo expandido/colapsado é estado local (`expandedGroups`, um
+    `Set<string>` por `label`) - **auto-expande** quando a rota atual
+    bate com algum filho (efeito reagindo a `location.pathname`, mesmo
+    raciocínio já usado pra trocar a aba Geral/Administrativo
+    sozinha), então navegar direto pra `/whatsapp/templates` (ex: pelo
+    link "Gerenciar" dentro da tela de Conexão) já abre o grupo certo
+    sem precisar clicar de novo.
+  - Visual: grupo é um `<button>` (não `NavLink`, já que não navega
+    sozinho) com `ChevronDown` que gira 180° quando aberto; filhos
+    aparecem indentados com uma borda à esquerda (mesmo idioma visual
+    de "sub-nível" que outras ferramentas usam), ícone/fonte um pouco
+    menores que os itens de primeiro nível.
+- Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
+  visualmente num navegador nesta sessão.
+
 ## Comandos úteis
 
 ```bash
