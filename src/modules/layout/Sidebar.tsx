@@ -64,7 +64,7 @@ const allAdminItems: AdminNavEntry[] = [
     label: 'WhatsApp',
     icon: Smartphone,
     children: [
-      { to: '/whatsapp', label: 'Conexão', icon: Smartphone, permission: { module: 'WHATSAPP', resource: 'whatsapp_instance', action: 'VIEW' } },
+      { to: '/whatsapp', label: 'Conexão', icon: Smartphone, end: true, permission: { module: 'WHATSAPP', resource: 'whatsapp_instance', action: 'VIEW' } },
       { to: '/whatsapp/templates', label: 'Templates', icon: FileText, permission: { module: 'WHATSAPP', resource: 'message_template', action: 'VIEW' } },
     ],
   },
@@ -237,10 +237,11 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                           expanded ? 'opacity-100 delay-75' : 'opacity-0',
                         )}
                       >
-                        {item.children.map(({ to, label, icon: ChildIcon }) => (
+                        {item.children.map(({ to, label, icon: ChildIcon, end }) => (
                           <NavLink
                             key={to}
                             to={to}
+                            end={end}
                             onClick={onCloseMobile}
                             className={({ isActive }) =>
                               cn(
