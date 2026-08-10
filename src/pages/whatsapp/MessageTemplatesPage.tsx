@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -45,6 +45,13 @@ const schema = z.object({
   footer_text: z.string().optional(),
 })
 type FormValues = z.infer<typeof schema>
+
+/** Números detectados em {{1}}, {{2}}... no corpo do template, em ordem. */
+function detectVariables(bodyText: string): number[] {
+  const numbers = new Set<number>()
+  for (const match of bodyText.matchAll(/\{\{(\d+)\}\}/g)) numbers.add(Number(match[1]))
+  return [...numbers].sort((a, b) => a - b)
+}
 
 export function MessageTemplatesPage() {
   const { data: templates, isLoading } = useMessageTemplates()
@@ -177,6 +184,9 @@ function CreateTemplateDialog({
   })
 
   const category = watch('category')
+  const bodyText = watch('body_text') ?? ''
+  const variableNumbers = useMemo(() => detectVariables(bodyText), [bodyText])
+  const isSequential = variableNumbers.every((n, i) => n === i + 1)
 
   async function onSubmit(data: FormValues) {
     setFormError(null)
@@ -244,8 +254,22 @@ function CreateTemplateDialog({
               {...register('body_text')}
             />
             <p className="text-xs text-muted-foreground">
-              Use {'{{1}}'}, {'{{2}}'}... pras partes que variam por Lead.
+              Use {'{{1}}'}, {'{{2}}'}... nos pontos que devem mudar por Lead (nome, produto, data...).
+              Quem for iniciar a conversa com um Lead vai ver 1 campo de texto pra cada variável, na
+              ordem, e preenche na hora.
             </p>
+            {variableNumbers.length > 0 &&
+              (isSequential ? (
+                <p className="text-xs text-emerald-500">
+                  {variableNumbers.length} variável{variableNumbers.length > 1 ? 'eis' : ''} detectada
+                  {variableNumbers.length > 1 ? 's' : ''}: {variableNumbers.map((n) => `{{${n}}}`).join(', ')}
+                </p>
+              ) : (
+                <p className="text-xs text-destructive">
+                  As variáveis precisam ser sequenciais a partir de {'{{1}}'} (achei:{' '}
+                  {variableNumbers.map((n) => `{{${n}}}`).join(', ')} — falta alguma no meio).
+                </p>
+              ))}
             {errors.body_text && <p className="text-xs text-destructive">{errors.body_text.message}</p>}
           </div>
           <div className="space-y-1.5">

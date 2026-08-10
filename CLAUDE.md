@@ -891,6 +891,26 @@ administrativa futura com múltiplas páginas usar sem duplicar código.
 - Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
   visualmente num navegador nesta sessão.
 
+## ✅ Novo em 2026-08-10 — feedback ao vivo de variáveis no dialog de criar Template
+
+Usuário testando o dialog "Novo template" achou pouco claro como
+`{{1}}`/`{{2}}` funciona - só tinha uma legenda estática abaixo do
+campo. `MessageTemplatesPage.tsx` (`CreateTemplateDialog`) ganhou:
+
+- `detectVariables(bodyText)` (novo, local) - extrai os números de
+  `{{N}}` via regex enquanto a pessoa digita (`watch('body_text')`).
+- Legenda reescrita explicando a ponta a ponta (não só "use {{1}}",
+  mas o que acontece depois: "quem for iniciar a conversa vai ver 1
+  campo de texto pra cada variável, na ordem").
+- Feedback ao vivo abaixo do textarea: lista as variáveis detectadas
+  (`{{1}}, {{2}}`) em verde se estiverem sequenciais a partir de 1, ou
+  avisa em vermelho se faltar algum número no meio (ex: `{{1}}` e
+  `{{3}}` sem `{{3}}` - a Meta espera sequência contínua, e
+  `StartConversationDialog` já assume isso pra gerar 1 campo por
+  variável). Só aviso visual, não bloqueia o envio - a Meta valida o
+  resto do lado dela mesmo.
+- Testado com `tsc -b`, `oxlint` e `npm run build` limpos.
+
 ## Comandos úteis
 
 ```bash
