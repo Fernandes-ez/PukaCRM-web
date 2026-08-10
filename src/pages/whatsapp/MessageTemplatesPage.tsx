@@ -50,6 +50,19 @@ const schema = z.object({
 })
 type FormValues = z.infer<typeof schema>
 
+/**
+ * Botões prontos pra inserir variável - clicar já define rótulo e fonte
+ * juntos, sem precisar configurar separado depois (só "Personalizado"
+ * ainda pede pra descrever o que é, já que não tem um nome natural).
+ */
+const VARIABLE_PRESETS: { label: string; source: MessageTemplateVariableSource }[] = [
+  { label: 'Nome do Lead', source: 'LEAD_NAME' },
+  { label: 'Telefone do Lead', source: 'LEAD_PHONE' },
+  { label: 'Quem está enviando', source: 'EMPLOYEE_NAME' },
+  { label: 'Nome da empresa', source: 'COMPANY_NAME' },
+  { label: 'Personalizado', source: 'CUSTOM' },
+]
+
 /** Números detectados em {{1}}, {{2}}... no corpo do template, em ordem. */
 function detectVariables(bodyText: string): number[] {
   const numbers = new Set<number>()
@@ -216,7 +229,7 @@ function CreateTemplateDialog({
     })
   }, [maxVariableNumber])
 
-  function insertVariable() {
+  function insertVariable(preset: (typeof VARIABLE_PRESETS)[number]) {
     const nextNumber = maxVariableNumber + 1
     const token = `{{${nextNumber}}}`
     const el = bodyRef.current
@@ -224,6 +237,14 @@ function CreateTemplateDialog({
     const end = el?.selectionEnd ?? bodyText.length
     const newText = bodyText.slice(0, start) + token + bodyText.slice(end)
     setValue('body_text', newText, { shouldValidate: true, shouldDirty: true })
+    // Já nasce com o rótulo/fonte do botão clicado - o useEffect que
+    // sincroniza `variables` com maxVariableNumber só completa o que
+    // ainda não existir, então isso não é sobrescrito depois.
+    setVariables((prev) => {
+      const next = [...prev]
+      next[nextNumber - 1] = { label: preset.label, source: preset.source }
+      return next
+    })
     if (el) {
       requestAnimationFrame(() => {
         el.focus()
@@ -231,7 +252,11 @@ function CreateTemplateDialog({
         el.setSelectionRange(cursor, cursor)
       })
     }
-    setTimeout(() => labelInputRefs.current[nextNumber - 1]?.focus(), 0)
+    // "Personalizado" não tem um rótulo natural - foca o campo pra pessoa
+    // descrever o que é. Fontes conhecidas já têm rótulo pronto, não precisa.
+    if (preset.source === 'CUSTOM') {
+      setTimeout(() => labelInputRefs.current[nextNumber - 1]?.focus(), 0)
+    }
   }
 
   async function onSubmit(data: FormValues) {
@@ -299,6 +324,24 @@ function CreateTemplateDialog({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="template_body">Corpo da mensagem</Label>
+            <p className="text-xs text-muted-foreground">
+              Uma parte da mensagem muda pra cada Lead? Clique pra inserir - o valor já vem pronto na
+              hora de iniciar a conversa (menos "Personalizado", que você digita na hora).
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {VARIABLE_PRESETS.map((preset) => (
+                <Button
+                  key={preset.label}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertVariable(preset)}
+                >
+                  <Tag className="h-3.5 w-3.5" />
+                  {preset.label}
+                </Button>
+              ))}
+            </div>
             <Textarea
               id="template_body"
               rows={4}
@@ -309,16 +352,6 @@ function CreateTemplateDialog({
                 bodyRef.current = el
               }}
             />
-            <div className="flex items-start justify-between gap-2">
-              <p className="text-xs text-muted-foreground">
-                Uma parte da mensagem muda pra cada Lead? (nome, produto, data...) Clique em "Adicionar
-                variável" e dê um nome pra ela.
-              </p>
-              <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={insertVariable}>
-                <Tag className="h-3.5 w-3.5" />
-                Adicionar variável
-              </Button>
-            </div>
             {!isSequential && (
               <p className="text-xs text-destructive">
                 As variáveis do texto pularam um número (achei {variableNumbers.map((n) => `{{${n}}}`).join(', ')}
@@ -330,7 +363,7 @@ function CreateTemplateDialog({
           {maxVariableNumber > 0 && (
             <div className="space-y-3 rounded-md border p-3">
               <p className="text-xs font-medium text-muted-foreground">
-                O que cada variável representa, e de onde vem o valor?
+                Variáveis inseridas - revise o rótulo ou troque a origem se precisar.
               </p>
               {Array.from({ length: maxVariableNumber }).map((_, index) => (
                 <div key={index} className="space-y-1.5 border-b pb-3 last:border-b-0 last:pb-0">

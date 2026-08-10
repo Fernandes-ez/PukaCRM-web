@@ -905,21 +905,25 @@ Consome `variables` (substituiu `variable_labels` no mesmo dia, antes
 de deploy - ver `CLAUDE.MD` do backend, decisão #27).
 
 - **`MessageTemplatesPage.tsx` (`CreateTemplateDialog`)**:
-  - Botão **"Adicionar variável"** ao lado do corpo da mensagem - insere
-    `{{N}}` na posição do cursor do textarea (`ref` combinado com o
-    `ref` do `register('body_text')` do react-hook-form pra ler/setar
-    `selectionStart`/`selectionEnd`) e foca o campo de rótulo
-    correspondente, recém-criado. Ainda dá pra digitar `{{1}}` manual
-    no texto - os dois jeitos convivem, sincronizados por
-    `detectVariables` (regex).
-  - Cada variável detectada ganha **2 campos**: o rótulo (texto livre,
-    como antes) + um `Select` **"De onde vem o valor?"** com 5 opções -
-    `Personalizado (digitar na hora)` (default, comportamento de
-    sempre) ou um campo do CRM: `Nome do Lead`, `Telefone do Lead`,
-    `Nome de quem está enviando`, `Nome da empresa`
-    (`MESSAGE_TEMPLATE_VARIABLE_SOURCE_LABEL`, `types/
-messageTemplate.ts`). Quando não é `CUSTOM`, mostra uma nota
-    "Preenche sozinho ao iniciar a conversa - continua editável".
+  - **Atualizado ainda no mesmo dia**: a primeira versão tinha 1 botão
+    genérico "Adicionar variável" + configurar rótulo/fonte à parte
+    numa lista abaixo - usuário sugeriu direto: por que não já ter
+    **botões prontos** pra cada tipo de variável, acima do texto?
+    `VARIABLE_PRESETS` (novo, `{label, source}[]` fixo) vira uma
+    fileira de botões - "Nome do Lead", "Telefone do Lead", "Quem está
+    enviando", "Nome da empresa", "Personalizado" - **acima do
+    textarea**. Clicar em um já insere `{{N}}` na posição do cursor
+    (`ref` combinado com o `ref` do `register('body_text')` do
+    react-hook-form pra ler/setar `selectionStart`/`selectionEnd`) **e**
+    preenche rótulo + fonte de uma vez só - só "Personalizado" ainda
+    foca o campo de rótulo pra pessoa descrever (não tem nome natural).
+    Ainda dá pra digitar `{{1}}` manual no texto - os dois jeitos
+    convivem, sincronizados por `detectVariables` (regex).
+  - A lista **"Variáveis inseridas"** abaixo do texto continua existindo,
+    agora como revisão/ajuste (rótulo + `Select` de origem por variável,
+    `MESSAGE_TEMPLATE_VARIABLE_SOURCE_LABEL`) - útil se a pessoa clicou
+    no botão errado ou quer refinar o rótulo, mas o caminho comum
+    (clicar no botão certo) já não precisa tocar nela.
   - `variables: {label, source}[]` só é mandado no payload se existir
     pelo menos 1 variável no corpo; `label` vazio cai pro fallback
     `"Variável N"` só no envio (nunca bloqueia o submit).
