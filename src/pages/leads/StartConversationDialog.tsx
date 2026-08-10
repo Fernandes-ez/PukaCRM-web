@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { useCompany } from '@/hooks/useCompany'
 import { useMessageTemplates } from '@/hooks/useMessageTemplates'
 import { useStartConversation } from '@/hooks/useLeads'
 import { ApiError } from '@/services/apiClient'
@@ -12,7 +14,7 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { Lead } from '@/types/lead'
-import { variableLabelOrFallback } from '@/types/messageTemplate'
+import { variableLabelOrFallback, type MessageTemplateVariableSource } from '@/types/messageTemplate'
 
 interface StartConversationDialogProps {
   lead: Lead
@@ -22,6 +24,8 @@ interface StartConversationDialogProps {
 
 export function StartConversationDialog({ lead, open, onOpenChange }: StartConversationDialogProps) {
   const { data: templates } = useMessageTemplates()
+  const { employee } = useAuth()
+  const { data: company } = useCompany()
   const startConversation = useStartConversation()
   const { toast } = useToast()
   const navigate = useNavigate()
@@ -33,10 +37,29 @@ export function StartConversationDialog({ lead, open, onOpenChange }: StartConve
   const approvedTemplates = useMemo(() => templates?.filter((t) => t.status === 'APPROVED') ?? [], [templates])
   const selectedTemplate = approvedTemplates.find((t) => t.id === templateId)
 
+  // Fontes conhecidas já preenchem sozinhas com dado que o CRM já tem -
+  // continua editável, só poupa digitar de novo o que já existe. CUSTOM
+  // (ou fonte desconhecida, ex: template antigo sem esse metadado) fica vazio.
+  function resolveVariableValue(source: MessageTemplateVariableSource | undefined): string {
+    switch (source) {
+      case 'LEAD_NAME':
+        return lead.full_name ?? ''
+      case 'LEAD_PHONE':
+        return lead.phone ?? ''
+      case 'EMPLOYEE_NAME':
+        return employee?.full_name ?? ''
+      case 'COMPANY_NAME':
+        return company?.name ?? ''
+      default:
+        return ''
+    }
+  }
+
   function handleSelectTemplate(id: string) {
     setTemplateId(id)
     const template = approvedTemplates.find((t) => t.id === id)
-    setVariables(new Array(template?.body_variable_count ?? 0).fill(''))
+    const count = template?.body_variable_count ?? 0
+    setVariables(Array.from({ length: count }, (_, index) => resolveVariableValue(template?.variables?.[index]?.source)))
   }
 
   const preview = useMemo(() => {
@@ -115,7 +138,7 @@ export function StartConversationDialog({ lead, open, onOpenChange }: StartConve
                 {variables.map((value, index) => (
                   <div key={index} className="space-y-1.5">
                     <Label htmlFor={`variable_${index}`}>
-                      {variableLabelOrFallback(selectedTemplate.variable_labels, index)}
+                      {variableLabelOrFallback(selectedTemplate.variables, index)}
                     </Label>
                     <Input
                       id={`variable_${index}`}

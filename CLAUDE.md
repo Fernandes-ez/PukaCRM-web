@@ -891,43 +891,54 @@ administrativa futura com múltiplas páginas usar sem duplicar código.
 - Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
   visualmente num navegador nesta sessão.
 
-## ✅ Novo em 2026-08-10 — variáveis nomeadas no template (não só {{1}}/{{2}})
+## ✅ Novo em 2026-08-10 — variáveis nomeadas E vinculadas a dado do CRM (não só {{1}}/{{2}})
 
 Primeira versão só tinha uma legenda estática explicando `{{1}}`/
-`{{2}}`. Usuário testou e continuou achando confuso ("como funcionaria
-a parte de mencionar variáveis... isso não fica claro, oq significa 1
-ou 2") - pediu pra pensar em UX de verdade: digitar sintaxe de API
-(`{{1}}`) é abstração vazando pra tela, ninguém de fora sabe o que
-"variável 1" quer dizer. Resolvido consumindo `variable_labels` novo do
-backend (ver `CLAUDE.MD` do backend, decisão #27) - cada variável ganha
-um **nome** dado pelo usuário (ex: "Nome do Lead"), não só um número.
+`{{2}}`. Usuário testou e continuou achando confuso - pediu pra pensar
+em UX de verdade: digitar sintaxe de API (`{{1}}`) é abstração vazando
+pra tela. Primeira correção deu só um **nome** livre pra cada variável
+(`variable_labels`); usuário perguntou então "como o sistema vai ler
+essa variável" e "como mandamos pra Meta o que o usuário quer" - viu
+que digitar de novo um dado que o CRM já tem (nome do Lead) não fazia
+sentido, e pediu a versão final: variável **vinculada a um campo real**.
+Consome `variables` (substituiu `variable_labels` no mesmo dia, antes
+de deploy - ver `CLAUDE.MD` do backend, decisão #27).
 
-- **`MessageTemplatesPage.tsx` (`CreateTemplateDialog`)** reformulado:
+- **`MessageTemplatesPage.tsx` (`CreateTemplateDialog`)**:
   - Botão **"Adicionar variável"** ao lado do corpo da mensagem - insere
-    `{{N}}` na posição do cursor do textarea (usa um `ref` combinado com
-    o `ref` do `register('body_text')` do react-hook-form pra ler/setar
-    `selectionStart`/`selectionEnd`) e foca automaticamente o campo de
-    rótulo correspondente, recém-criado. Ainda dá pra digitar `{{1}}`
-    manualmente no texto também - os dois jeitos convivem, o app só
-    sincroniza a lista de rótulos com o que detectar no texto
-    (`detectVariables`, regex).
-  - Logo abaixo, uma seção **"O que cada variável representa?"** - 1
-    campo de texto por `{{N}}` detectado, com o próprio `{{N}}` como
-    badge do lado (`{{1}} [Nome do Lead____]`) - responde a pergunta
-    "o que significa 1" diretamente na tela, no momento em que faz
-    sentido, em vez de só numa legenda separada.
-  - Aviso continua existindo se a numeração pular (`{{1}}` e `{{3}}`
-    sem `{{2}}`), mas não bloqueia o envio.
-  - `variable_labels` (`string[]`, na ordem) só é mandado no payload se
-    existir pelo menos 1 variável no corpo.
-- **`StartConversationDialog.tsx`** e a lista de `MessageTemplatesPage.tsx`
-  usam `variableLabelOrFallback(labels, index)` (novo, `types/
-messageTemplate.ts`) - mostra o rótulo dado na criação (ex: "Nome do
-  Lead" como `Label` do campo, em vez de "Variável 1"); cai pro genérico
-  `"Variável N"` só se o template não tiver rótulo (criado antes desse
-  campo existir, ou deixado em branco). A lista de templates também
-  ganhou badges pequenos mostrando `{{1}} Nome do Lead` embaixo do corpo
-  de cada template, pra bater o olho sem precisar abrir nada.
+    `{{N}}` na posição do cursor do textarea (`ref` combinado com o
+    `ref` do `register('body_text')` do react-hook-form pra ler/setar
+    `selectionStart`/`selectionEnd`) e foca o campo de rótulo
+    correspondente, recém-criado. Ainda dá pra digitar `{{1}}` manual
+    no texto - os dois jeitos convivem, sincronizados por
+    `detectVariables` (regex).
+  - Cada variável detectada ganha **2 campos**: o rótulo (texto livre,
+    como antes) + um `Select` **"De onde vem o valor?"** com 5 opções -
+    `Personalizado (digitar na hora)` (default, comportamento de
+    sempre) ou um campo do CRM: `Nome do Lead`, `Telefone do Lead`,
+    `Nome de quem está enviando`, `Nome da empresa`
+    (`MESSAGE_TEMPLATE_VARIABLE_SOURCE_LABEL`, `types/
+messageTemplate.ts`). Quando não é `CUSTOM`, mostra uma nota
+    "Preenche sozinho ao iniciar a conversa - continua editável".
+  - `variables: {label, source}[]` só é mandado no payload se existir
+    pelo menos 1 variável no corpo; `label` vazio cai pro fallback
+    `"Variável N"` só no envio (nunca bloqueia o submit).
+- **`StartConversationDialog.tsx`** - `resolveVariableValue(source)`
+  (novo, local) resolve o valor inicial de cada campo a partir de dado
+  que **já está disponível no componente** - `lead.full_name`/
+  `lead.phone` (prop já recebida), `useAuth().employee.full_name`
+  (quem está logado, é quem vai "enviar"), `useCompany().data.name`
+  (hook novo importado aqui). **Resolução 100% no frontend** - o
+  backend só recebe a lista final de valores (`variables: string[]`),
+  igual sempre recebeu; não muda nada no contrato do `POST /leads/{id}/
+  start-conversation`. O campo nasce preenchido mas continua editável -
+  não é travado, é só um ponto de partida.
+  - `variableLabelOrFallback(variables, index)` (`types/
+messageTemplate.ts`) continua resolvendo o rótulo exibido, agora a
+    partir de `MessageTemplateVariable.label` em vez de string solta.
+  - A lista de templates (`MessageTemplatesPage.tsx`) também ganhou
+    badges pequenos mostrando `{{1}} Nome do Lead` embaixo do corpo de
+    cada template.
 - Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
   visualmente num navegador nesta sessão.
 

@@ -21,10 +21,13 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import {
   MESSAGE_TEMPLATE_CATEGORY_LABEL,
   MESSAGE_TEMPLATE_STATUS_LABEL,
+  MESSAGE_TEMPLATE_VARIABLE_SOURCE_LABEL,
   variableLabelOrFallback,
   type MessageTemplate,
   type MessageTemplateCategory,
   type MessageTemplateStatus,
+  type MessageTemplateVariable,
+  type MessageTemplateVariableSource,
 } from '@/types/messageTemplate'
 
 const statusVariant: Record<MessageTemplateStatus, 'success' | 'warning' | 'destructive' | 'secondary'> = {
@@ -128,7 +131,7 @@ export function MessageTemplatesPage() {
                     <div className="flex flex-wrap items-center gap-1.5">
                       {Array.from({ length: template.body_variable_count }).map((_, index) => (
                         <Badge key={index} variant="outline" className="text-[10px] font-normal">
-                          {`{{${index + 1}}}`} {variableLabelOrFallback(template.variable_labels, index)}
+                          {`{{${index + 1}}}`} {variableLabelOrFallback(template.variables, index)}
                         </Badge>
                       ))}
                     </div>
@@ -181,7 +184,7 @@ function CreateTemplateDialog({
 }) {
   const { toast } = useToast()
   const [formError, setFormError] = useState<string | null>(null)
-  const [variableLabels, setVariableLabels] = useState<string[]>([])
+  const [variables, setVariables] = useState<MessageTemplateVariable[]>([])
   const bodyRef = useRef<HTMLTextAreaElement | null>(null)
   const labelInputRefs = useRef<(HTMLInputElement | null)[]>([])
   const {
@@ -203,12 +206,12 @@ function CreateTemplateDialog({
   const isSequential = variableNumbers.every((n, i) => n === i + 1)
   const maxVariableNumber = variableNumbers.length > 0 ? Math.max(...variableNumbers) : 0
 
-  // Mantém 1 rótulo por variável detectada no texto, preservando o que já
-  // foi digitado quando o número de variáveis muda.
+  // Mantém 1 entrada (rótulo + fonte) por variável detectada no texto,
+  // preservando o que já foi preenchido quando o número de variáveis muda.
   useEffect(() => {
-    setVariableLabels((prev) => {
+    setVariables((prev) => {
       const next = prev.slice(0, maxVariableNumber)
-      while (next.length < maxVariableNumber) next.push('')
+      while (next.length < maxVariableNumber) next.push({ label: '', source: 'CUSTOM' })
       return next
     })
   }, [maxVariableNumber])
@@ -237,11 +240,12 @@ function CreateTemplateDialog({
       await createTemplate.mutateAsync({
         ...data,
         footer_text: data.footer_text || undefined,
-        variable_labels: maxVariableNumber > 0 ? variableLabels.map((label) => label.trim()) : undefined,
+        variables:
+          maxVariableNumber > 0 ? variables.map((v) => ({ ...v, label: v.label.trim() || 'Variável' })) : undefined,
       })
       toast({ title: 'Template enviado pra aprovação da Meta', variant: 'success' })
       reset({ language: 'pt_BR', category: 'UTILITY', name: '', body_text: '', footer_text: '' })
-      setVariableLabels([])
+      setVariables([])
       onOpenChange(false)
     } catch (error) {
       setFormError(error instanceof ApiError ? error.message : 'Ocorreu um erro inesperado. Tente novamente.')
@@ -324,29 +328,57 @@ function CreateTemplateDialog({
             {errors.body_text && <p className="text-xs text-destructive">{errors.body_text.message}</p>}
           </div>
           {maxVariableNumber > 0 && (
-            <div className="space-y-2 rounded-md border p-3">
+            <div className="space-y-3 rounded-md border p-3">
               <p className="text-xs font-medium text-muted-foreground">
-                O que cada variável representa? (aparece assim pra quem for iniciar uma conversa)
+                O que cada variável representa, e de onde vem o valor?
               </p>
               {Array.from({ length: maxVariableNumber }).map((_, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <Badge variant="secondary" className="shrink-0 font-mono">
-                    {`{{${index + 1}}}`}
-                  </Badge>
-                  <Input
-                    ref={(el) => {
-                      labelInputRefs.current[index] = el
-                    }}
-                    placeholder="Ex: Nome do Lead"
-                    value={variableLabels[index] ?? ''}
-                    onChange={(e) =>
-                      setVariableLabels((prev) => {
-                        const next = [...prev]
-                        next[index] = e.target.value
-                        return next
-                      })
+                <div key={index} className="space-y-1.5 border-b pb-3 last:border-b-0 last:pb-0">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="shrink-0 font-mono">
+                      {`{{${index + 1}}}`}
+                    </Badge>
+                    <Input
+                      ref={(el) => {
+                        labelInputRefs.current[index] = el
+                      }}
+                      placeholder="Ex: Nome do Lead"
+                      value={variables[index]?.label ?? ''}
+                      onChange={(e) =>
+                        setVariables((prev) =>
+                          prev.map((v, i) => (i === index ? { ...v, label: e.target.value } : v)),
+                        )
+                      }
+                    />
+                  </div>
+                  <Select
+                    value={variables[index]?.source ?? 'CUSTOM'}
+                    onValueChange={(value) =>
+                      setVariables((prev) =>
+                        prev.map((v, i) =>
+                          i === index ? { ...v, source: value as MessageTemplateVariableSource } : v,
+                        ),
+                      )
                     }
-                  />
+                  >
+                    <SelectTrigger className="ml-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(MESSAGE_TEMPLATE_VARIABLE_SOURCE_LABEL) as MessageTemplateVariableSource[]).map(
+                        (value) => (
+                          <SelectItem key={value} value={value}>
+                            {MESSAGE_TEMPLATE_VARIABLE_SOURCE_LABEL[value]}
+                          </SelectItem>
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {variables[index]?.source !== 'CUSTOM' && (
+                    <p className="ml-9 text-xs text-muted-foreground">
+                      Preenche sozinho ao iniciar a conversa - continua editável se precisar ajustar.
+                    </p>
+                  )}
                 </div>
               ))}
             </div>

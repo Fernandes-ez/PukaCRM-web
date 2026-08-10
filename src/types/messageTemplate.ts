@@ -1,6 +1,14 @@
 export type MessageTemplateCategory = 'MARKETING' | 'UTILITY' | 'AUTHENTICATION'
 export type MessageTemplateStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAUSED' | 'DISABLED'
 
+/** CUSTOM = atendente digita na hora. Os demais são resolvidos sozinhos a partir de dado que o CRM já tem. */
+export type MessageTemplateVariableSource = 'CUSTOM' | 'LEAD_NAME' | 'LEAD_PHONE' | 'EMPLOYEE_NAME' | 'COMPANY_NAME'
+
+export interface MessageTemplateVariable {
+  label: string
+  source: MessageTemplateVariableSource
+}
+
 export const MESSAGE_TEMPLATE_CATEGORY_LABEL: Record<MessageTemplateCategory, string> = {
   MARKETING: 'Marketing',
   UTILITY: 'Utilidade',
@@ -15,6 +23,14 @@ export const MESSAGE_TEMPLATE_STATUS_LABEL: Record<MessageTemplateStatus, string
   DISABLED: 'Desativado',
 }
 
+export const MESSAGE_TEMPLATE_VARIABLE_SOURCE_LABEL: Record<MessageTemplateVariableSource, string> = {
+  CUSTOM: 'Personalizado (digitar na hora)',
+  LEAD_NAME: 'Nome do Lead',
+  LEAD_PHONE: 'Telefone do Lead',
+  EMPLOYEE_NAME: 'Nome de quem está enviando',
+  COMPANY_NAME: 'Nome da empresa',
+}
+
 export interface MessageTemplate {
   id: string
   company_id: string
@@ -23,8 +39,8 @@ export interface MessageTemplate {
   category: MessageTemplateCategory
   body_text: string
   footer_text: string | null
-  /** Rótulo amigável de cada variável, na ordem ({{1}}, {{2}}...) — cosmético, nunca vai pra Meta. */
-  variable_labels: string[] | null
+  /** 1 entrada por variável, na ordem ({{1}}, {{2}}...) — nunca vai pra Meta, só uso nosso. */
+  variables: MessageTemplateVariable[] | null
   status: MessageTemplateStatus
   rejected_reason: string | null
   body_variable_count: number
@@ -38,11 +54,11 @@ export interface MessageTemplateCreateRequest {
   category: MessageTemplateCategory
   body_text: string
   footer_text?: string
-  variable_labels?: string[]
+  variables?: MessageTemplateVariable[]
 }
 
 /** Rótulo de exibição de uma variável — usa o nome dado na criação, ou cai pro genérico. */
-export function variableLabelOrFallback(labels: string[] | null | undefined, index: number): string {
-  const label = labels?.[index]?.trim()
+export function variableLabelOrFallback(variables: MessageTemplateVariable[] | null | undefined, index: number): string {
+  const label = variables?.[index]?.label?.trim()
   return label ? label : `Variável ${index + 1}`
 }
