@@ -1051,6 +1051,30 @@ rodízio sem querer, ver `CLAUDE.MD` do backend, decisão #30).
 - Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
   visualmente num navegador nesta sessão.
 
+## ✅ Corrigido em 2026-08-11 — separação de carteira entre consultores
+
+Achado testando com uma conta "Consultora": ela via a lista inteira de
+Leads/Conversas da empresa, e o painel do Puka Copilot aparecia mesmo
+em conversa atribuída a outro colega. Ver `CLAUDE.MD` do backend,
+decisão #31, pro desenho completo (`GET /leads`/`GET /conversations`
+agora escopados por `Role.hierarchy_level` - Supervisor+ continua
+vendo tudo, abaixo disso só a própria carteira).
+
+- **Nenhuma mudança de código exigida pra listagem** - o frontend já
+  só renderiza o que a API devolve, então `LeadsPage.tsx`/
+  `ConversationsPage.tsx` passaram a mostrar menos automaticamente pra
+  quem tem cargo abaixo de Supervisor, sem precisar de filtro novo no
+  cliente.
+- **`ConversationsPage.tsx`** - `CopilotPanel` tinha um bug real,
+  achado no mesmo teste: só checava se a conversa **tinha** alguém
+  atribuído, não se era **o funcionário logado**. Corrigido pra
+  comparar `activeConversation.assigned_employee_id === employee?.id`
+  (`useAuth()`) - o copiloto é pessoal e intransferível, não deveria
+  aparecer pra quem só tem permissão de ver a conversa (ex: Owner
+  olhando o trabalho de um consultor).
+- Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
+  visualmente num navegador nesta sessão.
+
 ## Comandos úteis
 
 ```bash
