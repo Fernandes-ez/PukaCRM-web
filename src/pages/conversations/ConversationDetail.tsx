@@ -76,10 +76,6 @@ export function ConversationDetail({ conversationId, draftMessage, onDraftMessag
     try {
       await sendMessage.mutateAsync(data)
       reset()
-      toast({
-        title: 'Mensagem registrada',
-        description: 'O envio real pro WhatsApp ainda não está ativo — a mensagem fica pendente.',
-      })
     } catch (error) {
       toast({
         title: 'Não foi possível enviar',

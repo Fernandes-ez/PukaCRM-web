@@ -34,7 +34,7 @@ export const conversationService = {
     }
   },
 
-  /** A mensagem é criada mas o envio real pro WhatsApp ainda não existe — fica status PENDING. */
+  /** Envia de verdade pro WhatsApp - fica status PENDING até o backend confirmar o envio. */
   async sendMessage(id: string, payload: SendMessageRequest): Promise<Message> {
     try {
       const { data } = await api.post<Message>(`/conversations/${id}/messages`, payload)
