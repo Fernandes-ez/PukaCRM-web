@@ -16,6 +16,7 @@ import { PipelinePage } from '@/pages/pipeline/PipelinePage'
 import { ConversationsPage } from '@/pages/conversations/ConversationsPage'
 import { CompanyPage } from '@/pages/company/CompanyPage'
 import { SubscriptionPage } from '@/pages/subscription/SubscriptionPage'
+import { DistributionPage } from '@/pages/distribution/DistributionPage'
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
 
             <Route element={<RequirePermission module="EMPLOYEES" resource="employee" action="VIEW" />}>
               <Route path="/employees" element={<EmployeesPage />} />
+              <Route path="/distribuicao" element={<DistributionPage />} />
             </Route>
             <Route element={<RequirePermission module="ROLES" resource="role" action="VIEW" />}>
               <Route path="/roles" element={<RolesPage />} />

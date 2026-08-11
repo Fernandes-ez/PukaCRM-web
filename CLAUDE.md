@@ -1019,6 +1019,38 @@ depois do usuário apontar que a decisão fechada era só automático
   sozinha quando o backend/n8n empurram) antes de considerar essa tela
   pronta pra uso real.
 
+## ✅ Novo em 2026-08-11 — Tela de Distribuição
+
+Pedido do usuário: os campos de rodízio por funcionário
+(`receive_leads`/`distribution_enabled`/`distribution_priority`/
+`max_active_leads`) existem no backend desde a Fase 1, mas **nunca
+tiveram UI nenhuma** - não dava pra configurar isso sem mexer direto no
+banco (foi assim que o Owner de uma empresa piloto acabou entrando no
+rodízio sem querer, ver `CLAUDE.MD` do backend, decisão #30).
+
+- **`src/pages/distribution/DistributionPage.tsx`** (novo, rota
+  `/distribuicao`, item próprio na sidebar entre Funcionários e Cargos)
+  - mesma permissão de Funcionários (`EMPLOYEES/employee/VIEW`), sem
+    permissão nova no backend.
+- **Tabela por funcionário** (`GET /employees` + `PATCH /employees/
+{id}`, já existiam) - uma linha por funcionário com: Switch "Participa
+  do rodízio" (liga/desliga `receive_leads` **e** `distribution_enabled`
+  juntos - o backend só considera os dois `True` ao mesmo tempo, então
+  virou um interruptor só em vez de dois campos confusos), campo de
+  Prioridade e campo de Limite de leads ativos (os dois com auto-save
+  ao perder o foco - `onBlur`, não precisa de botão "Salvar" por
+  célula, mais limpo numa tabela com várias linhas editáveis).
+- **Card "Redistribuição por inatividade"** **migrado** de dentro de
+  Minha Empresa (`CompanyPage.tsx`) pra cá - decisão do usuário de
+  consolidar tudo que é "distribuição" (por funcionário + da empresa)
+  num lugar só, em vez de espalhar em duas telas. Mesmo componente/
+  lógica de antes (`PATCH /companies/me`), só mudou de tela.
+- `src/types/employee.ts` ganhou os 4 campos em `Employee`/
+  `EmployeeUpdateRequest` (não existiam no tipo do frontend antes,
+  mesmo já existindo no backend).
+- Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
+  visualmente num navegador nesta sessão.
+
 ## Comandos úteis
 
 ```bash
