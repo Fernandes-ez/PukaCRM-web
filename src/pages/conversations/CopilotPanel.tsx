@@ -32,7 +32,7 @@ export function CopilotPanel({ conversationId, onUseSuggestion }: CopilotPanelPr
       <div className="border-b p-4">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-brand-600 dark:text-brand-400" />
-          <h2 className="font-semibold">Copiloto de negociação</h2>
+          <h2 className="font-semibold">Puka Copilot</h2>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
           Só você vê isso - o Lead nunca recebe nada daqui automaticamente.

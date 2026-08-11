@@ -965,7 +965,7 @@ referência extra.
 - Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
   visualmente num navegador nesta sessão.
 
-## ✅ Novo em 2026-08-11 — Copiloto de negociação (assistente do consultor)
+## ✅ Novo em 2026-08-11 — Puka Copilot (assistente do consultor)
 
 Pedido do usuário: IA que lê a conversa Lead↔consultor e ajuda a
 contornar objeção/fechar, **sem nunca falar com o Lead** - ver
