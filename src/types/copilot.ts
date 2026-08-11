@@ -1,9 +1,6 @@
-export type ConversationSuggestionSource = 'ON_DEMAND' | 'AUTOMATIC'
-
 export interface ConversationSuggestion {
   id: string
   conversation_id: string
-  source: ConversationSuggestionSource
   objection_summary: string | null
   suggestion_text: string
   used: boolean
@@ -11,9 +8,10 @@ export interface ConversationSuggestion {
 }
 
 /**
- * Sugestão é 100% "push-driven" (resposta do POST sob demanda, ou evento de
- * WebSocket do disparo automático) — não existe GET de listagem, então essa
- * chave é só um slot de cache que os dois lados escrevem.
+ * Sugestão é 100% automática - só chega por push do WebSocket quando o
+ * pré-filtro do backend detecta objeção (sem botão/gatilho manual, ver
+ * CLAUDE.MD). Não existe GET de listagem, então essa chave é só o slot de
+ * cache que useNotificationSocket escreve.
  */
 export function copilotSuggestionKey(conversationId: string) {
   return ['conversations', conversationId, 'copilot-suggestion'] as const

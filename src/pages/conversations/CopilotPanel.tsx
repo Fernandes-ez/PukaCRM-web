@@ -1,13 +1,6 @@
-import { Loader2, Sparkles, Wand2 } from 'lucide-react'
-import {
-  useCopilotSuggestion,
-  useMarkCopilotSuggestionUsed,
-  useRequestCopilotSuggestion,
-} from '@/hooks/useCopilotSuggestion'
-import { ApiError } from '@/services/apiClient'
-import { useToast } from '@/components/ui/toast'
+import { Sparkles, Wand2 } from 'lucide-react'
+import { useCopilotSuggestion, useMarkCopilotSuggestionUsed } from '@/hooks/useCopilotSuggestion'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 
 interface CopilotPanelProps {
   conversationId: string
@@ -17,28 +10,14 @@ interface CopilotPanelProps {
 /**
  * Assiste o consultor, nunca o Lead - fica ao lado do chat, não dentro dele.
  * Só existe quando um humano já assumiu a conversa (ConversationsPage só
- * renderiza isso com `assigned_employee_id` preenchido). Sugestão chega por
- * dois caminhos que convergem no mesmo slot de cache (ver
- * hooks/useCopilotSuggestion.ts): pedido sob demanda (botão abaixo) ou push
- * automático via WebSocket quando o pré-filtro detecta objeção sozinho.
+ * renderiza isso com `assigned_employee_id` preenchido). 100% automático -
+ * sem botão de pedir sugestão (decisão do usuário) - a sugestão só chega
+ * por push do WebSocket quando o pré-filtro do backend detecta objeção
+ * sozinho (ver hooks/useCopilotSuggestion.ts).
  */
 export function CopilotPanel({ conversationId, onUseSuggestion }: CopilotPanelProps) {
   const { data: suggestion } = useCopilotSuggestion(conversationId)
-  const requestSuggestion = useRequestCopilotSuggestion(conversationId)
   const markUsed = useMarkCopilotSuggestionUsed(conversationId)
-  const { toast } = useToast()
-
-  async function handleRequest() {
-    try {
-      await requestSuggestion.mutateAsync()
-    } catch (error) {
-      toast({
-        title: 'Não foi possível gerar uma sugestão',
-        description: error instanceof ApiError ? error.message : undefined,
-        variant: 'destructive',
-      })
-    }
-  }
 
   function handleUse() {
     if (!suggestion) return
@@ -63,10 +42,6 @@ export function CopilotPanel({ conversationId, onUseSuggestion }: CopilotPanelPr
       <div className="flex-1 overflow-y-auto p-4">
         {suggestion ? (
           <div className="space-y-3">
-            <Badge variant="outline">
-              {suggestion.source === 'AUTOMATIC' ? 'Detectado automaticamente' : 'Gerado a pedido'}
-            </Badge>
-
             {suggestion.objection_summary && (
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground">Objeção identificada</p>
@@ -86,27 +61,9 @@ export function CopilotPanel({ conversationId, onUseSuggestion }: CopilotPanelPr
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Peça uma sugestão quando o Lead trouxer uma objeção, ou aguarde - o copiloto avisa sozinho quando
-            identificar algo na conversa.
+            Sem sugestão no momento - o copiloto avisa sozinho aqui quando identificar uma objeção na conversa.
           </p>
         )}
-      </div>
-
-      <div className="border-t p-3">
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full"
-          onClick={handleRequest}
-          disabled={requestSuggestion.isPending}
-        >
-          {requestSuggestion.isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Sparkles className="h-4 w-4" />
-          )}
-          Sugerir resposta
-        </Button>
       </div>
     </div>
   )

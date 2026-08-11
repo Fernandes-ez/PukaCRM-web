@@ -971,19 +971,23 @@ Pedido do usuário: IA que lê a conversa Lead↔consultor e ajuda a
 contornar objeção/fechar, **sem nunca falar com o Lead** - ver
 `CLAUDE.MD` do backend, decisão #28, pro desenho completo (por que não
 fere regra da Meta, previsão de custo que levou ao pré-filtro em 2
-camadas, contrato dos webhooks n8n novos).
+camadas, contrato do webhook n8n novo). **100% automático, sem botão**
+- a primeira versão desta entrega tinha por engano um botão "Sugerir
+resposta" além da checagem automática; corrigido ainda no mesmo dia
+depois do usuário apontar que a decisão fechada era só automático
+(nenhuma versão com o botão chegou a ir pra produção).
 
 - **`src/types/copilot.ts`, `src/services/copilotService.ts`,
   `src/hooks/useCopilotSuggestion.ts`** — mesmo padrão de types/service/
   hooks do resto do app, com uma particularidade: **não existe GET de
-  listagem** (a sugestão nunca é "buscada", só chega por dois caminhos -
-  resposta do `POST` sob demanda, ou push automático via WebSocket).
+  listagem nem `POST` de "pedir sugestão"** - o único jeito de uma
+  sugestão existir é o push automático via WebSocket.
   `useCopilotSuggestion(conversationId)` por isso é um `useQuery` com
   `enabled: false`/`initialData: null` - um slot de cache "só leitura"
-  que `useRequestCopilotSuggestion`/`useMarkCopilotSuggestionUsed`
-  (mutations) e o WebSocket escrevem via `setQueryData`, mesmo
-  raciocínio de "cache é a única fonte da verdade" já usado em
-  `useNotificationSocket`.
+  que o WebSocket escreve via `setQueryData` (mesmo raciocínio de
+  "cache é a única fonte da verdade" já usado em
+  `useNotificationSocket`); `useMarkCopilotSuggestionUsed` é a única
+  mutation que existe aqui.
 - **`useNotificationSocket()` (`useNotifications.ts`) ganhou um branch
   novo** - o copiloto usa o **mesmo socket** `/ws/notifications` (não
   abre uma conexão própria), mas o payload automático vem com
@@ -995,10 +999,10 @@ camadas, contrato dos webhooks n8n novos).
   em `ConversationsPage.tsx`, depois de `ConversationDetail`), **só
   renderiza quando a conversa já tem `assigned_employee_id`** (reflete
   a mesma trava do backend - copiloto não existe enquanto a IA responde
-  sozinha). Botão "Sugerir resposta" (chamada síncrona, com loading);
-  quando chega sugestão (por qualquer via), mostra badge "Detectado
-  automaticamente"/"Gerado a pedido" + objeção identificada (se houver)
-  + texto sugerido + botão "Usar esta sugestão".
+  sozinha). Sem botão nenhum - só um estado de espera ("sem sugestão no
+  momento") até chegar algo pelo WebSocket, aí mostra objeção
+  identificada (se houver) + texto sugerido + botão "Usar esta
+  sugestão".
 - **"Usar esta sugestão" nunca manda nada sozinho** - só preenche o
   campo de resposta do consultor pra ele revisar/editar e mandar pelo
   fluxo já existente. Implementado levantando um pequeno estado
@@ -1010,9 +1014,10 @@ camadas, contrato dos webhooks n8n novos).
 - Testado com `tsc -b`, `oxlint` e `npm run build` limpos. **Não
   testado visualmente num navegador** nesta sessão (sem ferramenta de
   automação de navegador disponível) - validar manualmente o fluxo
-  completo (botão sob demanda, badge/"Usar esta sugestão" preenchendo
-  o campo certo, painel some/aparece junto com `assigned_employee_id`)
-  antes de considerar essa tela pronta pra uso real.
+  completo ("Usar esta sugestão" preenchendo o campo certo, painel
+  some/aparece junto com `assigned_employee_id`, sugestão chegando
+  sozinha quando o backend/n8n empurram) antes de considerar essa tela
+  pronta pra uso real.
 
 ## Comandos úteis
 

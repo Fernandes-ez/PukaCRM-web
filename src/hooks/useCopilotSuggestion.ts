@@ -5,8 +5,8 @@ import type { ConversationSuggestion } from '@/types/copilot'
 
 /**
  * Lê a sugestão mais recente da conversa - nunca busca sozinho (não existe
- * GET de listagem, ver types/copilot.ts), só reage ao cache que o pedido
- * sob demanda e o push automático (useNotificationSocket) escrevem.
+ * GET de listagem, ver types/copilot.ts), só reage ao cache que o push
+ * automático (useNotificationSocket) escreve.
  */
 export function useCopilotSuggestion(conversationId: string) {
   return useQuery<ConversationSuggestion | null>({
@@ -15,16 +15,6 @@ export function useCopilotSuggestion(conversationId: string) {
     enabled: false,
     initialData: null,
     staleTime: Infinity,
-  })
-}
-
-export function useRequestCopilotSuggestion(conversationId: string) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: () => copilotService.requestSuggestion(conversationId),
-    onSuccess: (suggestion) => {
-      queryClient.setQueryData(copilotSuggestionKey(conversationId), suggestion)
-    },
   })
 }
 
