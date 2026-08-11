@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Loader2 } from 'lucide-react'
-import { useAssignConversation } from '@/hooks/useConversations'
-import { useEmployees } from '@/hooks/useEmployees'
+import { useAssignConversation, useAssignableEmployees } from '@/hooks/useConversations'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
 import type { ConversationRead } from '@/types/conversation'
@@ -18,7 +17,7 @@ interface AssignConversationDialogProps {
 }
 
 export function AssignConversationDialog({ open, onOpenChange, conversation }: AssignConversationDialogProps) {
-  const { data: employees } = useEmployees()
+  const { data: employees } = useAssignableEmployees()
   const assignConversation = useAssignConversation()
   const { toast } = useToast()
   const [employeeId, setEmployeeId] = useState(conversation.assigned_employee_id ?? '')
@@ -36,7 +35,8 @@ export function AssignConversationDialog({ open, onOpenChange, conversation }: A
     }
   }
 
-  const activeEmployees = (employees ?? []).filter((e) => e.status === 'ACTIVE')
+  // O backend já devolve só ativos (GET /conversations/assignable-employees).
+  const activeEmployees = employees ?? []
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

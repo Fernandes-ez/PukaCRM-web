@@ -1103,6 +1103,23 @@ lead_id` com a lista de `useLeads()`** pra resolver o nome (isso
 - Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
   visualmente num navegador nesta sessão.
 
+## ✅ Corrigido em 2026-08-11 — 403 em `GET /employees` pra Consultora
+
+Achado com a aba Network do navegador em produção: `GET /employees`
+devolvia 403 pra uma conta "Consultora" (que não tem `EMPLOYEES/
+employee/VIEW` por design, decisão #29 do `CLAUDE.MD` do backend).
+Duas telas dependiam disso sem precisar do diretório completo:
+
+- **`ConversationDetail.tsx`** parou de chamar `useEmployees()` -
+  `conversation.assigned_employee_name` já vem pronto do backend
+  (mesmo padrão do `lead_full_name`, decisão #32).
+- **`AssignConversationDialog.tsx`** trocou `useEmployees()` por
+  **`useAssignableEmployees()`** (novo, `GET /conversations/
+assignable-employees` - lista enxuta, só id/nome, liberada pra quem já
+  tem permissão de transferir conversa).
+- Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
+  visualmente num navegador nesta sessão.
+
 ## Comandos úteis
 
 ```bash

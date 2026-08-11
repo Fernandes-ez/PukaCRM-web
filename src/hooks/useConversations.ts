@@ -37,6 +37,13 @@ export function useSendMessage(conversationId: string) {
   })
 }
 
+export function useAssignableEmployees() {
+  return useQuery({
+    queryKey: [...conversationsKey, 'assignable-employees'],
+    queryFn: conversationService.listAssignableEmployees,
+  })
+}
+
 export function useAssignConversation() {
   const queryClient = useQueryClient()
   return useMutation({

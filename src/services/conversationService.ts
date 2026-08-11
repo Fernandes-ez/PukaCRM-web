@@ -2,6 +2,7 @@ import { api, normalizeApiError } from '@/services/apiClient'
 import type {
   AssignConversationRequest,
   ConversationRead,
+  EmployeeOption,
   Message,
   SendMessageRequest,
 } from '@/types/conversation'
@@ -38,6 +39,15 @@ export const conversationService = {
   async sendMessage(id: string, payload: SendMessageRequest): Promise<Message> {
     try {
       const { data } = await api.post<Message>(`/conversations/${id}/messages`, payload)
+      return data
+    } catch (error) {
+      throw normalizeApiError(error)
+    }
+  },
+
+  async listAssignableEmployees(): Promise<EmployeeOption[]> {
+    try {
+      const { data } = await api.get<EmployeeOption[]>('/conversations/assignable-employees')
       return data
     } catch (error) {
       throw normalizeApiError(error)

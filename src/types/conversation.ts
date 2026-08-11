@@ -48,3 +48,15 @@ export interface SendMessageRequest {
 export interface AssignConversationRequest {
   employee_id: string
 }
+
+/**
+ * Versão enxuta de Employee (só id/nome) pra popular o seletor do diálogo
+ * "Atribuir" - vem de `/conversations/assignable-employees`, gated pela
+ * permissão de transferir conversa, não pela de ver o diretório inteiro
+ * de Funcionários (que Consultora não tem por padrão, decisão #29 do
+ * `CLAUDE.MD` do backend).
+ */
+export interface EmployeeOption {
+  id: string
+  full_name: string
+}
