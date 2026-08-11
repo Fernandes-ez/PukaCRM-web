@@ -7,12 +7,17 @@ export interface ConversationRead {
   id: string
   company_id: string
   lead_id: string
-  whatsapp_instance_id: string
   /**
-   * O backend não faz join com Lead/Employee aqui (`ConversationRead` só tem os ids) —
-   * resolver `lead_id`/`assigned_employee_id` pro nome no cliente, cruzando com
-   * `useLeads()`/`useEmployees()` (mesmo padrão já usado em `LeadsPage.tsx`).
+   * Denormalizado direto do Lead pelo backend - não cruzar com `useLeads()`
+   * pra resolver isso (a lista de Leads pode ser mais restrita que a de
+   * Conversas, ver decisão #31 do `CLAUDE.MD` do backend: um funcionário
+   * pode ver uma Conversation sem o Lead correspondente estar na "própria
+   * carteira" de Leads dele).
    */
+  lead_full_name: string | null
+  lead_phone: string
+  whatsapp_instance_id: string
+  /** Resolver o nome do responsável cruzando com `useEmployees()` (mesmo padrão de sempre). */
   assigned_employee_id?: string | null
   status: ConversationStatus
   needs_human_attention: boolean

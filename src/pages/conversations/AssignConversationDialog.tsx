@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useAssignConversation } from '@/hooks/useConversations'
-import { useLeads } from '@/hooks/useLeads'
 import { useEmployees } from '@/hooks/useEmployees'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
@@ -20,7 +19,6 @@ interface AssignConversationDialogProps {
 
 export function AssignConversationDialog({ open, onOpenChange, conversation }: AssignConversationDialogProps) {
   const { data: employees } = useEmployees()
-  const { data: leads } = useLeads()
   const assignConversation = useAssignConversation()
   const { toast } = useToast()
   const [employeeId, setEmployeeId] = useState(conversation.assigned_employee_id ?? '')
@@ -39,14 +37,13 @@ export function AssignConversationDialog({ open, onOpenChange, conversation }: A
   }
 
   const activeEmployees = (employees ?? []).filter((e) => e.status === 'ACTIVE')
-  const leadName = leads?.find((lead) => lead.id === conversation.lead_id)?.full_name
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Atribuir conversa</DialogTitle>
-          <DialogDescription>{leadName ?? 'Lead sem nome'}</DialogDescription>
+          <DialogDescription>{conversation.lead_full_name ?? 'Lead sem nome'}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           {formError && (

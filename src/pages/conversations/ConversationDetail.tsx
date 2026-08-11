@@ -10,8 +10,8 @@ import {
   useUnassignConversation,
   useCloseConversation,
 } from '@/hooks/useConversations'
-import { useLeads } from '@/hooks/useLeads'
 import { useEmployees } from '@/hooks/useEmployees'
+import { useAuth } from '@/contexts/AuthContext'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
 import { cn } from '@/utils/cn'
@@ -43,8 +43,8 @@ interface ConversationDetailProps {
 export function ConversationDetail({ conversationId, draftMessage, onDraftMessageConsumed }: ConversationDetailProps) {
   const { data: conversation, isLoading: isLoadingConversation } = useConversation(conversationId)
   const { data: messages, isLoading: isLoadingMessages } = useMessages(conversationId)
-  const { data: leads } = useLeads()
   const { data: employees } = useEmployees()
+  const { employee: currentEmployee } = useAuth()
   const sendMessage = useSendMessage(conversationId)
   const unassignConversation = useUnassignConversation()
   const closeConversation = useCloseConversation()
@@ -125,15 +125,17 @@ export function ConversationDetail({ conversationId, draftMessage, onDraftMessag
   }
 
   const isClosed = conversation.status === 'CLOSED'
-  const leadName = leads?.find((lead) => lead.id === conversation.lead_id)?.full_name
   const assignedEmployeeName = employees?.find((employee) => employee.id === conversation.assigned_employee_id)
     ?.full_name
+  // Só quem está com a conversa responde - nem o Owner passa por cima de
+  // quem está atendendo (backend também trava isso, ver ConversationService.reply).
+  const isAssignedToMe = !!currentEmployee && conversation.assigned_employee_id === currentEmployee.id
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b p-4">
         <div>
-          <h2 className="font-semibold">{leadName ?? 'Lead sem nome'}</h2>
+          <h2 className="font-semibold">{conversation.lead_full_name ?? 'Lead sem nome'}</h2>
           <div className="mt-1 flex items-center gap-1.5">
             <Badge variant="outline">{statusLabel[conversation.status]}</Badge>
             <span className="text-xs text-muted-foreground">
@@ -219,6 +221,12 @@ export function ConversationDetail({ conversationId, draftMessage, onDraftMessag
       {isClosed ? (
         <div className="border-t p-3 text-center text-sm text-muted-foreground">
           Conversa fechada — envie uma mensagem nova pelo WhatsApp do Lead pra abrir outra.
+        </div>
+      ) : !isAssignedToMe ? (
+        <div className="border-t p-3 text-center text-sm text-muted-foreground">
+          {conversation.assigned_employee_id
+            ? `Esta conversa está com ${assignedEmployeeName ?? 'outro atendente'} — só quem está atribuído pode responder.`
+            : 'A IA está respondendo essa conversa — clique em "Atribuir" pra assumir e poder responder.'}
         </div>
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="flex items-end gap-2 border-t p-3">

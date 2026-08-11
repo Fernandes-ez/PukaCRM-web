@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AlertCircle, MessageSquare } from 'lucide-react'
 import { useConversation, useConversations } from '@/hooks/useConversations'
-import { useLeads } from '@/hooks/useLeads'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/utils/cn'
 import { compareDatesDesc } from '@/utils/date'
@@ -33,12 +32,9 @@ export function ConversationsPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { data: conversations, isLoading } = useConversations()
-  const { data: leads } = useLeads()
   const { data: activeConversation } = useConversation(id)
   const { employee } = useAuth()
   const [draftMessage, setDraftMessage] = useState('')
-
-  const leadNameById = new Map((leads ?? []).map((lead) => [lead.id, lead.full_name]))
 
   return (
     <div className="flex h-[calc(100vh-6.5rem)] gap-4">
@@ -70,7 +66,7 @@ export function ConversationsPage() {
                   )}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">{leadNameById.get(conversation.lead_id) ?? 'Lead sem nome'}</span>
+                    <span className="font-medium">{conversation.lead_full_name ?? 'Lead sem nome'}</span>
                     <span className="text-[10px] text-muted-foreground">
                       {relativeTime(conversation.last_message_at ?? conversation.created_at)}
                     </span>

@@ -20,7 +20,6 @@ export function DashboardPage() {
   const { data: employees, isLoading: isLoadingEmployees } = useEmployees()
 
   const openLeads = leads?.filter((l) => l.status === 'ACTIVE').length ?? 0
-  const leadNameById = new Map((leads ?? []).map((lead) => [lead.id, lead.full_name]))
   const needsAttention = conversations?.filter((c) => c.needs_human_attention).length ?? 0
   const activeEmployees = employees?.filter((e) => e.status === 'ACTIVE').length ?? 0
 
@@ -156,9 +155,7 @@ export function DashboardPage() {
                     to={`/conversations/${conversation.id}`}
                     className="flex items-center justify-between rounded-lg px-2 py-2 text-sm transition-colors hover:bg-accent/60"
                   >
-                    <span className="font-medium">
-                      {leadNameById.get(conversation.lead_id) ?? 'Lead sem nome'}
-                    </span>
+                    <span className="font-medium">{conversation.lead_full_name ?? 'Lead sem nome'}</span>
                     <AlertCircle className="h-4 w-4 text-destructive" />
                   </Link>
                 ))

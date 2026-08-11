@@ -1075,6 +1075,34 @@ vendo tudo, abaixo disso só a própria carteira).
 - Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
   visualmente num navegador nesta sessão.
 
+## ✅ Corrigido em 2026-08-11 — nome de lead sumindo + trava de resposta
+
+Dois achados testando a separação de carteira (seção acima) com uma
+conta "Consultora" de verdade. Ver `CLAUDE.MD` do backend, decisão #32,
+pro desenho completo.
+
+- **`ConversationRead` ganhou `lead_full_name`/`lead_phone`** vindos
+  prontos do backend - `ConversationsPage.tsx`, `ConversationDetail.tsx`,
+  `AssignConversationDialog.tsx` e o card "Conversas que precisam de
+  atenção" do `DashboardPage.tsx` **pararam de cruzar `conversation.
+lead_id` com a lista de `useLeads()`** pra resolver o nome (isso
+  quebrava mostrando "Lead sem nome" pra quem tinha carteira restrita,
+  já que a lista de Leads pode ser mais curta que a de Conversas
+  visíveis - decisão #31). Usam `conversation.lead_full_name`
+  diretamente agora - `useLeads()` saiu desses 3 primeiros arquivos por
+  completo (não precisavam de mais nada de lá); `DashboardPage.tsx`
+  manteve o hook (ainda usa `leads` pros gráficos e pro card "Leads
+  recentes").
+- **Barra de resposta trava quando não é sua conversa** -
+  `ConversationDetail.tsx` calcula `isAssignedToMe` (`useAuth()` vs
+  `conversation.assigned_employee_id`) e, quando `false`, esconde o
+  formulário e mostra uma mensagem explicando o motivo (conversa com
+  outro atendente, ou ainda com a IA - "clique em Atribuir"). O backend
+  também trava isso de verdade (`ConversationNotAssignedToYouError`,
+  403) - a UI só evita a pessoa tentar e tomar erro.
+- Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
+  visualmente num navegador nesta sessão.
+
 ## Comandos úteis
 
 ```bash
