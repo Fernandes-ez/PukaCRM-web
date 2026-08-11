@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { conversationService } from '@/services/conversationService'
+import { leadsKey } from '@/hooks/useLeads'
 import type { AssignConversationRequest, SendMessageRequest } from '@/types/conversation'
 
 export const conversationsKey = ['conversations'] as const
@@ -41,7 +42,13 @@ export function useAssignConversation() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: AssignConversationRequest }) =>
       conversationService.assign(id, payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: conversationsKey }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: conversationsKey })
+      // Atribuir a conversa agora também atribui o Lead (ver CLAUDE.MD do
+      // backend, decisão #33) - sem isso a tela de Leads ficaria com o
+      // dono antigo até a próxima navegação/refetch natural.
+      queryClient.invalidateQueries({ queryKey: leadsKey })
+    },
   })
 }
 
