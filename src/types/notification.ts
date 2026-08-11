@@ -1,4 +1,9 @@
-export type NotificationType = 'LEAD_ASSIGNED' | 'CONVERSATION_NEEDS_ATTENTION' | 'TASK_ASSIGNED' | 'TASK_DUE'
+export type NotificationType =
+  | 'LEAD_ASSIGNED'
+  | 'CONVERSATION_NEEDS_ATTENTION'
+  | 'TASK_ASSIGNED'
+  | 'TASK_DUE'
+  | 'NEW_MESSAGE'
 
 export interface Notification {
   id: string

@@ -1120,6 +1120,16 @@ assignable-employees` - lista enxuta, só id/nome, liberada pra quem já
 - Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
   visualmente num navegador nesta sessão.
 
+## ✅ Novo em 2026-08-11 — notificação de mensagem nova
+
+Backend ganhou `NotificationType.NEW_MESSAGE` (ver `CLAUDE.MD` do
+backend, decisão #36) - avisa o atendente quando o Lead manda mensagem
+numa conversa já assumida por ele. `types/notification.ts` ganhou o
+valor no union; `NotificationBell.tsx` ganhou o ícone
+(`MessageSquareText`). Nenhuma mudança de lógica necessária -
+`handleSelect` já navegava por `related_conversation_id`, que esse tipo
+novo também preenche.
+
 ## Comandos úteis
 
 ```bash

@@ -1,4 +1,4 @@
-import { Bell, CheckCheck, UserPlus, MessageCircleWarning, ClipboardList, ClipboardX } from 'lucide-react'
+import { Bell, CheckCheck, UserPlus, MessageCircleWarning, MessageSquareText, ClipboardList, ClipboardX } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import {
   DropdownMenu,
@@ -19,6 +19,7 @@ const NOTIFICATION_ICON: Record<Notification['type'], typeof UserPlus> = {
   CONVERSATION_NEEDS_ATTENTION: MessageCircleWarning,
   TASK_ASSIGNED: ClipboardList,
   TASK_DUE: ClipboardX,
+  NEW_MESSAGE: MessageSquareText,
 }
 
 export function NotificationBell() {
