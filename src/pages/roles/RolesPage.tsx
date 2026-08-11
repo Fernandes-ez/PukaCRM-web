@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import type { Role } from '@/types/role'
 import { displayRoleName } from '@/utils/roleDisplay'
 import { CreateRoleDialog } from '@/pages/roles/CreateRoleDialog'
@@ -28,12 +29,14 @@ export function RolesPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [editRole, setEditRole] = useState<Role | null>(null)
   const [permissionsRole, setPermissionsRole] = useState<Role | null>(null)
+  const [deleteRoleTarget, setDeleteRoleTarget] = useState<Role | null>(null)
 
-  async function handleDelete(role: Role) {
-    if (!window.confirm(`Excluir o cargo "${role.name}"? Essa ação não pode ser desfeita.`)) return
+  async function handleDelete() {
+    if (!deleteRoleTarget) return
     try {
-      await deleteRole.mutateAsync(role.id)
+      await deleteRole.mutateAsync(deleteRoleTarget.id)
       toast({ title: 'Cargo excluído', variant: 'success' })
+      setDeleteRoleTarget(null)
     } catch (error) {
       toast({
         title: 'Não foi possível excluir',
@@ -113,7 +116,7 @@ export function RolesPage() {
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
-                                onClick={() => handleDelete(role)}
+                                onClick={() => setDeleteRoleTarget(role)}
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Excluir
@@ -147,6 +150,18 @@ export function RolesPage() {
           role={permissionsRole}
           open={!!permissionsRole}
           onOpenChange={(open) => !open && setPermissionsRole(null)}
+        />
+      )}
+      {deleteRoleTarget && (
+        <ConfirmDialog
+          open={!!deleteRoleTarget}
+          onOpenChange={(open) => !open && setDeleteRoleTarget(null)}
+          title="Excluir cargo"
+          description={`Excluir o cargo "${deleteRoleTarget.name}"? Essa ação não pode ser desfeita.`}
+          confirmLabel="Excluir"
+          variant="destructive"
+          isPending={deleteRole.isPending}
+          onConfirm={handleDelete}
         />
       )}
     </div>

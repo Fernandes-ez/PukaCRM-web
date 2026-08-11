@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { EMPLOYEE_STATUS_LABEL, type Employee, type EmployeeStatus } from '@/types/employee'
 import { displayRoleName } from '@/utils/roleDisplay'
 import { CreateEmployeeDialog } from '@/pages/employees/CreateEmployeeDialog'
@@ -39,14 +40,16 @@ export function EmployeesPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [editEmployee, setEditEmployee] = useState<Employee | null>(null)
   const [scheduleEmployee, setScheduleEmployee] = useState<Employee | null>(null)
+  const [deactivateTarget, setDeactivateTarget] = useState<Employee | null>(null)
 
   const roleNameById = new Map((roles ?? []).map((role) => [role.id, role.name]))
 
-  async function handleDeactivate(employee: Employee) {
-    if (!window.confirm(`Desativar ${employee.full_name}? O acesso dele será bloqueado.`)) return
+  async function handleDeactivate() {
+    if (!deactivateTarget) return
     try {
-      await deactivateEmployee.mutateAsync(employee.id)
+      await deactivateEmployee.mutateAsync(deactivateTarget.id)
       toast({ title: 'Funcionário desativado', variant: 'success' })
+      setDeactivateTarget(null)
     } catch (error) {
       toast({
         title: 'Não foi possível desativar',
@@ -142,7 +145,7 @@ export function EmployeesPage() {
                           {employee.status === 'ACTIVE' && !employee.is_owner && (
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
-                              onClick={() => handleDeactivate(employee)}
+                              onClick={() => setDeactivateTarget(employee)}
                             >
                               <UserX className="mr-2 h-4 w-4" />
                               Desativar
@@ -186,6 +189,18 @@ export function EmployeesPage() {
           employee={scheduleEmployee}
           open={!!scheduleEmployee}
           onOpenChange={(open) => !open && setScheduleEmployee(null)}
+        />
+      )}
+      {deactivateTarget && (
+        <ConfirmDialog
+          open={!!deactivateTarget}
+          onOpenChange={(open) => !open && setDeactivateTarget(null)}
+          title="Desativar funcionário"
+          description={`Desativar ${deactivateTarget.full_name}? O acesso dele será bloqueado.`}
+          confirmLabel="Desativar"
+          variant="destructive"
+          isPending={deactivateEmployee.isPending}
+          onConfirm={handleDeactivate}
         />
       )}
     </div>
