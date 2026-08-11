@@ -1,0 +1,39 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { copilotService } from '@/services/copilotService'
+import { copilotSuggestionKey } from '@/types/copilot'
+import type { ConversationSuggestion } from '@/types/copilot'
+
+/**
+ * Lê a sugestão mais recente da conversa - nunca busca sozinho (não existe
+ * GET de listagem, ver types/copilot.ts), só reage ao cache que o pedido
+ * sob demanda e o push automático (useNotificationSocket) escrevem.
+ */
+export function useCopilotSuggestion(conversationId: string) {
+  return useQuery<ConversationSuggestion | null>({
+    queryKey: copilotSuggestionKey(conversationId),
+    queryFn: () => null,
+    enabled: false,
+    initialData: null,
+    staleTime: Infinity,
+  })
+}
+
+export function useRequestCopilotSuggestion(conversationId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => copilotService.requestSuggestion(conversationId),
+    onSuccess: (suggestion) => {
+      queryClient.setQueryData(copilotSuggestionKey(conversationId), suggestion)
+    },
+  })
+}
+
+export function useMarkCopilotSuggestionUsed(conversationId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (suggestionId: string) => copilotService.markUsed(conversationId, suggestionId),
+    onSuccess: (suggestion) => {
+      queryClient.setQueryData(copilotSuggestionKey(conversationId), suggestion)
+    },
+  })
+}

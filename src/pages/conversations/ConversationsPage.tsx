@@ -1,12 +1,14 @@
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AlertCircle, MessageSquare } from 'lucide-react'
-import { useConversations } from '@/hooks/useConversations'
+import { useConversation, useConversations } from '@/hooks/useConversations'
 import { useLeads } from '@/hooks/useLeads'
 import { cn } from '@/utils/cn'
 import { compareDatesDesc } from '@/utils/date'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConversationDetail } from '@/pages/conversations/ConversationDetail'
+import { CopilotPanel } from '@/pages/conversations/CopilotPanel'
 import type { ConversationStatus } from '@/types/conversation'
 
 const statusLabel: Record<ConversationStatus, string> = {
@@ -31,6 +33,8 @@ export function ConversationsPage() {
   const navigate = useNavigate()
   const { data: conversations, isLoading } = useConversations()
   const { data: leads } = useLeads()
+  const { data: activeConversation } = useConversation(id)
+  const [draftMessage, setDraftMessage] = useState('')
 
   const leadNameById = new Map((leads ?? []).map((lead) => [lead.id, lead.full_name]))
 
@@ -86,7 +90,11 @@ export function ConversationsPage() {
 
       <div className="flex-1 rounded-lg border bg-card">
         {id ? (
-          <ConversationDetail conversationId={id} />
+          <ConversationDetail
+            conversationId={id}
+            draftMessage={draftMessage}
+            onDraftMessageConsumed={() => setDraftMessage('')}
+          />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
             <MessageSquare className="h-8 w-8" />
@@ -94,6 +102,10 @@ export function ConversationsPage() {
           </div>
         )}
       </div>
+
+      {id && activeConversation?.assigned_employee_id && (
+        <CopilotPanel conversationId={id} onUseSuggestion={setDraftMessage} />
+      )}
     </div>
   )
 }

@@ -965,6 +965,55 @@ referência extra.
 - Testado com `tsc -b`, `oxlint` e `npm run build` limpos. Não testado
   visualmente num navegador nesta sessão.
 
+## ✅ Novo em 2026-08-11 — Copiloto de negociação (assistente do consultor)
+
+Pedido do usuário: IA que lê a conversa Lead↔consultor e ajuda a
+contornar objeção/fechar, **sem nunca falar com o Lead** - ver
+`CLAUDE.MD` do backend, decisão #28, pro desenho completo (por que não
+fere regra da Meta, previsão de custo que levou ao pré-filtro em 2
+camadas, contrato dos webhooks n8n novos).
+
+- **`src/types/copilot.ts`, `src/services/copilotService.ts`,
+  `src/hooks/useCopilotSuggestion.ts`** — mesmo padrão de types/service/
+  hooks do resto do app, com uma particularidade: **não existe GET de
+  listagem** (a sugestão nunca é "buscada", só chega por dois caminhos -
+  resposta do `POST` sob demanda, ou push automático via WebSocket).
+  `useCopilotSuggestion(conversationId)` por isso é um `useQuery` com
+  `enabled: false`/`initialData: null` - um slot de cache "só leitura"
+  que `useRequestCopilotSuggestion`/`useMarkCopilotSuggestionUsed`
+  (mutations) e o WebSocket escrevem via `setQueryData`, mesmo
+  raciocínio de "cache é a única fonte da verdade" já usado em
+  `useNotificationSocket`.
+- **`useNotificationSocket()` (`useNotifications.ts`) ganhou um branch
+  novo** - o copiloto usa o **mesmo socket** `/ws/notifications` (não
+  abre uma conexão própria), mas o payload automático vem com
+  `event: "copilot_suggestion"` em vez do formato de `Notification`
+  normal. `onmessage` agora checa esse campo primeiro: se for o evento
+  do copiloto, escreve em `copilotSuggestionKey(conversation_id)` e
+  retorna cedo (sem virar item do sino, sem contador).
+- **`CopilotPanel.tsx`** (novo) - painel **ao lado** do chat (3ª coluna
+  em `ConversationsPage.tsx`, depois de `ConversationDetail`), **só
+  renderiza quando a conversa já tem `assigned_employee_id`** (reflete
+  a mesma trava do backend - copiloto não existe enquanto a IA responde
+  sozinha). Botão "Sugerir resposta" (chamada síncrona, com loading);
+  quando chega sugestão (por qualquer via), mostra badge "Detectado
+  automaticamente"/"Gerado a pedido" + objeção identificada (se houver)
+  + texto sugerido + botão "Usar esta sugestão".
+- **"Usar esta sugestão" nunca manda nada sozinho** - só preenche o
+  campo de resposta do consultor pra ele revisar/editar e mandar pelo
+  fluxo já existente. Implementado levantando um pequeno estado
+  (`draftMessage`) em `ConversationsPage.tsx`, passado como prop pra
+  `ConversationDetail` (que aplica via `setValue('content', ...)` do
+  react-hook-form, num `useEffect`) e como callback pra `CopilotPanel`
+  - os dois componentes são irmãos, não têm outra forma de se
+  comunicarem diretamente.
+- Testado com `tsc -b`, `oxlint` e `npm run build` limpos. **Não
+  testado visualmente num navegador** nesta sessão (sem ferramenta de
+  automação de navegador disponível) - validar manualmente o fluxo
+  completo (botão sob demanda, badge/"Usar esta sugestão" preenchendo
+  o campo certo, painel some/aparece junto com `assigned_employee_id`)
+  antes de considerar essa tela pronta pra uso real.
+
 ## Comandos úteis
 
 ```bash

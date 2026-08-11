@@ -33,7 +33,14 @@ const statusLabel: Record<ConversationStatus, string> = {
   CLOSED: 'Fechada',
 }
 
-export function ConversationDetail({ conversationId }: { conversationId: string }) {
+interface ConversationDetailProps {
+  conversationId: string
+  /** Texto vindo do CopilotPanel ("Usar esta sugestão") - preenche o campo de resposta pro consultor revisar/editar antes de mandar. */
+  draftMessage?: string
+  onDraftMessageConsumed?: () => void
+}
+
+export function ConversationDetail({ conversationId, draftMessage, onDraftMessageConsumed }: ConversationDetailProps) {
   const { data: conversation, isLoading: isLoadingConversation } = useConversation(conversationId)
   const { data: messages, isLoading: isLoadingMessages } = useMessages(conversationId)
   const { data: leads } = useLeads()
@@ -51,12 +58,19 @@ export function ConversationDetail({ conversationId }: { conversationId: string 
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight })
   }, [messages])
+
+  useEffect(() => {
+    if (!draftMessage) return
+    setValue('content', draftMessage)
+    onDraftMessageConsumed?.()
+  }, [draftMessage, setValue, onDraftMessageConsumed])
 
   async function onSubmit(data: FormValues) {
     try {

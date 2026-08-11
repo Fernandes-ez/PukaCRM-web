@@ -5,6 +5,7 @@ import { notificationService } from '@/services/notificationService'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/components/ui/toast'
 import type { Notification } from '@/types/notification'
+import { copilotSuggestionKey, type ConversationSuggestion } from '@/types/copilot'
 
 export const notificationsKey = ['notifications'] as const
 export const unreadCountKey = ['notifications', 'unread-count'] as const
@@ -82,7 +83,18 @@ export function useNotificationSocket() {
 
       socket.onmessage = (event) => {
         try {
-          const notification = JSON.parse(event.data) as Notification
+          const parsed = JSON.parse(event.data) as { event?: string } & Record<string, unknown>
+
+          if (parsed.event === 'copilot_suggestion') {
+            // Mesmo socket de notificações, evento diferente - o copiloto de
+            // negociação não é uma Notification (não tem sino/contador), só
+            // atualiza o slot de cache que CopilotPanel lê (ver types/copilot.ts).
+            const suggestion = parsed as unknown as ConversationSuggestion
+            queryClient.setQueryData(copilotSuggestionKey(suggestion.conversation_id), suggestion)
+            return
+          }
+
+          const notification = parsed as unknown as Notification
           queryClient.setQueryData<Notification[]>(notificationsKey, (prev) =>
             prev ? [notification, ...prev] : [notification],
           )
