@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { AlertCircle, MessageSquare } from 'lucide-react'
 import { useConversation, useConversations } from '@/hooks/useConversations'
 import { useLeads } from '@/hooks/useLeads'
+import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/utils/cn'
 import { compareDatesDesc } from '@/utils/date'
 import { Badge } from '@/components/ui/badge'
@@ -34,6 +35,7 @@ export function ConversationsPage() {
   const { data: conversations, isLoading } = useConversations()
   const { data: leads } = useLeads()
   const { data: activeConversation } = useConversation(id)
+  const { employee } = useAuth()
   const [draftMessage, setDraftMessage] = useState('')
 
   const leadNameById = new Map((leads ?? []).map((lead) => [lead.id, lead.full_name]))
@@ -103,7 +105,9 @@ export function ConversationsPage() {
         )}
       </div>
 
-      {id && activeConversation?.assigned_employee_id && (
+      {/* Copiloto é pessoal - só quem está assumindo a conversa vê, não
+          qualquer um com permissão de ver a lista inteira (ex: Owner). */}
+      {id && activeConversation?.assigned_employee_id === employee?.id && (
         <CopilotPanel conversationId={id} onUseSuggestion={setDraftMessage} />
       )}
     </div>
