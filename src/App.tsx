@@ -18,6 +18,7 @@ import { CompanyPage } from '@/pages/company/CompanyPage'
 import { SubscriptionPage } from '@/pages/subscription/SubscriptionPage'
 import { DistributionPage } from '@/pages/distribution/DistributionPage'
 import { CampaignsPage } from '@/pages/campaigns/CampaignsPage'
+import { CreateCampaignPage } from '@/pages/campaigns/CreateCampaignPage'
 
 function App() {
   return (
@@ -56,6 +57,9 @@ function App() {
             </Route>
             <Route element={<RequirePermission module="CAMPAIGNS" resource="campaign" action="VIEW" />}>
               <Route path="/campanhas" element={<CampaignsPage />} />
+            </Route>
+            <Route element={<RequirePermission module="CAMPAIGNS" resource="campaign" action="CREATE" />}>
+              <Route path="/campanhas/nova" element={<CreateCampaignPage />} />
             </Route>
             <Route element={<RequirePermission module="COMPANY" resource="company" action="VIEW" />}>
               <Route path="/empresa" element={<CompanyPage />} />

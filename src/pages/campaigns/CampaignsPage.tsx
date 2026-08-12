@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Megaphone, Plus, X } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useCampaigns, useCancelCampaign } from '@/hooks/useCampaigns'
@@ -10,7 +11,6 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import { CreateCampaignDialog } from '@/pages/campaigns/CreateCampaignDialog'
 import { CAMPAIGN_STATUS_LABEL, type Campaign, type CampaignStatus } from '@/types/campaign'
 import { formatRelativeTime } from '@/utils/date'
 
@@ -92,7 +92,7 @@ export function CampaignsPage() {
   const { data: campaigns, isLoading } = useCampaigns()
   const { data: templates } = useMessageTemplates()
   const { hasPermission } = useAuth()
-  const [createOpen, setCreateOpen] = useState(false)
+  const navigate = useNavigate()
 
   const templateNameById = new Map((templates ?? []).map((t) => [t.id, t.name]))
 
@@ -104,7 +104,7 @@ export function CampaignsPage() {
           <p className="text-sm text-muted-foreground">Envie um template pra um público filtrado, com acompanhamento</p>
         </div>
         {hasPermission('CAMPAIGNS', 'campaign', 'CREATE') && (
-          <Button onClick={() => setCreateOpen(true)}>
+          <Button onClick={() => navigate('/campanhas/nova')}>
             <Plus className="h-4 w-4" />
             Nova campanha
           </Button>
@@ -141,8 +141,6 @@ export function CampaignsPage() {
           )}
         </CardContent>
       </Card>
-
-      <CreateCampaignDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   )
 }

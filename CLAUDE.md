@@ -1363,11 +1363,27 @@ continua existindo separado, pra disparo pontual).
 
 - **`src/pages/campaigns/`** (novo) - `CampaignsPage.tsx` (lista com
   barra de progresso por campanha, atualizada por polling a cada 5s,
-  igual `useConversations`) + `CreateCampaignDialog.tsx` (wizard de 3
+  igual `useConversations`) + `CreateCampaignPage.tsx` (wizard de 3
   passos: filtros com contador ao vivo debounced → template → confirmar
   e disparar). Item novo no menu (`Megaphone`, seção administrativa,
   gated por `CAMPAIGNS/campaign/VIEW` - primeiro módulo de permissão
   novo desde a Fase 4).
+- **Wizard é página cheia (`/campanhas/nova`), não modal** - decisão do
+  usuário depois de ver o diálogo pequeno em produção ("implemente isso
+  na tela normal, com botões de próximo e voltar no formulário").
+  `CreateCampaignDialog.tsx` (a versão em `<Dialog>`) foi **removida**,
+  não mantida ao lado - mesmo raciocínio de "não deixar código morto"
+  já aplicado outras vezes na sessão. `CreateCampaignPage.tsx` reaproveita
+  exatamente a mesma lógica de estado/filtros/preview debounced que o
+  diálogo tinha, só troca `DialogContent`/`DialogFooter` por um `Card`
+  numa página normal com um `Stepper` (indicador de passo 1/2/3) e
+  botões "Voltar"/"Continuar"/"Disparar campanha" no corpo do form.
+  Rota nova gated por `CAMPAIGNS/campaign/CREATE` (mais restrita que a
+  listagem, que só exige `VIEW`) - impede acesso direto por URL de quem
+  só pode ver campanhas, não criar. `CampaignsPage.tsx` troca o botão
+  "Nova campanha" de abrir estado local (`createOpen`) pra
+  `navigate('/campanhas/nova')`; ao concluir, `CreateCampaignPage`
+  navega de volta pra `/campanhas`.
 - **Preview do template na campanha não usa `renderTemplatePreview`**
   (diferente dos diálogos de iniciar conversa) - como o público é um
   filtro, não um Lead específico, mostra o `body_text` cru com uma nota
