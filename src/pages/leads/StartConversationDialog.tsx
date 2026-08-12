@@ -12,9 +12,10 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { MessageTemplateButtonsPreview } from '@/components/message-template-buttons-preview'
 import type { Lead } from '@/types/lead'
 import { formatPhone } from '@/utils/phone'
-import { MESSAGE_TEMPLATE_VARIABLE_TOKEN, type MessageTemplateVariableSource } from '@/types/messageTemplate'
+import { renderTemplatePreview } from '@/utils/messageTemplatePreview'
 
 interface StartConversationDialogProps {
   lead: Lead
@@ -36,30 +37,15 @@ export function StartConversationDialog({ lead, open, onOpenChange }: StartConve
   const approvedTemplates = useMemo(() => templates?.filter((t) => t.status === 'APPROVED') ?? [], [templates])
   const selectedTemplate = approvedTemplates.find((t) => t.id === templateId)
 
-  // Todo valor vem de um campo real do CRM, resolvido pelo próprio
-  // backend no envio - isso aqui é só pra mostrar a pré-visualização,
-  // não é enviado (o backend resolve de novo, com os dados mais atuais).
-  function resolveVariableValue(source: MessageTemplateVariableSource): string {
-    switch (source) {
-      case 'LEAD_NAME':
-        return lead.full_name || lead.phone
-      case 'LEAD_PHONE':
-        return lead.phone
-      case 'EMPLOYEE_NAME':
-        return employee?.full_name ?? ''
-      case 'COMPANY_NAME':
-        return company?.name ?? ''
-    }
-  }
-
+  // Pré-visualização só - o backend resolve de novo, com os dados mais
+  // atuais, na hora de enviar de verdade.
   const preview = useMemo(() => {
-    if (!selectedTemplate) return ''
-    let text = selectedTemplate.body_text
-    for (const source of selectedTemplate.variables_used) {
-      text = text.replaceAll(`{{${MESSAGE_TEMPLATE_VARIABLE_TOKEN[source]}}}`, resolveVariableValue(source))
-    }
-    return text
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!selectedTemplate) return null
+    return renderTemplatePreview(selectedTemplate, {
+      lead,
+      employeeName: employee?.full_name,
+      companyName: company?.name,
+    })
   }, [selectedTemplate, lead, employee, company])
 
   async function handleSend() {
@@ -124,10 +110,11 @@ export function StartConversationDialog({ lead, open, onOpenChange }: StartConve
               </Select>
             </div>
 
-            {selectedTemplate && (
+            {preview && (
               <div className="space-y-1.5">
                 <Label>Pré-visualização</Label>
-                <p className="whitespace-pre-wrap rounded-md border bg-muted p-3 text-sm">{preview}</p>
+                <p className="whitespace-pre-wrap rounded-md border bg-muted p-3 text-sm">{preview.bodyText}</p>
+                <MessageTemplateButtonsPreview buttons={preview.buttons} />
               </div>
             )}
 

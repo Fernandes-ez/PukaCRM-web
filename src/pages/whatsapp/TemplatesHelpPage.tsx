@@ -11,7 +11,7 @@ const steps = [
     icon: Tag,
     title: 'Escolha a categoria certa',
     description:
-      'Utilidade: mensagem transacional ligada a algo já combinado com o Lead (sem conteúdo promocional). Marketing: oferta, promoção ou recomendação - a Meta exige um jeito de recusar receber mais ("pare de enviar promoções" no rodapé, por exemplo). Autenticação: só código/confirmação - o corpo é um texto fixo da própria Meta, não dá pra escrever livremente. Na dúvida pra reengajar um Lead parado, Utilidade costuma ser a categoria certa.',
+      'Utilidade: mensagem transacional ligada a algo já combinado com o Lead (sem conteúdo promocional). Marketing: oferta, promoção ou recomendação - a Meta exige um texto de opt-out no corpo (ex: "Responda PARAR para não receber mais mensagens") e um botão de resposta rápida com essa mesma opção. Autenticação: só código/confirmação - o corpo é um texto fixo da própria Meta, não dá pra escrever livremente. Na dúvida pra reengajar um Lead parado, Utilidade costuma ser a categoria certa.',
   },
   {
     icon: FileText,
@@ -78,9 +78,11 @@ export function TemplatesHelpPage() {
       <Alert>
         <AlertTitle>Sobre a categoria Marketing</AlertTitle>
         <AlertDescription>
-          Templates de Marketing precisam de um jeito de recusar receber mais mensagens (normalmente um botão -
-          recurso que nosso sistema ainda não oferece na criação de template). Até isso existir aqui, prefira
-          Utilidade pra reengajar Leads - é a categoria pensada exatamente pra esse caso e não exige opt-out.
+          Templates de Marketing precisam de um jeito de recusar receber mais mensagens - adicione um botão de
+          "Resposta rápida" (ex: "Parar promoções") na seção de Botões do formulário, e inclua um texto de opt-out
+          no corpo (ex: "Responda PARAR para não receber mais mensagens"). Sem os dois, a Meta rejeita o template.
+          Pra reengajar um Lead parado sem oferta/promoção, Utilidade continua sendo a categoria certa e não exige
+          nada disso.
         </AlertDescription>
       </Alert>
 

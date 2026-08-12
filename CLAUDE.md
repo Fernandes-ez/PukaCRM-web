@@ -1237,6 +1237,59 @@ aparecia sem formatação nenhuma na tabela.
   já formatado (`+55 11 94035-4855`, idempotente). `tsc -b`/`vite
   build`/`oxlint` limpos.
 
+## ✅ Novo em 2026-08-12 — botões em Message Template
+
+Backend ganhou `MessageTemplate.buttons` (ver `CLAUDE.MD` do backend,
+decisão #39) - `QUICK_REPLY`/`URL` (com 1 variável dinâmica opcional)/
+`PHONE_NUMBER`, até 10 por template. Pedido do usuário: ler a doc da
+Meta e planejar antes de construir - motivado pela lacuna que a própria
+`TemplatesHelpPage.tsx` já documentava (Marketing exige opt-out, "botão
+- recurso que a plataforma não oferece ainda").
+
+- **`MessageTemplatesPage.tsx` (`CreateTemplateDialog`)** ganhou uma
+  seção "Botões", com **duas listas via `useFieldArray`** (primeiro uso
+  desse hook no projeto) - "Respostas rápidas" (`QUICK_REPLY`) e
+  "Botões de ação" (`URL`/`PHONE_NUMBER`, tipo escolhido por linha).
+  Duas listas separadas em vez de uma genérica reflete estruturalmente
+  a regra da Meta de agrupar resposta-rápida separado de ação, sem
+  precisar validar reordenação na tela (o backend também reordena
+  defensivamente antes de submeter, decisão #39). Botão "Adicionar" de
+  cada lista desabilita ao atingir o teto (10 total, 2 `URL`, 1
+  `PHONE_NUMBER`) - validação real ainda acontece no backend
+  (`MessageTemplateCreate`), isso aqui é só feedback instantâneo.
+- **Variável em botão de URL só concatena no final** (nunca por
+  posição de cursor, diferente do corpo) - a Meta só aceita a variável
+  no fim da URL, então não faz sentido oferecer inserção por cursor
+  ali. Chips de variável ficam desabilitados assim que a URL já tem
+  algum token (só 1 por botão).
+- **Lista de templates** mostra os botões como badges com ícone por
+  tipo (`Link2`/`Phone`/`MessageSquareReply`), abaixo dos badges de
+  variável que já existiam.
+- **Novo `src/utils/messageTemplatePreview.ts`** - extrai a lógica de
+  `resolveVariableValue`/substituição que antes estava duplicada em
+  `StartConversationDialog.tsx` e `StartConversationBulkDialog.tsx`,
+  generalizando pra também resolver a variável dentro da `url` de cada
+  botão. **Novo `src/components/message-template-buttons-preview.tsx`**
+  (`MessageTemplateButtonsPreview`) - mockup somente-leitura dos
+  botões, mesma pinta de como aparecem de verdade no WhatsApp (linhas
+  cheias, empilhadas) - os dois diálogos de iniciar conversa (1 lead e
+  em lote) agora mostram isso abaixo do preview de texto, com a URL
+  dinâmica já resolvida pro Lead selecionado/exemplo.
+- **`types/messageTemplate.ts`** ganhou `MessageTemplateButtonType`/
+  `MessageTemplateButton`/`MESSAGE_TEMPLATE_BUTTON_TYPE_LABEL` e
+  `MESSAGE_TEMPLATE_VARIABLE_SOURCES` (array das 4 fontes - existia só
+  como constante local duplicada em `MessageTemplatesPage.tsx`, agora
+  compartilhada com o novo helper de preview).
+- **`TemplatesHelpPage.tsx`** atualizada - a lacuna de opt-out que o
+  texto documentava não existe mais; agora explica como cumprir a
+  exigência (botão de resposta rápida "Parar promoções" + texto de
+  opt-out no corpo).
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos. UI no navegador não
+  verificada visualmente nesta entrega (sem ferramenta de automação de
+  browser disponível na sessão) - lógica conferida via build/lint e
+  pelos testes ponta a ponta do backend (decisão #39, incluindo a
+  reordenação de botões e o índice do componente dinâmico no envio).
+
 ## Comandos úteis
 
 ```bash

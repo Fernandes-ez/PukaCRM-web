@@ -4,6 +4,15 @@ export type MessageTemplateStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAUSE
 /** Toda variável é amarrada a um campo real do CRM - resolvida pelo backend, nunca digitada. */
 export type MessageTemplateVariableSource = 'LEAD_NAME' | 'LEAD_PHONE' | 'EMPLOYEE_NAME' | 'COMPANY_NAME'
 
+export const MESSAGE_TEMPLATE_VARIABLE_SOURCES: MessageTemplateVariableSource[] = [
+  'LEAD_NAME',
+  'LEAD_PHONE',
+  'EMPLOYEE_NAME',
+  'COMPANY_NAME',
+]
+
+export type MessageTemplateButtonType = 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER'
+
 export const MESSAGE_TEMPLATE_CATEGORY_LABEL: Record<MessageTemplateCategory, string> = {
   MARKETING: 'Marketing',
   UTILITY: 'Utilidade',
@@ -33,6 +42,24 @@ export const MESSAGE_TEMPLATE_VARIABLE_TOKEN: Record<MessageTemplateVariableSour
   COMPANY_NAME: 'empresa',
 }
 
+export const MESSAGE_TEMPLATE_BUTTON_TYPE_LABEL: Record<MessageTemplateButtonType, string> = {
+  QUICK_REPLY: 'Resposta rápida',
+  URL: 'Link',
+  PHONE_NUMBER: 'Telefone',
+}
+
+/**
+ * `url`/`phone_number` só fazem sentido pro tipo correspondente - o
+ * backend valida isso de verdade (`MessageTemplateButton`), aqui é só
+ * pra dar feedback instantâneo no formulário antes do 422.
+ */
+export interface MessageTemplateButton {
+  type: MessageTemplateButtonType
+  text: string
+  url?: string | null
+  phone_number?: string | null
+}
+
 export interface MessageTemplate {
   id: string
   company_id: string
@@ -41,6 +68,7 @@ export interface MessageTemplate {
   category: MessageTemplateCategory
   body_text: string
   footer_text: string | null
+  buttons: MessageTemplateButton[]
   /** Quais variáveis o corpo usa, na ordem em que aparecem - sempre derivado do body_text, nunca guardado à parte. */
   variables_used: MessageTemplateVariableSource[]
   status: MessageTemplateStatus
@@ -55,4 +83,5 @@ export interface MessageTemplateCreateRequest {
   category: MessageTemplateCategory
   body_text: string
   footer_text?: string
+  buttons?: MessageTemplateButton[]
 }

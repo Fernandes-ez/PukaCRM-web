@@ -16,9 +16,10 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { MessageTemplateButtonsPreview } from '@/components/message-template-buttons-preview'
 import type { Lead, StartConversationBulkResult } from '@/types/lead'
 import { formatPhone } from '@/utils/phone'
-import { MESSAGE_TEMPLATE_VARIABLE_TOKEN, type MessageTemplateVariableSource } from '@/types/messageTemplate'
+import { renderTemplatePreview } from '@/utils/messageTemplatePreview'
 
 function initials(name: string) {
   return name
@@ -81,27 +82,15 @@ export function StartConversationBulkDialog({ open, onOpenChange }: StartConvers
   const approvedTemplates = useMemo(() => templates?.filter((t) => t.status === 'APPROVED') ?? [], [templates])
   const selectedTemplate = approvedTemplates.find((t) => t.id === templateId)
 
-  function resolveVariableValue(source: MessageTemplateVariableSource, lead: Lead): string {
-    switch (source) {
-      case 'LEAD_NAME':
-        return lead.full_name || lead.phone
-      case 'LEAD_PHONE':
-        return lead.phone
-      case 'EMPLOYEE_NAME':
-        return employee?.full_name ?? ''
-      case 'COMPANY_NAME':
-        return company?.name ?? ''
-    }
-  }
-
+  // Pré-visualização com o primeiro contato selecionado como exemplo - o
+  // backend resolve de novo pra cada Lead na hora de enviar de verdade.
   const preview = useMemo(() => {
-    if (!selectedTemplate || selectedLeads.length === 0) return ''
-    let text = selectedTemplate.body_text
-    for (const source of selectedTemplate.variables_used) {
-      text = text.replaceAll(`{{${MESSAGE_TEMPLATE_VARIABLE_TOKEN[source]}}}`, resolveVariableValue(source, selectedLeads[0]))
-    }
-    return text
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!selectedTemplate || selectedLeads.length === 0) return null
+    return renderTemplatePreview(selectedTemplate, {
+      lead: selectedLeads[0],
+      employeeName: employee?.full_name,
+      companyName: company?.name,
+    })
   }, [selectedTemplate, selectedLeads, employee, company])
 
   function toggleLead(id: string) {
@@ -287,10 +276,11 @@ export function StartConversationBulkDialog({ open, onOpenChange }: StartConvers
                     </Select>
                   </div>
 
-                  {selectedTemplate && (
+                  {preview && (
                     <div className="space-y-1.5">
                       <Label>Pré-visualização</Label>
-                      <p className="whitespace-pre-wrap rounded-md border bg-muted p-3 text-sm">{preview}</p>
+                      <p className="whitespace-pre-wrap rounded-md border bg-muted p-3 text-sm">{preview.bodyText}</p>
+                      <MessageTemplateButtonsPreview buttons={preview.buttons} />
                       {selectedLeads.length > 1 && (
                         <p className="text-xs text-muted-foreground">
                           Exemplo com {selectedLeads[0].full_name ?? formatPhone(selectedLeads[0].phone)} — cada contato recebe a
