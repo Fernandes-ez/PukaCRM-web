@@ -1390,23 +1390,44 @@ continua existindo separado, pra disparo pontual).
   explicando que as variáveis são resolvidas individualmente pra cada
   contato no envio (mesmo raciocínio de sempre: resolução 100% no
   backend, nada calculado no frontend).
-- **Seção "Quando enviar" no passo Confirmar, adicionada ainda em
-  2026-08-12** (decisão #45 do backend) - pedido do usuário logo depois
-  de ver o wizard virar página cheia: faltava agendar o disparo, e
-  também recorrência de verdade ("toda quinta durante o período da
-  campanha"). Um `Select` com 3 opções (`sendMode`: `now`/`schedule`/
-  `recurring`) dentro do próprio `CreateCampaignPage.tsx`, sem passo
-  novo no wizard - é só mais uma seção do formulário de confirmação:
-  - **Agora** (default) - comportamento de sempre, sem campo extra.
-  - **Agendar para uma data** - um `datetime-local` (`scheduledAt`,
-    convertido pra ISO com `.toISOString()` antes de mandar - o backend
-    rejeita data no passado).
-  - **Repetir em dias específicos** - o mesmo `datetime-local` (usado
-    como início + horário diário de disparo) + checkboxes de dia da
-    semana (`Checkbox`, mesmo componente já usado em
-    `RolePermissionsDialog`) + um `date` de "repetir até". Nota no form
-    avisa que o público é recalculado a cada ocorrência e que ninguém
-    recebe a campanha 2x, coerente com o desenho do backend.
+- **Passo "Agendamento" dedicado (4º passo do wizard), adicionado ainda
+  em 2026-08-12** (decisão #45 do backend) - pedido do usuário em 2
+  rodadas na mesma conversa: primeiro "faltava agendar o disparo, e
+  também recorrência de verdade" (implementado inicialmente como uma
+  seção dentro do passo Confirmar), depois "adicione um quarto [passo]
+  para o agendamento, coloque um calendário e deixe a UI/UX bem
+  acessível e clara" - promovido de seção pra passo próprio
+  (`Filtros → Template → Agendamento → Confirmar`), com um calendário de
+  verdade em vez de `input[type=datetime-local]`.
+  - **`src/components/ui/calendar.tsx`** (novo) - calendário mensal
+    construído do zero (sem `react-day-picker`/`date-fns` novos -
+    mesmo raciocínio de evitar dependência nova sem necessidade clara
+    já aplicado a outras decisões deste projeto). Acessível de
+    propósito: `role="grid"/"row"/"gridcell"/"columnheader"`, roving
+    `tabIndex` (só o dia selecionado ou hoje é focável via Tab, o resto
+    é alcançado por seta), navegação por `ArrowLeft/Right/Up/Down`
+    (inclusive atravessando mês), `aria-selected`/`aria-current="date"`/
+    `aria-label` com a data por extenso em português por botão-dia,
+    `aria-live="polite"` no rótulo do mês, dias antes de `minDate`
+    desabilitados (`disabled` real, não só visual). Repetição do padrão
+    `bg-brand-600` de seleção já usado no resto do app.
+  - Um `role="radiogroup"` com 3 cartões clicáveis (`Agora`/`Agendar`/
+    `Repetir`, com ícone + descrição curta cada) substitui o `Select` de
+    3 opções da versão anterior - inputs `radio` nativos por trás (foco/
+    teclado/leitor de tela de graça, sem reinventar).
+  - **Agendar**: 1 `Calendar` (data) + `input type="time"` (hora,
+    default `09:00`) em vez do `datetime-local` combinado de antes -
+    mais claro visualmente e cada campo tem seu próprio rótulo.
+  - **Repetir**: mesmo par Calendar+hora pra "início", checkboxes de dia
+    da semana (`Checkbox`, mesmo componente já usado em
+    `RolePermissionsDialog`) dentro de um `<fieldset>`/`<legend>`, e um
+    2º `Calendar` pra "repetir até" (com `minDate` = data de início).
+    Texto explicando que o público é recalculado a cada ocorrência e
+    que ninguém recebe a campanha 2x continua igual.
+  - Passo Confirmar ficou mais enxuto - só nome + resumo (destinatários,
+    template, e uma linha com o agendamento escolhido em texto corrido,
+    ex: "Recorrente: toda(o) Quinta, a partir de quinta-feira, 20 de
+    agosto de 2026 às 09:00, até quinta-feira, 10 de setembro de 2026").
   - `types/campaign.ts` ganhou `scheduled_at`/`recurrence_days_of_week`/
     `recurrence_end_date` em `Campaign`/`CampaignCreateRequest`,
     `SCHEDULED` em `CampaignStatus`, e `WEEKDAY_LABEL`/

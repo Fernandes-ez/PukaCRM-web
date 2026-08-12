@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Check, Loader2, Megaphone, Users } from 'lucide-react'
+import { ArrowLeft, Calendar as CalendarIcon, Check, Clock, Loader2, Megaphone, Repeat, Send, Users } from 'lucide-react'
 import { usePipeline } from '@/hooks/usePipeline'
 import { useMessageTemplates } from '@/hooks/useMessageTemplates'
 import { useCampaignPreview, useCreateCampaign } from '@/hooks/useCampaigns'
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Calendar } from '@/components/ui/calendar'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -27,30 +28,44 @@ const ANY = '__any__'
 
 type SendMode = 'now' | 'schedule' | 'recurring'
 
-function toLocalDatetimeInputValue(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+const SEND_MODE_OPTIONS: { value: SendMode; label: string; description: string; icon: typeof Send }[] = [
+  { value: 'now', label: 'Agora', description: 'Começa a enviar assim que confirmar', icon: Send },
+  { value: 'schedule', label: 'Agendar', description: 'Escolha uma data e hora futuras', icon: CalendarIcon },
+  { value: 'recurring', label: 'Repetir', description: 'Em dias da semana, até uma data final', icon: Repeat },
+]
+
+function combineDateAndTime(date: Date, time: string): Date {
+  const [hours, minutes] = time.split(':').map(Number)
+  const combined = new Date(date)
+  combined.setHours(hours || 0, minutes || 0, 0, 0)
+  return combined
 }
 
-type Step = 'filters' | 'template' | 'confirm'
+function formatDateLabel(date: Date): string {
+  return date.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })
+}
+
+type Step = 'filters' | 'template' | 'schedule' | 'confirm'
 
 const STEPS: { key: Step; label: string }[] = [
   { key: 'filters', label: 'Filtros' },
   { key: 'template', label: 'Template' },
+  { key: 'schedule', label: 'Agendamento' },
   { key: 'confirm', label: 'Confirmar' },
 ]
 
 function Stepper({ current }: { current: Step }) {
   const currentIndex = STEPS.findIndex((s) => s.key === current)
   return (
-    <div className="flex items-center">
+    <div className="flex items-center" role="list" aria-label="Etapas da criação da campanha">
       {STEPS.map((step, index) => {
         const isDone = index < currentIndex
         const isCurrent = index === currentIndex
         return (
-          <div key={step.key} className="flex items-center">
+          <div key={step.key} role="listitem" className="flex items-center">
             <div className="flex items-center gap-2">
               <div
+                aria-current={isCurrent ? 'step' : undefined}
                 className={cn(
                   'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
                   isDone && 'bg-brand-600 text-white',
@@ -63,7 +78,7 @@ function Stepper({ current }: { current: Step }) {
               <span className={cn('text-sm', isCurrent ? 'font-medium' : 'text-muted-foreground')}>{step.label}</span>
             </div>
             {index < STEPS.length - 1 && (
-              <div className={cn('mx-3 h-px w-10 sm:w-16', isDone ? 'bg-brand-600' : 'bg-border')} />
+              <div className={cn('mx-3 h-px w-8 sm:w-12', isDone ? 'bg-brand-600' : 'bg-border')} />
             )}
           </div>
         )
@@ -91,12 +106,10 @@ export function CreateCampaignPage() {
   const [formError, setFormError] = useState<string | null>(null)
 
   const [sendMode, setSendMode] = useState<SendMode>('now')
-  const [scheduledAt, setScheduledAt] = useState(() => {
-    const inOneHour = new Date(Date.now() + 60 * 60 * 1000)
-    return toLocalDatetimeInputValue(inOneHour)
-  })
+  const [scheduleDate, setScheduleDate] = useState<Date | null>(null)
+  const [scheduleTime, setScheduleTime] = useState('09:00')
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>([])
-  const [recurrenceEndDate, setRecurrenceEndDate] = useState('')
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState<Date | null>(null)
 
   function toggleRecurrenceDay(day: number, checked: boolean) {
     setRecurrenceDays((prev) => (checked ? [...prev, day].sort() : prev.filter((d) => d !== day)))
@@ -124,9 +137,10 @@ export function CreateCampaignPage() {
   const approvedTemplates = useMemo(() => templates?.filter((t) => t.status === 'APPROVED') ?? [], [templates])
   const selectedTemplate = approvedTemplates.find((t) => t.id === templateId)
 
-  const scheduleValid = sendMode === 'now' || scheduledAt !== ''
-  const recurrenceValid = sendMode !== 'recurring' || (recurrenceDays.length > 0 && recurrenceEndDate !== '')
-  const canSubmit = name.trim() !== '' && scheduleValid && recurrenceValid
+  const scheduleValid = sendMode === 'now' || scheduleDate !== null
+  const recurrenceValid = sendMode !== 'recurring' || (recurrenceDays.length > 0 && recurrenceEndDate !== null)
+  const canAdvanceFromSchedule = scheduleValid && recurrenceValid
+  const canSubmit = name.trim() !== '' && canAdvanceFromSchedule
 
   async function handleCreate() {
     if (!templateId || !canSubmit) return
@@ -136,9 +150,9 @@ export function CreateCampaignPage() {
         name: name.trim(),
         message_template_id: templateId,
         filters,
-        scheduled_at: sendMode === 'now' ? null : new Date(scheduledAt).toISOString(),
+        scheduled_at: sendMode === 'now' || !scheduleDate ? null : combineDateAndTime(scheduleDate, scheduleTime).toISOString(),
         recurrence_days_of_week: sendMode === 'recurring' ? recurrenceDays : null,
-        recurrence_end_date: sendMode === 'recurring' ? recurrenceEndDate : null,
+        recurrence_end_date: sendMode === 'recurring' && recurrenceEndDate ? recurrenceEndDate.toISOString().slice(0, 10) : null,
       })
       toast({
         title:
@@ -169,7 +183,7 @@ export function CreateCampaignPage() {
 
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Nova campanha</h1>
-        <p className="text-sm text-muted-foreground">Filtre o público e escolha o template pra disparar em massa</p>
+        <p className="text-sm text-muted-foreground">Filtre o público, escolha o template e quando disparar</p>
       </div>
 
       <Stepper current={step} />
@@ -341,7 +355,152 @@ export function CreateCampaignPage() {
                   <ArrowLeft className="h-4 w-4" />
                   Voltar
                 </Button>
-                <Button type="button" disabled={!templateId} onClick={() => setStep('confirm')}>
+                <Button type="button" disabled={!templateId} onClick={() => setStep('schedule')}>
+                  Continuar
+                </Button>
+              </div>
+            </CardContent>
+          </>
+        )}
+
+        {step === 'schedule' && (
+          <>
+            <CardHeader>
+              <CardTitle className="text-base">Agendamento</CardTitle>
+              <CardDescription>Decida quando o disparo acontece.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <fieldset className="space-y-2">
+                <legend className="text-sm font-medium">Quando enviar</legend>
+                <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Quando enviar">
+                  {SEND_MODE_OPTIONS.map((option) => {
+                    const Icon = option.icon
+                    const checked = sendMode === option.value
+                    return (
+                      <label
+                        key={option.value}
+                        className={cn(
+                          'flex cursor-pointer flex-col gap-1.5 rounded-lg border p-3 text-sm transition-colors hover:bg-accent',
+                          checked && 'border-brand-600 bg-brand-600/5 ring-1 ring-brand-600',
+                        )}
+                      >
+                        <span className="flex items-center gap-2 font-medium">
+                          <input
+                            type="radio"
+                            name="send_mode"
+                            value={option.value}
+                            checked={checked}
+                            onChange={() => setSendMode(option.value)}
+                            className="h-4 w-4 accent-brand-600"
+                          />
+                          <Icon className="h-4 w-4 text-muted-foreground" />
+                          {option.label}
+                        </span>
+                        <span className="text-xs text-muted-foreground">{option.description}</span>
+                      </label>
+                    )
+                  })}
+                </div>
+              </fieldset>
+
+              {sendMode === 'now' && (
+                <Alert>
+                  <Send className="h-4 w-4" />
+                  <AlertDescription>
+                    O envio começa logo após confirmar e roda em segundo plano, com throttling - acompanhe o
+                    progresso na lista de campanhas.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {(sendMode === 'schedule' || sendMode === 'recurring') && (
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label id="campaign_schedule_date_label">
+                      {sendMode === 'recurring' ? 'Data de início' : 'Data do disparo'}
+                    </Label>
+                    <Calendar
+                      value={scheduleDate}
+                      onChange={setScheduleDate}
+                      minDate={new Date()}
+                      aria-label={sendMode === 'recurring' ? 'Data de início' : 'Data do disparo'}
+                    />
+                    <div className="flex max-w-[10rem] items-center gap-2">
+                      <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <Label htmlFor="campaign_schedule_time" className="sr-only">
+                        Horário do disparo
+                      </Label>
+                      <Input
+                        id="campaign_schedule_time"
+                        type="time"
+                        value={scheduleTime}
+                        onChange={(e) => setScheduleTime(e.target.value)}
+                      />
+                    </div>
+                    {scheduleDate && (
+                      <p className="text-xs text-muted-foreground" aria-live="polite">
+                        {formatDateLabel(scheduleDate)}, às {scheduleTime}
+                      </p>
+                    )}
+                  </div>
+
+                  {sendMode === 'schedule' && (
+                    <p className="text-xs text-muted-foreground">
+                      O público é calculado agora, na criação - não é recalculado na hora do disparo.
+                    </p>
+                  )}
+
+                  {sendMode === 'recurring' && (
+                    <>
+                      <fieldset className="space-y-1.5">
+                        <legend className="text-sm font-medium">Repetir toda(o)</legend>
+                        <div className="flex flex-wrap gap-3">
+                          {WEEKDAY_LABEL.map((label, index) => (
+                            <label key={label} className="flex items-center gap-1.5 text-sm">
+                              <Checkbox
+                                checked={recurrenceDays.includes(index)}
+                                onCheckedChange={(checked) => toggleRecurrenceDay(index, checked === true)}
+                              />
+                              {label}
+                            </label>
+                          ))}
+                        </div>
+                      </fieldset>
+
+                      <div className="space-y-1.5">
+                        <Label id="campaign_recurrence_end_label">Repetir até</Label>
+                        <Calendar
+                          value={recurrenceEndDate}
+                          onChange={setRecurrenceEndDate}
+                          minDate={scheduleDate ?? new Date()}
+                          aria-label="Repetir até"
+                        />
+                        {recurrenceEndDate && (
+                          <p className="text-xs text-muted-foreground" aria-live="polite">
+                            Última ocorrência possível: {formatDateLabel(recurrenceEndDate)}
+                          </p>
+                        )}
+                      </div>
+
+                      <Alert>
+                        <Repeat className="h-4 w-4" />
+                        <AlertDescription>
+                          O público é recalculado a cada ocorrência - ideal pra algo como "toda quinta,
+                          aniversariantes do dia". Uma pessoa nunca recebe a mesma campanha 2 vezes, mesmo batendo
+                          em várias ocorrências.
+                        </AlertDescription>
+                      </Alert>
+                    </>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-between border-t pt-4">
+                <Button type="button" variant="ghost" onClick={() => setStep('template')}>
+                  <ArrowLeft className="h-4 w-4" />
+                  Voltar
+                </Button>
+                <Button type="button" disabled={!canAdvanceFromSchedule} onClick={() => setStep('confirm')}>
                   Continuar
                 </Button>
               </div>
@@ -370,92 +529,25 @@ export function CreateCampaignPage() {
                   placeholder="Ex: Aniversariantes de agosto"
                 />
               </div>
-              <div className="rounded-md border p-3 text-sm">
+              <div className="space-y-1 rounded-md border p-3 text-sm">
                 <p>
                   <strong>{count}</strong> {count === 1 ? 'destinatário' : 'destinatários'}
                 </p>
                 <p className="text-muted-foreground">Template: {selectedTemplate?.name}</p>
-              </div>
-
-              <div className="space-y-2 border-t pt-4">
-                <Label>Quando enviar</Label>
-                <Select value={sendMode} onValueChange={(value) => setSendMode(value as SendMode)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="now">Agora</SelectItem>
-                    <SelectItem value="schedule">Agendar para uma data</SelectItem>
-                    <SelectItem value="recurring">Repetir em dias específicos</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {sendMode === 'now' && (
-                  <p className="text-xs text-muted-foreground">
-                    O envio começa logo após confirmar e roda em segundo plano, com throttling - acompanhe o
-                    progresso na lista de campanhas.
-                  </p>
-                )}
-
-                {sendMode === 'schedule' && (
-                  <div className="space-y-1.5">
-                    <Label htmlFor="campaign_scheduled_at">Data e hora do disparo</Label>
-                    <Input
-                      id="campaign_scheduled_at"
-                      type="datetime-local"
-                      value={scheduledAt}
-                      onChange={(e) => setScheduledAt(e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      O público é calculado agora, na criação - não é recalculado na hora do disparo.
-                    </p>
-                  </div>
-                )}
-
-                {sendMode === 'recurring' && (
-                  <div className="space-y-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="campaign_recurring_start">Início e horário de disparo</Label>
-                      <Input
-                        id="campaign_recurring_start"
-                        type="datetime-local"
-                        value={scheduledAt}
-                        onChange={(e) => setScheduledAt(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Repetir toda(o)</Label>
-                      <div className="flex flex-wrap gap-3">
-                        {WEEKDAY_LABEL.map((label, index) => (
-                          <label key={label} className="flex items-center gap-1.5 text-sm">
-                            <Checkbox
-                              checked={recurrenceDays.includes(index)}
-                              onCheckedChange={(checked) => toggleRecurrenceDay(index, checked === true)}
-                            />
-                            {label}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="campaign_recurrence_end">Repetir até</Label>
-                      <Input
-                        id="campaign_recurrence_end"
-                        type="date"
-                        value={recurrenceEndDate}
-                        onChange={(e) => setRecurrenceEndDate(e.target.value)}
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      O público é recalculado a cada ocorrência - ideal pra algo como "toda quinta, aniversariantes
-                      do dia". Uma pessoa nunca recebe a mesma campanha 2 vezes, mesmo batendo em várias ocorrências.
-                    </p>
-                  </div>
-                )}
+                <p className="text-muted-foreground">
+                  {sendMode === 'now' && 'Envio: assim que confirmar'}
+                  {sendMode === 'schedule' &&
+                    scheduleDate &&
+                    `Agendada pra ${formatDateLabel(scheduleDate)}, às ${scheduleTime}`}
+                  {sendMode === 'recurring' &&
+                    scheduleDate &&
+                    recurrenceEndDate &&
+                    `Recorrente: toda(o) ${recurrenceDays.map((d) => WEEKDAY_LABEL[d]).join(', ')}, a partir de ${formatDateLabel(scheduleDate)} às ${scheduleTime}, até ${formatDateLabel(recurrenceEndDate)}`}
+                </p>
               </div>
 
               <div className="flex justify-between border-t pt-4">
-                <Button type="button" variant="ghost" onClick={() => setStep('template')}>
+                <Button type="button" variant="ghost" onClick={() => setStep('schedule')}>
                   <ArrowLeft className="h-4 w-4" />
                   Voltar
                 </Button>
