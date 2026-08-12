@@ -4,16 +4,17 @@ import { copilotSuggestionKey } from '@/types/copilot'
 import type { ConversationSuggestion } from '@/types/copilot'
 
 /**
- * Lê a sugestão mais recente da conversa - nunca busca sozinho (não existe
- * GET de listagem, ver types/copilot.ts), só reage ao cache que o push
- * automático (useNotificationSocket) escreve.
+ * Lê a sugestão mais recente da conversa. Busca uma vez ao montar
+ * (fallback pro caso do push de WebSocket ter sido perdido - achado
+ * real: NotificationConnectionManager.push é fire-and-forget, sem
+ * fila/retry) e continua recebendo atualização ao vivo depois, porque
+ * useNotificationSocket escreve na MESMA chave de cache quando o evento
+ * `copilot_suggestion` chega.
  */
 export function useCopilotSuggestion(conversationId: string) {
   return useQuery<ConversationSuggestion | null>({
     queryKey: copilotSuggestionKey(conversationId),
-    queryFn: () => null,
-    enabled: false,
-    initialData: null,
+    queryFn: () => copilotService.getLatest(conversationId),
     staleTime: Infinity,
   })
 }

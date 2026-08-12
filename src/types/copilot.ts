@@ -8,10 +8,11 @@ export interface ConversationSuggestion {
 }
 
 /**
- * Sugestão é 100% automática - só chega por push do WebSocket quando o
- * pré-filtro do backend detecta objeção (sem botão/gatilho manual, ver
- * CLAUDE.MD). Não existe GET de listagem, então essa chave é só o slot de
- * cache que useNotificationSocket escreve.
+ * Sugestão é 100% automática - só é gerada quando o pré-filtro do backend
+ * detecta objeção (sem botão/gatilho manual, ver CLAUDE.MD). Chega por
+ * push do WebSocket em tempo real OU por `GET .../copilot-suggestion`
+ * (fallback buscado ao abrir o painel, ver useCopilotSuggestion) - os
+ * dois escrevem nesta mesma chave de cache.
  */
 export function copilotSuggestionKey(conversationId: string) {
   return ['conversations', conversationId, 'copilot-suggestion'] as const

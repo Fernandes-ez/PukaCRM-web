@@ -1,6 +1,7 @@
 import { Sparkles, Wand2 } from 'lucide-react'
 import { useCopilotSuggestion, useMarkCopilotSuggestionUsed } from '@/hooks/useCopilotSuggestion'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface CopilotPanelProps {
   conversationId: string
@@ -11,12 +12,13 @@ interface CopilotPanelProps {
  * Assiste o consultor, nunca o Lead - fica ao lado do chat, não dentro dele.
  * Só existe quando um humano já assumiu a conversa (ConversationsPage só
  * renderiza isso com `assigned_employee_id` preenchido). 100% automático -
- * sem botão de pedir sugestão (decisão do usuário) - a sugestão só chega
- * por push do WebSocket quando o pré-filtro do backend detecta objeção
- * sozinho (ver hooks/useCopilotSuggestion.ts).
+ * sem botão de pedir sugestão (decisão do usuário) - o pré-filtro do
+ * backend detecta a objeção sozinho e a sugestão chega por push do
+ * WebSocket em tempo real, com um `GET` de fallback ao abrir o painel
+ * pro caso do push ter sido perdido (ver hooks/useCopilotSuggestion.ts).
  */
 export function CopilotPanel({ conversationId, onUseSuggestion }: CopilotPanelProps) {
-  const { data: suggestion } = useCopilotSuggestion(conversationId)
+  const { data: suggestion, isLoading } = useCopilotSuggestion(conversationId)
   const markUsed = useMarkCopilotSuggestionUsed(conversationId)
 
   function handleUse() {
@@ -40,7 +42,13 @@ export function CopilotPanel({ conversationId, onUseSuggestion }: CopilotPanelPr
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
-        {suggestion ? (
+        {isLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+          </div>
+        ) : suggestion ? (
           <div className="space-y-3">
             {suggestion.objection_summary && (
               <div className="space-y-1">

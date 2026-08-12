@@ -1290,6 +1290,33 @@ Meta e planejar antes de construir - motivado pela lacuna que a própria
   pelos testes ponta a ponta do backend (decisão #39, incluindo a
   reordenação de botões e o índice do componente dinâmico no envio).
 
+## ✅ Corrigido em 2026-08-12 — Puka Copilot não mostrava sugestão gerada
+
+Achado pelo usuário em produção: o n8n gerou e confirmou o envio de uma
+sugestão (callback com 200), mas o painel continuou mostrando "Sem
+sugestão no momento". Investigado (ver `CLAUDE.MD` do backend, decisão
+#40): a sugestão estava salva certinha no Postgres - o push em tempo
+real pelo WebSocket que nunca chegou (`NotificationConnectionManager.
+push()` é fire-and-forget, sem fila/retry) e não existia nenhum jeito
+de a tela buscar isso depois.
+
+- **`useCopilotSuggestion` (`hooks/useCopilotSuggestion.ts`)** passou a
+  ter `queryFn` de verdade - antes era `() => null` com `enabled: false`
+  (um slot de cache só-escrita, que só o handler do WebSocket
+  preenchia). Agora busca via `GET /conversations/{id}/
+copilot-suggestion` (novo, `copilotService.getLatest`) ao montar, e o
+  push em tempo real continua funcionando normalmente por cima (mesma
+  chave de cache) - o `GET` é só fallback pro caso do push ter sido
+  perdido, não substitui a entrega ao vivo.
+- **`CopilotPanel.tsx`** ganhou um estado de carregamento (`Skeleton`)
+  pro instante da busca inicial - antes mostrava "Sem sugestão no
+  momento" de cara (fazia sentido quando a única fonte era o push, mas
+  agora existe uma busca real acontecendo que merece um loading state).
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos. A lógica do fallback
+  em si foi validada ponta a ponta nos testes do backend (decisão #40);
+  não foi possível reproduzir visualmente o bug original em produção
+  nesta sessão (sem ferramenta de automação de browser disponível).
+
 ## Comandos úteis
 
 ```bash
