@@ -101,7 +101,7 @@ export function WhatsappPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="max-w-4xl space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">WhatsApp</h1>
         <p className="text-sm text-muted-foreground">Gerencie a instância que conecta sua empresa ao WhatsApp</p>

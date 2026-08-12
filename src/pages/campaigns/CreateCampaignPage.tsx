@@ -172,7 +172,7 @@ export function CreateCampaignPage() {
   const count = preview.data?.count ?? 0
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-4xl space-y-6">
       <Link
         to="/campanhas"
         className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
@@ -196,7 +196,7 @@ export function CreateCampaignPage() {
               <CardDescription>Filtre o público que vai receber a mensagem.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-1.5">
                   <Label>Sexo</Label>
                   <Select value={gender} onValueChange={(value) => setGender(value as LeadGender | typeof ANY)}>
@@ -229,9 +229,6 @@ export function CreateCampaignPage() {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="campaign_min_age">Idade mínima</Label>
                   <Input
@@ -256,7 +253,7 @@ export function CreateCampaignPage() {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 sm:max-w-xs">
                 <Label>Estágio do pipeline</Label>
                 <Select value={pipelineStageId} onValueChange={setPipelineStageId}>
                   <SelectTrigger>
@@ -372,7 +369,7 @@ export function CreateCampaignPage() {
             <CardContent className="space-y-5">
               <fieldset className="space-y-2">
                 <legend className="text-sm font-medium">Quando enviar</legend>
-                <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Quando enviar">
+                <div className="grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Quando enviar">
                   {SEND_MODE_OPTIONS.map((option) => {
                     const Icon = option.icon
                     const checked = sendMode === option.value
@@ -380,7 +377,7 @@ export function CreateCampaignPage() {
                       <label
                         key={option.value}
                         className={cn(
-                          'flex cursor-pointer flex-col gap-1.5 rounded-lg border p-3 text-sm transition-colors hover:bg-accent',
+                          'flex cursor-pointer flex-col gap-1.5 rounded-lg border p-4 text-sm transition-colors hover:bg-accent',
                           checked && 'border-brand-600 bg-brand-600/5 ring-1 ring-brand-600',
                         )}
                       >
@@ -413,18 +410,13 @@ export function CreateCampaignPage() {
                 </Alert>
               )}
 
-              {(sendMode === 'schedule' || sendMode === 'recurring') && (
-                <div className="space-y-4">
+              {sendMode === 'schedule' && (
+                <div className="grid gap-6 lg:grid-cols-[20rem_1fr]">
                   <div className="space-y-1.5">
-                    <Label id="campaign_schedule_date_label">
-                      {sendMode === 'recurring' ? 'Data de início' : 'Data do disparo'}
-                    </Label>
-                    <Calendar
-                      value={scheduleDate}
-                      onChange={setScheduleDate}
-                      minDate={new Date()}
-                      aria-label={sendMode === 'recurring' ? 'Data de início' : 'Data do disparo'}
-                    />
+                    <Label id="campaign_schedule_date_label">Data do disparo</Label>
+                    <Calendar value={scheduleDate} onChange={setScheduleDate} minDate={new Date()} aria-label="Data do disparo" />
+                  </div>
+                  <div className="space-y-4">
                     <div className="flex max-w-[10rem] items-center gap-2">
                       <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
                       <Label htmlFor="campaign_schedule_time" className="sr-only">
@@ -437,61 +429,87 @@ export function CreateCampaignPage() {
                         onChange={(e) => setScheduleTime(e.target.value)}
                       />
                     </div>
-                    {scheduleDate && (
-                      <p className="text-xs text-muted-foreground" aria-live="polite">
-                        {formatDateLabel(scheduleDate)}, às {scheduleTime}
-                      </p>
+                    {scheduleDate ? (
+                      <Alert>
+                        <CalendarIcon className="h-4 w-4" />
+                        <AlertDescription aria-live="polite">
+                          Disparo agendado pra <strong>{formatDateLabel(scheduleDate)}</strong>, às{' '}
+                          <strong>{scheduleTime}</strong>. O público é calculado agora, na criação - não é
+                          recalculado na hora do disparo.
+                        </AlertDescription>
+                      </Alert>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Escolha uma data no calendário ao lado.</p>
                     )}
                   </div>
+                </div>
+              )}
 
-                  {sendMode === 'schedule' && (
-                    <p className="text-xs text-muted-foreground">
-                      O público é calculado agora, na criação - não é recalculado na hora do disparo.
-                    </p>
-                  )}
+              {sendMode === 'recurring' && (
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label id="campaign_schedule_date_label">Data de início</Label>
+                    <Calendar value={scheduleDate} onChange={setScheduleDate} minDate={new Date()} aria-label="Data de início" />
+                    <div className="flex max-w-[10rem] items-center gap-2 pt-1">
+                      <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <Label htmlFor="campaign_schedule_time" className="sr-only">
+                        Horário do disparo diário
+                      </Label>
+                      <Input
+                        id="campaign_schedule_time"
+                        type="time"
+                        value={scheduleTime}
+                        onChange={(e) => setScheduleTime(e.target.value)}
+                      />
+                    </div>
+                  </div>
 
-                  {sendMode === 'recurring' && (
-                    <>
-                      <fieldset className="space-y-1.5">
-                        <legend className="text-sm font-medium">Repetir toda(o)</legend>
-                        <div className="flex flex-wrap gap-3">
-                          {WEEKDAY_LABEL.map((label, index) => (
-                            <label key={label} className="flex items-center gap-1.5 text-sm">
-                              <Checkbox
-                                checked={recurrenceDays.includes(index)}
-                                onCheckedChange={(checked) => toggleRecurrenceDay(index, checked === true)}
-                              />
-                              {label}
-                            </label>
-                          ))}
-                        </div>
-                      </fieldset>
-
-                      <div className="space-y-1.5">
-                        <Label id="campaign_recurrence_end_label">Repetir até</Label>
-                        <Calendar
-                          value={recurrenceEndDate}
-                          onChange={setRecurrenceEndDate}
-                          minDate={scheduleDate ?? new Date()}
-                          aria-label="Repetir até"
-                        />
-                        {recurrenceEndDate && (
-                          <p className="text-xs text-muted-foreground" aria-live="polite">
-                            Última ocorrência possível: {formatDateLabel(recurrenceEndDate)}
-                          </p>
-                        )}
+                  <div className="space-y-4">
+                    <fieldset className="space-y-1.5">
+                      <legend className="text-sm font-medium">Repetir toda(o)</legend>
+                      <div className="flex flex-wrap gap-3">
+                        {WEEKDAY_LABEL.map((label, index) => (
+                          <label key={label} className="flex items-center gap-1.5 text-sm">
+                            <Checkbox
+                              checked={recurrenceDays.includes(index)}
+                              onCheckedChange={(checked) => toggleRecurrenceDay(index, checked === true)}
+                            />
+                            {label}
+                          </label>
+                        ))}
                       </div>
+                    </fieldset>
 
+                    <div className="space-y-1.5">
+                      <Label id="campaign_recurrence_end_label">Repetir até</Label>
+                      <Calendar
+                        value={recurrenceEndDate}
+                        onChange={setRecurrenceEndDate}
+                        minDate={scheduleDate ?? new Date()}
+                        aria-label="Repetir até"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-2">
+                    {scheduleDate && recurrenceDays.length > 0 && recurrenceEndDate ? (
                       <Alert>
                         <Repeat className="h-4 w-4" />
-                        <AlertDescription>
+                        <AlertDescription aria-live="polite">
+                          Toda(o) <strong>{recurrenceDays.map((d) => WEEKDAY_LABEL[d]).join(', ')}</strong>, a
+                          partir de <strong>{formatDateLabel(scheduleDate)}</strong> às{' '}
+                          <strong>{scheduleTime}</strong>, até <strong>{formatDateLabel(recurrenceEndDate)}</strong>.
                           O público é recalculado a cada ocorrência - ideal pra algo como "toda quinta,
                           aniversariantes do dia". Uma pessoa nunca recebe a mesma campanha 2 vezes, mesmo batendo
                           em várias ocorrências.
                         </AlertDescription>
                       </Alert>
-                    </>
-                  )}
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Escolha a data de início, os dias da semana e até quando repetir.
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
 

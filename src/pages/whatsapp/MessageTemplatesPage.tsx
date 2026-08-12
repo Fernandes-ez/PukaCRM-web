@@ -124,7 +124,7 @@ export function MessageTemplatesPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="max-w-4xl space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Templates de Mensagem</h1>

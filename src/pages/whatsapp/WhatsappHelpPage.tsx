@@ -35,7 +35,7 @@ const steps = [
 
 export function WhatsappHelpPage() {
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-3xl space-y-6">
       <Link
         to="/whatsapp"
         className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"

@@ -1451,6 +1451,56 @@ continua existindo separado, pra disparo pontual).
   navegador não verificada visualmente (sem ferramenta de automação de
   browser disponível na sessão).
 
+## ✅ Corrigido em 2026-08-12 — páginas de formulário "coladas" na
+esquerda com muito espaço vazio
+
+Achado pelo usuário direto num screenshot da tela de Agendamento da
+campanha: o conteúdo ficava preso numa coluna estreita (`max-w-2xl`,
+672px) no canto esquerdo, com boa parte da tela sobrando vazia à
+direita - mesmo padrão em várias telas do app, não só nessa. Páginas de
+lista (`LeadsPage`, `EmployeesPage`, `CampaignsPage` etc.) nunca tiveram
+esse problema - usam `Table`/`Card` sem `max-w`, então já ocupam a
+largura disponível. O problema era específico de páginas
+"formulário"/wizard que herdavam o mesmo idioma `<div className="space-y-6
+max-w-2xl">` copiado de tela em tela.
+
+- **Larguras ajustadas** (`max-w-2xl` → `max-w-4xl`, ~896px):
+  `AssistantPage.tsx`, `CompanyPage.tsx`, `WhatsappPage.tsx`,
+  `SubscriptionPage.tsx`, `MessageTemplatesPage.tsx`,
+  `CreateCampaignPage.tsx`. Escolha deliberada de não ir 100% full-bleed
+  (sem `max-w` nenhum) - essas páginas têm `Textarea`s longas (ex:
+  `AssistantPage`, `persona`/`business_rules` com `rows=4`) que ficariam
+  com linhas de texto desconfortavelmente compridas numa tela ultra-wide;
+  896px é bem mais largo que os 672px de antes sem sacrificar
+  legibilidade.
+- **`WhatsappHelpPage.tsx`/`TemplatesHelpPage.tsx`** (`max-w-2xl` →
+  `max-w-3xl`, ~768px) - subida menor de propósito: são páginas de
+  prosa (parágrafo longo explicando regras da Meta), e linha de texto
+  muito comprida piora leitura em vez de ajudar - a v2xl original já
+  estava perto do ideal de ~65-75 caracteres por linha, só que
+  hiper-comprimida; um meio-termo aqui, não o mesmo salto das páginas de
+  formulário.
+- **`CreateCampaignPage.tsx` ganhou mais que só a largura maior** - é a
+  página do screenshot original, então recebeu atenção extra pra
+  realmente usar o espaço, não só esticar com vazio maior:
+  - Passo **Filtros**: Sexo/Mês/Idade mínima/Idade máxima viraram uma
+    grid única `sm:grid-cols-2 lg:grid-cols-4` (antes eram 2 grids
+    `grid-cols-2` empilhadas) - os 4 campos curtos cabem numa linha só
+    em telas largas.
+  - Passo **Agendamento**: virou grid de 2 colunas quando `Agendar`/
+    `Repetir` está selecionado - calendário à esquerda, horário +
+    resumo (`Alert` com a data/hora escolhida por extenso) à direita;
+    modo `Repetir` usa a largura pra colocar calendário de início +
+    horário numa coluna e checkboxes de dia da semana + calendário de
+    "até" na outra, com o resumo final ocupando as duas colunas embaixo.
+    Card `Quando enviar` (os 3 cartões `Agora`/`Agendar`/`Repetir`)
+    ganhou padding maior (`p-4` em vez de `p-3`) pra acompanhar o resto.
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos. UI no navegador não
+  verificada visualmente nesta sessão (sem ferramenta de automação de
+  browser disponível) - o achado original veio de um screenshot real do
+  usuário, não foi possível reconferir visualmente o resultado do ajuste
+  ainda dentro desta sessão.
+
 ## Comandos úteis
 
 ```bash
