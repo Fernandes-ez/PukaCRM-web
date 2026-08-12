@@ -40,3 +40,11 @@ export function useDeactivateEmployee() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: employeesKey }),
   })
 }
+
+export function useResetEmployeePassword() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => employeeService.resetPassword(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: employeesKey }),
+  })
+}

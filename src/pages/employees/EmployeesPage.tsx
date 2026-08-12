@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { MoreHorizontal, Plus, CalendarClock, Pencil, UserX, UserCheck } from 'lucide-react'
-import { useEmployees, useDeactivateEmployee, useUpdateEmployee } from '@/hooks/useEmployees'
+import { MoreHorizontal, Plus, CalendarClock, Pencil, UserX, UserCheck, KeyRound } from 'lucide-react'
+import { useEmployees, useDeactivateEmployee, useUpdateEmployee, useResetEmployeePassword } from '@/hooks/useEmployees'
 import { useRoles } from '@/hooks/useRoles'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { SecretRevealDialog } from '@/components/secret-reveal-dialog'
 import { EMPLOYEE_STATUS_LABEL, type Employee, type EmployeeStatus } from '@/types/employee'
 import { displayRoleName } from '@/utils/roleDisplay'
 import { CreateEmployeeDialog } from '@/pages/employees/CreateEmployeeDialog'
@@ -35,12 +36,15 @@ export function EmployeesPage() {
   const { data: roles } = useRoles()
   const deactivateEmployee = useDeactivateEmployee()
   const updateEmployee = useUpdateEmployee()
+  const resetPassword = useResetEmployeePassword()
   const { toast } = useToast()
 
   const [createOpen, setCreateOpen] = useState(false)
   const [editEmployee, setEditEmployee] = useState<Employee | null>(null)
   const [scheduleEmployee, setScheduleEmployee] = useState<Employee | null>(null)
   const [deactivateTarget, setDeactivateTarget] = useState<Employee | null>(null)
+  const [resetPasswordTarget, setResetPasswordTarget] = useState<Employee | null>(null)
+  const [revealedPassword, setRevealedPassword] = useState<{ employeeName: string; password: string } | null>(null)
 
   const roleNameById = new Map((roles ?? []).map((role) => [role.id, role.name]))
 
@@ -66,6 +70,21 @@ export function EmployeesPage() {
     } catch (error) {
       toast({
         title: 'Não foi possível reativar',
+        description: error instanceof ApiError ? error.message : undefined,
+        variant: 'destructive',
+      })
+    }
+  }
+
+  async function handleResetPassword() {
+    if (!resetPasswordTarget) return
+    try {
+      const { temporary_password } = await resetPassword.mutateAsync(resetPasswordTarget.id)
+      setRevealedPassword({ employeeName: resetPasswordTarget.full_name, password: temporary_password })
+      setResetPasswordTarget(null)
+    } catch (error) {
+      toast({
+        title: 'Não foi possível redefinir a senha',
         description: error instanceof ApiError ? error.message : undefined,
         variant: 'destructive',
       })
@@ -142,6 +161,10 @@ export function EmployeesPage() {
                             <CalendarClock className="mr-2 h-4 w-4" />
                             Horários de trabalho
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setResetPasswordTarget(employee)}>
+                            <KeyRound className="mr-2 h-4 w-4" />
+                            Redefinir senha
+                          </DropdownMenuItem>
                           {employee.status === 'ACTIVE' && !employee.is_owner && (
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
@@ -201,6 +224,26 @@ export function EmployeesPage() {
           variant="destructive"
           isPending={deactivateEmployee.isPending}
           onConfirm={handleDeactivate}
+        />
+      )}
+      {resetPasswordTarget && (
+        <ConfirmDialog
+          open={!!resetPasswordTarget}
+          onOpenChange={(open) => !open && setResetPasswordTarget(null)}
+          title="Redefinir senha"
+          description={`Gerar uma senha temporária nova pra ${resetPasswordTarget.full_name}? A senha atual dele deixa de funcionar e ele vai precisar trocar no próximo login.`}
+          confirmLabel="Redefinir senha"
+          isPending={resetPassword.isPending}
+          onConfirm={handleResetPassword}
+        />
+      )}
+      {revealedPassword && (
+        <SecretRevealDialog
+          open={!!revealedPassword}
+          onOpenChange={(open) => !open && setRevealedPassword(null)}
+          title={`Nova senha de ${revealedPassword.employeeName}`}
+          label="a senha temporária"
+          secret={revealedPassword.password}
         />
       )}
     </div>

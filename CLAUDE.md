@@ -1317,6 +1317,25 @@ copilot-suggestion` (novo, `copilotService.getLatest`) ao montar, e o
   não foi possível reproduzir visualmente o bug original em produção
   nesta sessão (sem ferramenta de automação de browser disponível).
 
+## ✅ Novo em 2026-08-12 — reset administrativo de senha
+
+Backend ganhou `POST /employees/{id}/reset-password` (ver `CLAUDE.MD`
+do backend, decisão #41) - pedido do usuário: uma forma de redefinir a
+senha de um funcionário sem depender de email (SMTP não está
+configurado/confiável agora).
+
+- **`EmployeesPage.tsx`** - novo item "Redefinir senha" no menu de
+  ações de cada funcionário. Fluxo em 2 passos: `ConfirmDialog` (avisa
+  que a senha atual do funcionário para de funcionar) → ao confirmar,
+  `SecretRevealDialog` (mesmo componente já usado pra `service_api_key`
+  do WhatsApp) mostra a senha temporária nova, só essa vez - quem gerou
+  repassa manualmente pro colega (WhatsApp, verbalmente etc.).
+- **`useResetEmployeePassword()`** (`hooks/useEmployees.ts`) invalida a
+  lista de funcionários ao terminar (`must_change_password` mudou).
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos. Lógica validada ponta
+  a ponta no backend (decisão #41); UI não verificada visualmente nesta
+  sessão (sem ferramenta de automação de browser disponível).
+
 ## Comandos úteis
 
 ```bash

@@ -51,4 +51,14 @@ export const employeeService = {
       throw normalizeApiError(error)
     }
   },
+
+  /** Reset administrativo - gera senha temporária nova, devolvida em texto puro uma única vez. */
+  async resetPassword(id: string): Promise<EmployeeCreateResponse> {
+    try {
+      const { data } = await api.post<EmployeeCreateResponse>(`/employees/${id}/reset-password`)
+      return data
+    } catch (error) {
+      throw normalizeApiError(error)
+    }
+  },
 }
