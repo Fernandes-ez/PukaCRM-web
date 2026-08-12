@@ -1206,6 +1206,25 @@ precisar ir em Leads e disparar um por um.
   revisada por leitura, e o backend foi testado ponta a ponta
   isoladamente (decisão #38).
 
+## ✅ Novo em 2026-08-12 — telefone formatado na tela de Leads
+
+Pedido do usuário: `lead.phone` é gravado como veio (dígitos crus do
+webhook da Meta, ou o que a pessoa digitou no cadastro manual) e
+aparecia sem formatação nenhuma na tabela.
+
+- **`src/utils/phone.ts`** (novo) - `formatPhone(phone)` normaliza pelos
+  dígitos e formata como `+xxx (xx) xxxxx-xxxx` (móvel, 9 dígitos) ou
+  `+xxx (xx) xxxx-xxxx` (fixo, 8 dígitos). **Assume DDI `55` (Brasil)**
+  quando o número não vem com DDI (10-11 dígitos) - único mercado do
+  produto hoje. Formato não reconhecido (nem 10-13 dígitos) devolve o
+  telefone original sem mexer, em vez de arriscar um resultado errado.
+- Aplicado só em `LeadsPage.tsx` (a tela pedida) - não mexeu em
+  `Lead.phone` armazenado nem em outras telas que também mostram
+  telefone (ex: `ConversationsPage`, `StartConversationDialog`).
+- Testado: conferido com telefone móvel com/sem DDI, fixo, e telefone
+  já formatado (`+55 11 94035-4855`, idempotente). `tsc -b`/`vite
+  build`/`oxlint` limpos.
+
 ## Comandos úteis
 
 ```bash

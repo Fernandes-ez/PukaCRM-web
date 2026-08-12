@@ -19,6 +19,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { LEAD_STATUS_LABEL, type Lead, type LeadStatus } from '@/types/lead'
+import { formatPhone } from '@/utils/phone'
 import { CreateLeadDialog } from '@/pages/leads/CreateLeadDialog'
 import { EditLeadDialog } from '@/pages/leads/EditLeadDialog'
 import { AssignLeadDialog } from '@/pages/leads/AssignLeadDialog'
@@ -220,7 +221,7 @@ export function LeadsPage() {
                 {leads?.map((lead) => (
                   <TableRow key={lead.id}>
                     <TableCell className="font-medium">{lead.full_name ?? 'Lead sem nome'}</TableCell>
-                    <TableCell className="text-muted-foreground">{lead.phone}</TableCell>
+                    <TableCell className="text-muted-foreground">{formatPhone(lead.phone)}</TableCell>
                     <TableCell>
                       <Badge variant={statusVariant[lead.status]}>{statusLabel[lead.status]}</Badge>
                     </TableCell>
