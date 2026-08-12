@@ -1336,6 +1336,23 @@ configurado/confiável agora).
   a ponta no backend (decisão #41); UI não verificada visualmente nesta
   sessão (sem ferramenta de automação de browser disponível).
 
+## ✅ Novo em 2026-08-12 — notificação de aprovação/rejeição de Template
+
+Backend ganhou `NotificationType.TEMPLATE_APPROVED`/`TEMPLATE_REJECTED`
+(ver `CLAUDE.MD` do backend, decisão #43) - avisa quem cadastrou o
+template quando a Meta aprova ou rejeita.
+
+- **`NotificationBell.tsx`** ganhou os ícones (`BadgeCheck`/`BadgeX`) e,
+  pela primeira vez, uma navegação por `type` em vez de `related_*` -
+  esses dois tipos não têm nenhum `related_lead_id`/`related_conversation_id`/
+  `related_task_id` (não existe página de detalhe por template, só a
+  lista), então clicar leva direto pra `/whatsapp/templates`.
+- `types/notification.ts` ganhou os dois valores no union.
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos. Lógica de notificação
+  validada ponta a ponta no backend (decisão #43); UI não verificada
+  visualmente nesta sessão (sem ferramenta de automação de browser
+  disponível).
+
 ## Comandos úteis
 
 ```bash

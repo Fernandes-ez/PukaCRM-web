@@ -1,4 +1,14 @@
-import { Bell, CheckCheck, UserPlus, MessageCircleWarning, MessageSquareText, ClipboardList, ClipboardX } from 'lucide-react'
+import {
+  Bell,
+  CheckCheck,
+  UserPlus,
+  MessageCircleWarning,
+  MessageSquareText,
+  ClipboardList,
+  ClipboardX,
+  BadgeCheck,
+  BadgeX,
+} from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import {
   DropdownMenu,
@@ -20,6 +30,8 @@ const NOTIFICATION_ICON: Record<Notification['type'], typeof UserPlus> = {
   TASK_ASSIGNED: ClipboardList,
   TASK_DUE: ClipboardX,
   NEW_MESSAGE: MessageSquareText,
+  TEMPLATE_APPROVED: BadgeCheck,
+  TEMPLATE_REJECTED: BadgeX,
 }
 
 export function NotificationBell() {
@@ -39,6 +51,8 @@ export function NotificationBell() {
       navigate('/pipeline')
     } else if (notification.related_lead_id) {
       navigate('/leads')
+    } else if (notification.type === 'TEMPLATE_APPROVED' || notification.type === 'TEMPLATE_REJECTED') {
+      navigate('/whatsapp/templates')
     }
   }
 

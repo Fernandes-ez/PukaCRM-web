@@ -4,6 +4,8 @@ export type NotificationType =
   | 'TASK_ASSIGNED'
   | 'TASK_DUE'
   | 'NEW_MESSAGE'
+  | 'TEMPLATE_APPROVED'
+  | 'TEMPLATE_REJECTED'
 
 export interface Notification {
   id: string
