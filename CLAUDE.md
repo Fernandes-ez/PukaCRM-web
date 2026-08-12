@@ -1542,6 +1542,31 @@ uma tela pra ver os detalhes de uma campanha mesmo já concluída.
   verificada visualmente (sem ferramenta de automação de browser
   disponível na sessão).
 
+## ✅ Novo em 2026-08-12 — campanha nunca "atravessa" conversa aberta
+
+Pedido do usuário: cuidado pra campanha não interferir num atendimento já
+em andamento, e checar as normas da Meta sobre a janela de 24h antes de
+mexer (ver decisão #47 do backend - pesquisado contra a doc oficial: o
+risco real não é a janela de 24h em si, é o pacing de templates de
+Marketing por usuário que a Meta aplica, erro `131049` se estourar).
+Backend passou a nunca incluir num público de campanha (nem na criação,
+nem reavaliando ocorrência de recorrente, nem no momento do envio) um
+Lead que já tem uma conversa `OPEN`.
+
+- **`types/campaign.ts`** ganhou `SKIPPED_ACTIVE_CONVERSATION` em
+  `CampaignRecipientStatus`/`CAMPAIGN_RECIPIENT_STATUS_LABEL` ("Pulado
+  (conversa em andamento)") - aparece na tabela de destinatários da
+  `CampaignDetailPage.tsx` igual o `SKIPPED_OPT_OUT` já existente.
+- **`CreateCampaignPage.tsx`** - texto de aviso no passo Filtros
+  atualizado ("Leads que já pediram pra não receber campanha, ou que já
+  têm uma conversa em andamento (com humano ou com a IA), nunca
+  entram...").
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos. Lógica de exclusão
+  validada ponta a ponta no backend (decisão #47, inclusive o caso de
+  corrida - Lead abre conversa depois do snapshot mas antes do envio);
+  UI no navegador não verificada visualmente (sem ferramenta de
+  automação de browser disponível na sessão).
+
 ## Comandos úteis
 
 ```bash

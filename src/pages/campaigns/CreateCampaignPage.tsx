@@ -282,7 +282,8 @@ export function CreateCampaignPage() {
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Leads que já pediram pra não receber campanha nunca entram, mesmo se baterem no filtro.
+                Leads que já pediram pra não receber campanha, ou que já têm uma conversa em andamento (com humano
+                ou com a IA), nunca entram, mesmo se baterem no filtro.
               </p>
 
               <div className="flex justify-between border-t pt-4">

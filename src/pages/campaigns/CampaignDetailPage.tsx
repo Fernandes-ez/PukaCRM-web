@@ -25,6 +25,7 @@ const RECIPIENT_STATUS_VARIANT: Record<CampaignRecipientStatus, 'secondary' | 's
   SENT: 'success',
   FAILED: 'destructive',
   SKIPPED_OPT_OUT: 'outline',
+  SKIPPED_ACTIVE_CONVERSATION: 'outline',
   CANCELED: 'outline',
 }
 

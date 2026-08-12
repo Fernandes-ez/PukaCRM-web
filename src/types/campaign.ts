@@ -39,13 +39,20 @@ export interface CampaignPreviewResponse {
   count: number
 }
 
-export type CampaignRecipientStatus = 'PENDING' | 'SENT' | 'FAILED' | 'SKIPPED_OPT_OUT' | 'CANCELED'
+export type CampaignRecipientStatus =
+  | 'PENDING'
+  | 'SENT'
+  | 'FAILED'
+  | 'SKIPPED_OPT_OUT'
+  | 'SKIPPED_ACTIVE_CONVERSATION'
+  | 'CANCELED'
 
 export const CAMPAIGN_RECIPIENT_STATUS_LABEL: Record<CampaignRecipientStatus, string> = {
   PENDING: 'Na fila',
   SENT: 'Enviado',
   FAILED: 'Falhou',
   SKIPPED_OPT_OUT: 'Pulado (opt-out)',
+  SKIPPED_ACTIVE_CONVERSATION: 'Pulado (conversa em andamento)',
   CANCELED: 'Cancelado',
 }
 
