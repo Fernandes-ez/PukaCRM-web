@@ -1218,9 +1218,21 @@ aparecia sem formatação nenhuma na tabela.
   quando o número não vem com DDI (10-11 dígitos) - único mercado do
   produto hoje. Formato não reconhecido (nem 10-13 dígitos) devolve o
   telefone original sem mexer, em vez de arriscar um resultado errado.
-- Aplicado só em `LeadsPage.tsx` (a tela pedida) - não mexeu em
-  `Lead.phone` armazenado nem em outras telas que também mostram
-  telefone (ex: `ConversationsPage`, `StartConversationDialog`).
+- Aplicado em toda exibição somente-leitura de `lead.phone` no app:
+  `LeadsPage.tsx` (tabela), `PipelinePage.tsx` (card do Kanban),
+  `LeadDetailDialog.tsx` (cabeçalho do diálogo), `StartConversationDialog.tsx`
+  (título, quando o Lead não tem nome) e `StartConversationBulkDialog.tsx`
+  (linha do contato, chip removível, texto de exemplo da pré-visualização,
+  linha de resultado). Nunca mexeu em `Lead.phone` armazenado.
+  Busca do picker (`lead.phone.includes(query)`) continua comparando o
+  valor cru, não o formatado - buscar só por dígitos continua funcionando.
+- **Não formata a variável `{{telefone_lead}}` dentro do texto do
+  Message Template** (`resolveVariableValue`, caso `LEAD_PHONE`, nos dois
+  diálogos de iniciar conversa) - de propósito: esse valor é o que o
+  backend realmente resolve e envia pro Lead (`_resolve_variable_values`,
+  decisão #27), então a pré-visualização tem que continuar batendo com o
+  que sai de verdade. Formatar só ali criaria uma pré-visualização
+  enganosa.
 - Testado: conferido com telefone móvel com/sem DDI, fixo, e telefone
   já formatado (`+55 11 94035-4855`, idempotente). `tsc -b`/`vite
   build`/`oxlint` limpos.

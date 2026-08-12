@@ -15,6 +15,7 @@ import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '@/hooks/u
 import { useNotes, useCreateNote, useDeleteNote } from '@/hooks/useNotes'
 import { formatDate, formatRelativeTime } from '@/utils/date'
 import { cn } from '@/utils/cn'
+import { formatPhone } from '@/utils/phone'
 import type { Lead } from '@/types/lead'
 
 interface LeadDetailDialogProps {
@@ -29,7 +30,7 @@ export function LeadDetailDialog({ lead, open, onOpenChange }: LeadDetailDialogP
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{lead.full_name ?? 'Lead sem nome'}</DialogTitle>
-          <DialogDescription>{lead.phone}</DialogDescription>
+          <DialogDescription>{formatPhone(lead.phone)}</DialogDescription>
         </DialogHeader>
         <Tabs defaultValue="tasks">
           <TabsList className="grid w-full grid-cols-2">

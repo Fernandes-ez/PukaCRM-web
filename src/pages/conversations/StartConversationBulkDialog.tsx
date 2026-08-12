@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { Lead, StartConversationBulkResult } from '@/types/lead'
+import { formatPhone } from '@/utils/phone'
 import { MESSAGE_TEMPLATE_VARIABLE_TOKEN, type MessageTemplateVariableSource } from '@/types/messageTemplate'
 
 function initials(name: string) {
@@ -210,7 +211,7 @@ export function StartConversationBulkDialog({ open, onOpenChange }: StartConvers
                       </Avatar>
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-medium">{lead.full_name ?? 'Lead sem nome'}</p>
-                        <p className="truncate text-xs text-muted-foreground">{lead.phone}</p>
+                        <p className="truncate text-xs text-muted-foreground">{formatPhone(lead.phone)}</p>
                       </div>
                     </label>
                   ))
@@ -242,12 +243,12 @@ export function StartConversationBulkDialog({ open, onOpenChange }: StartConvers
               <div className="flex flex-wrap gap-1.5">
                 {selectedLeads.map((lead) => (
                   <Badge key={lead.id} variant="outline" className="gap-1 pr-1">
-                    {lead.full_name ?? lead.phone}
+                    {lead.full_name ?? formatPhone(lead.phone)}
                     <button
                       type="button"
                       onClick={() => toggleLead(lead.id)}
                       className="rounded-full p-0.5 hover:bg-muted"
-                      aria-label={`Remover ${lead.full_name ?? lead.phone}`}
+                      aria-label={`Remover ${lead.full_name ?? formatPhone(lead.phone)}`}
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -292,7 +293,7 @@ export function StartConversationBulkDialog({ open, onOpenChange }: StartConvers
                       <p className="whitespace-pre-wrap rounded-md border bg-muted p-3 text-sm">{preview}</p>
                       {selectedLeads.length > 1 && (
                         <p className="text-xs text-muted-foreground">
-                          Exemplo com {selectedLeads[0].full_name ?? selectedLeads[0].phone} — cada contato recebe a
+                          Exemplo com {selectedLeads[0].full_name ?? formatPhone(selectedLeads[0].phone)} — cada contato recebe a
                           mensagem personalizada com os próprios dados.
                         </p>
                       )}
@@ -347,7 +348,7 @@ export function StartConversationBulkDialog({ open, onOpenChange }: StartConvers
                       <XCircle className="h-4 w-4 shrink-0 text-destructive" />
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{lead?.full_name ?? lead?.phone ?? 'Contato'}</p>
+                      <p className="truncate font-medium">{lead?.full_name ?? (lead ? formatPhone(lead.phone) : 'Contato')}</p>
                       {result.error && <p className="truncate text-xs text-destructive">{result.error}</p>}
                     </div>
                   </button>

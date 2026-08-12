@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { Lead } from '@/types/lead'
+import { formatPhone } from '@/utils/phone'
 import { MESSAGE_TEMPLATE_VARIABLE_TOKEN, type MessageTemplateVariableSource } from '@/types/messageTemplate'
 
 interface StartConversationDialogProps {
@@ -87,7 +88,7 @@ export function StartConversationDialog({ lead, open, onOpenChange }: StartConve
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Iniciar conversa com {lead.full_name ?? lead.phone}</DialogTitle>
+          <DialogTitle>Iniciar conversa com {lead.full_name ?? formatPhone(lead.phone)}</DialogTitle>
           <DialogDescription>
             Fora da janela de atendimento de 24h, só um Message Template aprovado pode iniciar contato.
           </DialogDescription>

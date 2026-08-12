@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/utils/cn'
+import { formatPhone } from '@/utils/phone'
 import { PipelineStagesDialog } from '@/pages/pipeline/PipelineStagesDialog'
 import { LeadDetailDialog } from '@/pages/pipeline/LeadDetailDialog'
 import type { Lead } from '@/types/lead'
@@ -173,7 +174,7 @@ function LeadCard({ lead, onSelect }: { lead: Lead; onSelect: () => void }) {
       )}
     >
       <p className="text-sm font-medium">{lead.full_name ?? 'Lead sem nome'}</p>
-      <p className="text-xs text-muted-foreground">{lead.phone}</p>
+      <p className="text-xs text-muted-foreground">{formatPhone(lead.phone)}</p>
     </div>
   )
 }
