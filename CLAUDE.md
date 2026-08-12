@@ -1390,6 +1390,35 @@ continua existindo separado, pra disparo pontual).
   explicando que as variáveis são resolvidas individualmente pra cada
   contato no envio (mesmo raciocínio de sempre: resolução 100% no
   backend, nada calculado no frontend).
+- **Seção "Quando enviar" no passo Confirmar, adicionada ainda em
+  2026-08-12** (decisão #45 do backend) - pedido do usuário logo depois
+  de ver o wizard virar página cheia: faltava agendar o disparo, e
+  também recorrência de verdade ("toda quinta durante o período da
+  campanha"). Um `Select` com 3 opções (`sendMode`: `now`/`schedule`/
+  `recurring`) dentro do próprio `CreateCampaignPage.tsx`, sem passo
+  novo no wizard - é só mais uma seção do formulário de confirmação:
+  - **Agora** (default) - comportamento de sempre, sem campo extra.
+  - **Agendar para uma data** - um `datetime-local` (`scheduledAt`,
+    convertido pra ISO com `.toISOString()` antes de mandar - o backend
+    rejeita data no passado).
+  - **Repetir em dias específicos** - o mesmo `datetime-local` (usado
+    como início + horário diário de disparo) + checkboxes de dia da
+    semana (`Checkbox`, mesmo componente já usado em
+    `RolePermissionsDialog`) + um `date` de "repetir até". Nota no form
+    avisa que o público é recalculado a cada ocorrência e que ninguém
+    recebe a campanha 2x, coerente com o desenho do backend.
+  - `types/campaign.ts` ganhou `scheduled_at`/`recurrence_days_of_week`/
+    `recurrence_end_date` em `Campaign`/`CampaignCreateRequest`,
+    `SCHEDULED` em `CampaignStatus`, e `WEEKDAY_LABEL`/
+    `WEEKDAY_LABEL_SHORT` (índice = `date.weekday()` do Python,
+    0=segunda).
+  - **`CampaignsPage.tsx`** - badge "Recorrente" (ícone `Repeat`) nas
+    campanhas com `recurrence_days_of_week`, texto de agendamento
+    (`scheduleSummary`: "Agendada pra dd/mm hh:mm" ou "Toda(o) Qui até
+    dd/mm/aaaa") no lugar da barra de progresso enquanto
+    `total_recipients` ainda é 0 (recorrente sem nenhuma ocorrência
+    gerada ainda, ou agendada única que ainda não chegou a hora).
+    `canCancel`/`statusVariant` passaram a cobrir `SCHEDULED`.
 - **`CreateLeadDialog.tsx`/`EditLeadDialog.tsx`** ganharam campos
   opcionais de Sexo (select) e Nascimento (`input type="date"`).
 - **`LeadsPage.tsx`** mostra um badge "Não recebe campanhas" quando

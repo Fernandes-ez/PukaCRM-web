@@ -1,13 +1,18 @@
 import type { LeadGender } from '@/types/lead'
 
-export type CampaignStatus = 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'CANCELED'
+export type CampaignStatus = 'SCHEDULED' | 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'CANCELED'
 
 export const CAMPAIGN_STATUS_LABEL: Record<CampaignStatus, string> = {
+  SCHEDULED: 'Agendada',
   QUEUED: 'Na fila',
   RUNNING: 'Enviando',
   COMPLETED: 'Concluída',
   CANCELED: 'Cancelada',
 }
+
+/** date.weekday() do Python: 0=segunda...6=domingo. */
+export const WEEKDAY_LABEL = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+export const WEEKDAY_LABEL_SHORT = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 
 export interface CampaignFilters {
   gender?: LeadGender | null
@@ -22,6 +27,12 @@ export interface CampaignCreateRequest {
   name: string
   message_template_id: string
   filters: CampaignFilters
+  /** ISO. Ausente/null = dispara assim que possível. */
+  scheduled_at?: string | null
+  /** date.weekday(): 0=segunda...6=domingo. Ausente/null = disparo único. */
+  recurrence_days_of_week?: number[] | null
+  /** YYYY-MM-DD - último dia em que uma ocorrência pode disparar. */
+  recurrence_end_date?: string | null
 }
 
 export interface CampaignPreviewResponse {
@@ -36,6 +47,9 @@ export interface Campaign {
   created_by_employee_id: string
   status: CampaignStatus
   filters: CampaignFilters
+  scheduled_at: string | null
+  recurrence_days_of_week: number[] | null
+  recurrence_end_date: string | null
   total_recipients: number
   sent_count: number
   failed_count: number

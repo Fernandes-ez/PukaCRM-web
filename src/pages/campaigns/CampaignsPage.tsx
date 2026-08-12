@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Megaphone, Plus, X } from 'lucide-react'
+import { Megaphone, Plus, Repeat, X } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useCampaigns, useCancelCampaign } from '@/hooks/useCampaigns'
 import { useMessageTemplates } from '@/hooks/useMessageTemplates'
@@ -11,14 +11,36 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import { CAMPAIGN_STATUS_LABEL, type Campaign, type CampaignStatus } from '@/types/campaign'
+import { CAMPAIGN_STATUS_LABEL, WEEKDAY_LABEL_SHORT, type Campaign, type CampaignStatus } from '@/types/campaign'
 import { formatRelativeTime } from '@/utils/date'
 
 const statusVariant: Record<CampaignStatus, 'secondary' | 'warning' | 'success' | 'destructive'> = {
+  SCHEDULED: 'secondary',
   QUEUED: 'secondary',
   RUNNING: 'warning',
   COMPLETED: 'success',
   CANCELED: 'destructive',
+}
+
+function formatDateTime(iso: string): string {
+  return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
+
+function formatDate(iso: string): string {
+  const [year, month, day] = iso.split('-')
+  return `${day}/${month}/${year}`
+}
+
+function scheduleSummary(campaign: Campaign): string | null {
+  if (campaign.recurrence_days_of_week?.length) {
+    const days = campaign.recurrence_days_of_week.map((d) => WEEKDAY_LABEL_SHORT[d]).join(', ')
+    const until = campaign.recurrence_end_date ? ` até ${formatDate(campaign.recurrence_end_date)}` : ''
+    return `Toda(o) ${days}${until}`
+  }
+  if (campaign.status === 'SCHEDULED' && campaign.scheduled_at) {
+    return `Agendada pra ${formatDateTime(campaign.scheduled_at)}`
+  }
+  return null
 }
 
 function CampaignRow({ campaign, templateName }: { campaign: Campaign; templateName: string }) {
@@ -28,7 +50,9 @@ function CampaignRow({ campaign, templateName }: { campaign: Campaign; templateN
 
   const processed = campaign.sent_count + campaign.failed_count
   const pct = campaign.total_recipients > 0 ? Math.round((processed / campaign.total_recipients) * 100) : 0
-  const canCancel = campaign.status === 'QUEUED' || campaign.status === 'RUNNING'
+  const canCancel = campaign.status === 'SCHEDULED' || campaign.status === 'QUEUED' || campaign.status === 'RUNNING'
+  const isRecurring = !!campaign.recurrence_days_of_week?.length
+  const schedule = scheduleSummary(campaign)
 
   async function handleCancel() {
     try {
@@ -54,6 +78,12 @@ function CampaignRow({ campaign, templateName }: { campaign: Campaign; templateN
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
+          {isRecurring && (
+            <Badge variant="outline" className="gap-1">
+              <Repeat className="h-3 w-3" />
+              Recorrente
+            </Badge>
+          )}
           <Badge variant={statusVariant[campaign.status]}>{CAMPAIGN_STATUS_LABEL[campaign.status]}</Badge>
           {canCancel && (
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setConfirmCancel(true)}>
@@ -63,16 +93,20 @@ function CampaignRow({ campaign, templateName }: { campaign: Campaign; templateN
         </div>
       </div>
 
-      <div className="space-y-1">
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-          <div className="h-full rounded-full bg-brand-600 transition-all" style={{ width: `${pct}%` }} />
+      {schedule && <p className="text-xs text-muted-foreground">{schedule}</p>}
+
+      {campaign.total_recipients > 0 && (
+        <div className="space-y-1">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div className="h-full rounded-full bg-brand-600 transition-all" style={{ width: `${pct}%` }} />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {processed} de {campaign.total_recipients} processados
+            {campaign.sent_count > 0 && ` · ${campaign.sent_count} enviado(s)`}
+            {campaign.failed_count > 0 && ` · ${campaign.failed_count} falhou(aram)`}
+          </p>
         </div>
-        <p className="text-xs text-muted-foreground">
-          {processed} de {campaign.total_recipients} processados
-          {campaign.sent_count > 0 && ` · ${campaign.sent_count} enviado(s)`}
-          {campaign.failed_count > 0 && ` · ${campaign.failed_count} falhou(aram)`}
-        </p>
-      </div>
+      )}
 
       <ConfirmDialog
         open={confirmCancel}
