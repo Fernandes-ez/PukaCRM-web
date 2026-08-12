@@ -54,3 +54,18 @@ export interface LeadImportResult {
   created: number
   skipped: LeadImportSkipped[]
 }
+
+export interface StartConversationBulkRequest {
+  lead_ids: string[]
+  template_id: string
+}
+
+export interface StartConversationBulkResult {
+  lead_id: string
+  conversation_id: string | null
+  error: string | null
+}
+
+export interface StartConversationBulkResponse {
+  results: StartConversationBulkResult[]
+}

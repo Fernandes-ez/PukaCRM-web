@@ -1,6 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { leadService, type StartConversationRequest } from '@/services/leadService'
-import type { Lead, LeadAssignRequest, LeadCreateRequest, LeadUpdateRequest } from '@/types/lead'
+import type {
+  Lead,
+  LeadAssignRequest,
+  LeadCreateRequest,
+  LeadUpdateRequest,
+  StartConversationBulkRequest,
+} from '@/types/lead'
 
 export const leadsKey = ['leads'] as const
 
@@ -68,6 +74,18 @@ export function useStartConversation() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: StartConversationRequest }) =>
       leadService.startConversation(id, payload),
+  })
+}
+
+export function useStartConversationBulk() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: StartConversationBulkRequest) => leadService.startConversationBulk(payload),
+    onSuccess: () => {
+      // Valor igual a `conversationsKey` (useConversations.ts) - não importado direto pra evitar import circular.
+      queryClient.invalidateQueries({ queryKey: ['conversations'] })
+      queryClient.invalidateQueries({ queryKey: leadsKey })
+    },
   })
 }
 

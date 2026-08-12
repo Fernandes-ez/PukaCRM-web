@@ -1167,6 +1167,45 @@ editar os próprios dados, e a senha temporária do primeiro acesso
   browser disponível na sessão) - lógica conferida via build/lint e
   pelos testes ponta a ponta do backend (decisão #37).
 
+## ✅ Novo em 2026-08-12 — iniciar conversa com vários Leads de uma vez
+
+Backend ganhou `POST /leads/start-conversation-bulk` (ver `CLAUDE.MD`
+do backend, decisão #38) - pedido do usuário: na tela de Conversas, um
+botão que abre um seletor de contatos com multi-seleção, em vez de
+precisar ir em Leads e disparar um por um.
+
+- **`StartConversationBulkDialog.tsx`** (novo,
+  `src/pages/conversations/`) - fluxo em 3 passos, pensado como um
+  picker de agenda de contatos (busca por nome/telefone, checkbox por
+  linha, avatar com iniciais, "N selecionados" com atalho "Selecionar
+  visíveis"/"Limpar"):
+  1. **Selecionar contatos** - só mostra Leads **sem** conversa `OPEN`
+     (cruza `useLeads()` com `useConversations()`) - quem já tem
+     conversa aberta já está na lista principal de Conversas, não faz
+     sentido oferecer "iniciar" de novo pra essa pessoa.
+  2. **Escolher template** - mesmo componente/lógica de preview do
+     `StartConversationDialog.tsx` (tela de Leads, gatilho de 1 Lead só,
+     decisão de 2026-08-07) - contatos selecionados aparecem como chips
+     removíveis, preview usa o primeiro selecionado como exemplo com
+     aviso de que cada um recebe a mensagem com os próprios dados
+     (renderização de verdade continua 100% no backend, decisão #27).
+  3. **Resultado** - lista sucesso/erro por contato (ícone + mensagem de
+     erro quando falhou); clicar num item que deu certo abre a
+     conversa. Nunca trava no meio por causa de 1 contato problemático -
+     o backend já isola por item (decisão #38).
+- Botão de entrada: ícone `MessageSquarePlus` no cabeçalho da lista de
+  Conversas (`ConversationsPage.tsx`), condicionado a
+  `hasPermission('CONVERSATIONS', 'conversation', 'CREATE')` - mesma
+  permissão que já gate o botão equivalente na tela de Leads.
+- **`useStartConversationBulk()`** (`hooks/useLeads.ts`) invalida tanto
+  a lista de conversas quanto a de leads ao terminar (mesmo lead pode
+  ganhar uma `Conversation` nova).
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos. UI no navegador não
+  verificada visualmente nesta entrega (sem ferramenta de automação de
+  browser disponível na sessão) - a lógica de filtro/estado foi
+  revisada por leitura, e o backend foi testado ponta a ponta
+  isoladamente (decisão #38).
+
 ## Comandos úteis
 
 ```bash

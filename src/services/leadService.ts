@@ -6,6 +6,8 @@ import type {
   LeadImportResult,
   LeadMoveStageRequest,
   LeadUpdateRequest,
+  StartConversationBulkRequest,
+  StartConversationBulkResponse,
 } from '@/types/lead'
 import type { ConversationRead } from '@/types/conversation'
 
@@ -120,6 +122,16 @@ export const leadService = {
   async startConversation(id: string, payload: StartConversationRequest): Promise<ConversationRead> {
     try {
       const { data } = await api.post<ConversationRead>(`/leads/${id}/start-conversation`, payload)
+      return data
+    } catch (error) {
+      throw normalizeApiError(error)
+    }
+  },
+
+  /** Nunca rejeita por causa de 1 lead problemático - o resultado por item já vem no corpo da resposta. */
+  async startConversationBulk(payload: StartConversationBulkRequest): Promise<StartConversationBulkResponse> {
+    try {
+      const { data } = await api.post<StartConversationBulkResponse>('/leads/start-conversation-bulk', payload)
       return data
     } catch (error) {
       throw normalizeApiError(error)

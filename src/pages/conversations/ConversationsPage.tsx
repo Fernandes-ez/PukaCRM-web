@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { AlertCircle, MessageSquare } from 'lucide-react'
+import { AlertCircle, MessageSquare, MessageSquarePlus } from 'lucide-react'
 import { useConversation, useConversations } from '@/hooks/useConversations'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/utils/cn'
 import { compareDatesDesc } from '@/utils/date'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConversationDetail } from '@/pages/conversations/ConversationDetail'
 import { CopilotPanel } from '@/pages/conversations/CopilotPanel'
+import { StartConversationBulkDialog } from '@/pages/conversations/StartConversationBulkDialog'
 import type { ConversationStatus } from '@/types/conversation'
 
 const statusLabel: Record<ConversationStatus, string> = {
@@ -33,15 +35,23 @@ export function ConversationsPage() {
   const navigate = useNavigate()
   const { data: conversations, isLoading } = useConversations()
   const { data: activeConversation } = useConversation(id)
-  const { employee } = useAuth()
+  const { employee, hasPermission } = useAuth()
   const [draftMessage, setDraftMessage] = useState('')
+  const [startConversationOpen, setStartConversationOpen] = useState(false)
 
   return (
     <div className="flex h-[calc(100vh-6.5rem)] gap-4">
       <div className="flex w-full max-w-xs shrink-0 flex-col rounded-lg border bg-card">
-        <div className="border-b p-4">
-          <h1 className="text-lg font-semibold tracking-tight">Conversas</h1>
-          <p className="text-xs text-muted-foreground">{conversations?.length ?? 0} no total</p>
+        <div className="flex items-start justify-between gap-2 border-b p-4">
+          <div>
+            <h1 className="text-lg font-semibold tracking-tight">Conversas</h1>
+            <p className="text-xs text-muted-foreground">{conversations?.length ?? 0} no total</p>
+          </div>
+          {hasPermission('CONVERSATIONS', 'conversation', 'CREATE') && (
+            <Button size="icon" variant="outline" onClick={() => setStartConversationOpen(true)} aria-label="Iniciar conversa">
+              <MessageSquarePlus className="h-4 w-4" />
+            </Button>
+          )}
         </div>
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
@@ -106,6 +116,8 @@ export function ConversationsPage() {
       {id && activeConversation?.assigned_employee_id === employee?.id && (
         <CopilotPanel conversationId={id} onUseSuggestion={setDraftMessage} />
       )}
+
+      <StartConversationBulkDialog open={startConversationOpen} onOpenChange={setStartConversationOpen} />
     </div>
   )
 }
