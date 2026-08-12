@@ -11,41 +11,14 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import { CAMPAIGN_STATUS_LABEL, WEEKDAY_LABEL_SHORT, type Campaign, type CampaignStatus } from '@/types/campaign'
+import { CAMPAIGN_STATUS_LABEL, type Campaign } from '@/types/campaign'
+import { CAMPAIGN_STATUS_VARIANT, scheduleSummary } from '@/utils/campaignFormat'
 import { formatRelativeTime } from '@/utils/date'
-
-const statusVariant: Record<CampaignStatus, 'secondary' | 'warning' | 'success' | 'destructive'> = {
-  SCHEDULED: 'secondary',
-  QUEUED: 'secondary',
-  RUNNING: 'warning',
-  COMPLETED: 'success',
-  CANCELED: 'destructive',
-}
-
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
-}
-
-function formatDate(iso: string): string {
-  const [year, month, day] = iso.split('-')
-  return `${day}/${month}/${year}`
-}
-
-function scheduleSummary(campaign: Campaign): string | null {
-  if (campaign.recurrence_days_of_week?.length) {
-    const days = campaign.recurrence_days_of_week.map((d) => WEEKDAY_LABEL_SHORT[d]).join(', ')
-    const until = campaign.recurrence_end_date ? ` até ${formatDate(campaign.recurrence_end_date)}` : ''
-    return `Toda(o) ${days}${until}`
-  }
-  if (campaign.status === 'SCHEDULED' && campaign.scheduled_at) {
-    return `Agendada pra ${formatDateTime(campaign.scheduled_at)}`
-  }
-  return null
-}
 
 function CampaignRow({ campaign, templateName }: { campaign: Campaign; templateName: string }) {
   const cancelCampaign = useCancelCampaign()
   const { toast } = useToast()
+  const navigate = useNavigate()
   const [confirmCancel, setConfirmCancel] = useState(false)
 
   const processed = campaign.sent_count + campaign.failed_count
@@ -69,7 +42,15 @@ function CampaignRow({ campaign, templateName }: { campaign: Campaign; templateN
   }
 
   return (
-    <div className="space-y-2 rounded-md border p-3">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => navigate(`/campanhas/${campaign.id}`)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') navigate(`/campanhas/${campaign.id}`)
+      }}
+      className="cursor-pointer space-y-2 rounded-md border p-3 transition-colors hover:bg-accent/50"
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">{campaign.name}</p>
@@ -84,9 +65,17 @@ function CampaignRow({ campaign, templateName }: { campaign: Campaign; templateN
               Recorrente
             </Badge>
           )}
-          <Badge variant={statusVariant[campaign.status]}>{CAMPAIGN_STATUS_LABEL[campaign.status]}</Badge>
+          <Badge variant={CAMPAIGN_STATUS_VARIANT[campaign.status]}>{CAMPAIGN_STATUS_LABEL[campaign.status]}</Badge>
           {canCancel && (
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setConfirmCancel(true)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={(e) => {
+                e.stopPropagation()
+                setConfirmCancel(true)
+              }}
+            >
               <X className="h-3.5 w-3.5" />
             </Button>
           )}

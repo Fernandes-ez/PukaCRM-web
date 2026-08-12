@@ -1501,6 +1501,47 @@ max-w-2xl">` copiado de tela em tela.
   usuário, não foi possível reconferir visualmente o resultado do ajuste
   ainda dentro desta sessão.
 
+## ✅ Novo em 2026-08-12 — notificação de status de campanha + tela de
+detalhes
+
+Backend ganhou `CAMPAIGN_COMPLETED`/`CAMPAIGN_CANCELED` (decisão #46) e
+`GET /campaigns/{id}/recipients` - pedido do usuário logo depois do ajuste
+de largura das páginas: notificar quando uma campanha muda de status, e
+uma tela pra ver os detalhes de uma campanha mesmo já concluída.
+
+- **`NotificationBell.tsx`** ganhou os 2 ícones novos (`Megaphone`/
+  `MegaphoneOff`) e passou a navegar por `related_campaign_id` (novo campo
+  em `Notification`) antes de cair nos outros `related_*` - primeira
+  notificação do app a levar direto pra uma tela de detalhe específica em
+  vez de só a lista (diferente do padrão usado pra Template, decisão #43,
+  que não tinha tela de detalhe por item ainda).
+- **`src/pages/campaigns/CampaignDetailPage.tsx`** (novo, rota
+  `/campanhas/:campaignId`, mesma permissão `VIEW` da listagem) - cabeçalho
+  com nome/status/badge "Recorrente"/botão Cancelar (quando aplicável),
+  card de progresso (barra + contadores enviados/falharam/restam +
+  timestamps de início/conclusão) e uma tabela de destinatários (nome/
+  telefone do Lead, status individual, motivo do erro quando `FAILED`,
+  data de envio). Continua acessível depois de `COMPLETED`/`CANCELED` -
+  era exatamente a lacuna que o usuário apontou (só dava pra ver
+  campanhas ativas na lista, sem detalhe nenhum depois).
+- **Linhas de `CampaignsPage.tsx` viraram clicáveis** (`role="button"`,
+  navega pro detalhe) - o botão de cancelar usa `stopPropagation` pra não
+  disparar a navegação junto.
+- **`useCampaignRecipients(id, activelyProcessing)`** (novo hook) - só
+  faz polling (3s) enquanto a campanha ainda pode gerar/processar mais
+  gente (`SCHEDULED`/`QUEUED`/`RUNNING`); campanha `COMPLETED`/`CANCELED`
+  busca uma vez só, sem polling - não tem por que continuar reconsultando
+  algo que não muda mais.
+- **`src/utils/campaignFormat.ts`** (novo) - extrai `CAMPAIGN_STATUS_VARIANT`/
+  `formatDateTime`/`formatDateOnly`/`scheduleSummary` de dentro de
+  `CampaignsPage.tsx` (estavam definidos ali, agora reaproveitados também
+  por `CampaignDetailPage.tsx` sem duplicar).
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos. Lógica de notificação
+  (1 evento por transição terminal, não uma por ocorrência de recorrente)
+  validada ponta a ponta no backend (decisão #46); UI no navegador não
+  verificada visualmente (sem ferramenta de automação de browser
+  disponível na sessão).
+
 ## Comandos úteis
 
 ```bash

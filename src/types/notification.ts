@@ -6,6 +6,8 @@ export type NotificationType =
   | 'NEW_MESSAGE'
   | 'TEMPLATE_APPROVED'
   | 'TEMPLATE_REJECTED'
+  | 'CAMPAIGN_COMPLETED'
+  | 'CAMPAIGN_CANCELED'
 
 export interface Notification {
   id: string
@@ -14,6 +16,7 @@ export interface Notification {
   related_lead_id: string | null
   related_conversation_id: string | null
   related_task_id: string | null
+  related_campaign_id: string | null
   read_at: string | null
   created_at: string
 }

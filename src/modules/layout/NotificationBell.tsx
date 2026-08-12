@@ -8,6 +8,8 @@ import {
   ClipboardX,
   BadgeCheck,
   BadgeX,
+  Megaphone,
+  MegaphoneOff,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -32,6 +34,8 @@ const NOTIFICATION_ICON: Record<Notification['type'], typeof UserPlus> = {
   NEW_MESSAGE: MessageSquareText,
   TEMPLATE_APPROVED: BadgeCheck,
   TEMPLATE_REJECTED: BadgeX,
+  CAMPAIGN_COMPLETED: Megaphone,
+  CAMPAIGN_CANCELED: MegaphoneOff,
 }
 
 export function NotificationBell() {
@@ -49,6 +53,8 @@ export function NotificationBell() {
       navigate(`/conversations/${notification.related_conversation_id}`)
     } else if (notification.related_task_id) {
       navigate('/pipeline')
+    } else if (notification.related_campaign_id) {
+      navigate(`/campanhas/${notification.related_campaign_id}`)
     } else if (notification.related_lead_id) {
       navigate('/leads')
     } else if (notification.type === 'TEMPLATE_APPROVED' || notification.type === 'TEMPLATE_REJECTED') {

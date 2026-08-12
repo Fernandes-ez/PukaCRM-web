@@ -18,6 +18,16 @@ export function useCampaign(id: string | undefined) {
   })
 }
 
+/** Só faz sentido reconsultar enquanto a campanha ainda pode processar mais gente. */
+export function useCampaignRecipients(id: string | undefined, activelyProcessing: boolean) {
+  return useQuery({
+    queryKey: [...campaignsKey, id, 'recipients'],
+    queryFn: () => campaignService.getRecipients(id as string),
+    enabled: !!id,
+    refetchInterval: activelyProcessing ? 3000 : false,
+  })
+}
+
 export function useCampaignPreview() {
   return useMutation({ mutationFn: (filters: CampaignFilters) => campaignService.preview(filters) })
 }

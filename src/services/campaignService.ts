@@ -1,5 +1,11 @@
 import { api, normalizeApiError } from '@/services/apiClient'
-import type { Campaign, CampaignCreateRequest, CampaignFilters, CampaignPreviewResponse } from '@/types/campaign'
+import type {
+  Campaign,
+  CampaignCreateRequest,
+  CampaignFilters,
+  CampaignPreviewResponse,
+  CampaignRecipient,
+} from '@/types/campaign'
 
 export const campaignService = {
   async list(): Promise<Campaign[]> {
@@ -33,6 +39,15 @@ export const campaignService = {
   async create(payload: CampaignCreateRequest): Promise<Campaign> {
     try {
       const { data } = await api.post<Campaign>('/campaigns', payload)
+      return data
+    } catch (error) {
+      throw normalizeApiError(error)
+    }
+  },
+
+  async getRecipients(id: string): Promise<CampaignRecipient[]> {
+    try {
+      const { data } = await api.get<CampaignRecipient[]>(`/campaigns/${id}/recipients`)
       return data
     } catch (error) {
       throw normalizeApiError(error)

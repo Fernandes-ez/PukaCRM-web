@@ -39,6 +39,28 @@ export interface CampaignPreviewResponse {
   count: number
 }
 
+export type CampaignRecipientStatus = 'PENDING' | 'SENT' | 'FAILED' | 'SKIPPED_OPT_OUT' | 'CANCELED'
+
+export const CAMPAIGN_RECIPIENT_STATUS_LABEL: Record<CampaignRecipientStatus, string> = {
+  PENDING: 'Na fila',
+  SENT: 'Enviado',
+  FAILED: 'Falhou',
+  SKIPPED_OPT_OUT: 'Pulado (opt-out)',
+  CANCELED: 'Cancelado',
+}
+
+export interface CampaignRecipient {
+  id: string
+  lead_id: string
+  lead_full_name: string | null
+  lead_phone: string
+  status: CampaignRecipientStatus
+  error: string | null
+  occurrence_date: string
+  sent_at: string | null
+  created_at: string
+}
+
 export interface Campaign {
   id: string
   company_id: string
