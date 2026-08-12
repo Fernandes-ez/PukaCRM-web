@@ -14,6 +14,7 @@ import {
   Kanban,
   FileText,
   Shuffle,
+  Megaphone,
   ChevronDown,
   X,
 } from 'lucide-react'
@@ -60,6 +61,7 @@ const generalItems: NavItem[] = [
 const allAdminItems: AdminNavEntry[] = [
   { to: '/employees', label: 'Funcionários', icon: Users, permission: { module: 'EMPLOYEES', resource: 'employee', action: 'VIEW' } },
   { to: '/distribuicao', label: 'Distribuição', icon: Shuffle, permission: { module: 'EMPLOYEES', resource: 'employee', action: 'VIEW' } },
+  { to: '/campanhas', label: 'Campanhas', icon: Megaphone, permission: { module: 'CAMPAIGNS', resource: 'campaign', action: 'VIEW' } },
   { to: '/roles', label: 'Cargos', icon: ShieldCheck, permission: { module: 'ROLES', resource: 'role', action: 'VIEW' } },
   { to: '/assistant', label: 'Assistente IA', icon: Bot, permission: { module: 'ASSISTANT', resource: 'assistant', action: 'VIEW' } },
   {

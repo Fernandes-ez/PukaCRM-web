@@ -32,6 +32,7 @@ export type PermissionModule =
   | 'INTEGRATIONS'
   | 'SETTINGS'
   | 'SUBSCRIPTION'
+  | 'CAMPAIGNS'
 
 export type PermissionAction =
   | 'VIEW'
@@ -79,4 +80,5 @@ export const PERMISSION_MODULE_LABEL: Record<PermissionModule, string> = {
   INTEGRATIONS: 'Integrações',
   SETTINGS: 'Configurações',
   SUBSCRIPTION: 'Assinatura',
+  CAMPAIGNS: 'Campanhas',
 }

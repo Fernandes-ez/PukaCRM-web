@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Loader2 } from 'lucide-react'
@@ -10,11 +10,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { LEAD_GENDER_LABEL, type LeadGender } from '@/types/lead'
 
 const schema = z.object({
   full_name: z.string().optional(),
   phone: z.string().min(1, 'Informe o telefone'),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
+  gender: z.enum(['MALE', 'FEMALE', 'OTHER']).optional(),
+  birth_date: z.string().optional(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -30,6 +34,7 @@ export function CreateLeadDialog({ open, onOpenChange }: CreateLeadDialogProps) 
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     setError,
@@ -39,7 +44,12 @@ export function CreateLeadDialog({ open, onOpenChange }: CreateLeadDialogProps) 
   async function onSubmit(data: FormValues) {
     setFormError(null)
     try {
-      await createLead.mutateAsync({ ...data, full_name: data.full_name || undefined, email: data.email || undefined })
+      await createLead.mutateAsync({
+        ...data,
+        full_name: data.full_name || undefined,
+        email: data.email || undefined,
+        birth_date: data.birth_date || undefined,
+      })
       reset()
       onOpenChange(false)
     } catch (error) {
@@ -87,6 +97,33 @@ export function CreateLeadDialog({ open, onOpenChange }: CreateLeadDialogProps) 
             <Label htmlFor="lead_email">Email (opcional)</Label>
             <Input id="lead_email" type="email" {...register('email')} />
             {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="lead_gender">Sexo (opcional)</Label>
+              <Controller
+                control={control}
+                name="gender"
+                render={({ field }) => (
+                  <Select value={field.value ?? ''} onValueChange={(value) => field.onChange(value as LeadGender)}>
+                    <SelectTrigger id="lead_gender">
+                      <SelectValue placeholder="Não informado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(LEAD_GENDER_LABEL) as LeadGender[]).map((value) => (
+                        <SelectItem key={value} value={value}>
+                          {LEAD_GENDER_LABEL[value]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="lead_birth_date">Nascimento (opcional)</Label>
+              <Input id="lead_birth_date" type="date" {...register('birth_date')} />
+            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

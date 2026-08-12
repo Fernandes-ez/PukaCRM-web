@@ -223,7 +223,14 @@ export function LeadsPage() {
                     <TableCell className="font-medium">{lead.full_name ?? 'Lead sem nome'}</TableCell>
                     <TableCell className="text-muted-foreground">{formatPhone(lead.phone)}</TableCell>
                     <TableCell>
-                      <Badge variant={statusVariant[lead.status]}>{statusLabel[lead.status]}</Badge>
+                      <div className="flex flex-wrap items-center gap-1">
+                        <Badge variant={statusVariant[lead.status]}>{statusLabel[lead.status]}</Badge>
+                        {lead.marketing_opt_out && (
+                          <Badge variant="outline" className="text-[10px] font-normal text-muted-foreground">
+                            Não recebe campanhas
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {(lead.assigned_employee_id && employeeNameById.get(lead.assigned_employee_id)) ?? 'Não atribuído'}

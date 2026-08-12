@@ -1353,6 +1353,38 @@ template quando a Meta aprova ou rejeita.
   visualmente nesta sessão (sem ferramenta de automação de browser
   disponível).
 
+## ✅ Novo em 2026-08-12 — Campanhas com filtro de público
+
+Backend ganhou `POST /campaigns` + fila de envio com throttling (ver
+`CLAUDE.MD` do backend, decisão #44) - tela nova pra filtrar o público
+(sexo, idade, aniversário, estágio do pipeline) e disparar um template
+em massa, sem o teto de 50 contatos do gatilho manual (decisão #38, que
+continua existindo separado, pra disparo pontual).
+
+- **`src/pages/campaigns/`** (novo) - `CampaignsPage.tsx` (lista com
+  barra de progresso por campanha, atualizada por polling a cada 5s,
+  igual `useConversations`) + `CreateCampaignDialog.tsx` (wizard de 3
+  passos: filtros com contador ao vivo debounced → template → confirmar
+  e disparar). Item novo no menu (`Megaphone`, seção administrativa,
+  gated por `CAMPAIGNS/campaign/VIEW` - primeiro módulo de permissão
+  novo desde a Fase 4).
+- **Preview do template na campanha não usa `renderTemplatePreview`**
+  (diferente dos diálogos de iniciar conversa) - como o público é um
+  filtro, não um Lead específico, mostra o `body_text` cru com uma nota
+  explicando que as variáveis são resolvidas individualmente pra cada
+  contato no envio (mesmo raciocínio de sempre: resolução 100% no
+  backend, nada calculado no frontend).
+- **`CreateLeadDialog.tsx`/`EditLeadDialog.tsx`** ganharam campos
+  opcionais de Sexo (select) e Nascimento (`input type="date"`).
+- **`LeadsPage.tsx`** mostra um badge "Não recebe campanhas" quando
+  `lead.marketing_opt_out` - visibilidade de que aquele contato foi
+  excluído automaticamente (resposta tipo "PARAR" detectada no
+  WhatsApp).
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos. Lógica de filtro/fila/
+  opt-out validada ponta a ponta no backend (decisão #44); UI no
+  navegador não verificada visualmente (sem ferramenta de automação de
+  browser disponível na sessão).
+
 ## Comandos úteis
 
 ```bash

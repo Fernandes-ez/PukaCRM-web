@@ -5,6 +5,14 @@ export const LEAD_STATUS_LABEL: Record<LeadStatus, string> = {
   INACTIVE: 'Arquivado',
 }
 
+export type LeadGender = 'MALE' | 'FEMALE' | 'OTHER'
+
+export const LEAD_GENDER_LABEL: Record<LeadGender, string> = {
+  MALE: 'Masculino',
+  FEMALE: 'Feminino',
+  OTHER: 'Outro',
+}
+
 export interface Lead {
   id: string
   company_id: string
@@ -19,6 +27,11 @@ export interface Lead {
    */
   assigned_employee_id?: string | null
   pipeline_stage_id?: string | null
+  /** Só existem se cadastrados manualmente/via import - usados pra segmentação de Campaign. */
+  gender: LeadGender | null
+  birth_date: string | null
+  /** Setado automaticamente quando o Lead pede pra parar de receber (ex: responde "PARAR" no WhatsApp). */
+  marketing_opt_out: boolean
   created_at: string
   updated_at: string
 }
@@ -27,6 +40,8 @@ export interface LeadCreateRequest {
   phone: string
   full_name?: string
   email?: string
+  gender?: LeadGender
+  birth_date?: string
 }
 
 export interface LeadUpdateRequest {
@@ -34,6 +49,8 @@ export interface LeadUpdateRequest {
   phone?: string
   email?: string
   status?: LeadStatus
+  gender?: LeadGender
+  birth_date?: string
 }
 
 export interface LeadAssignRequest {

@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react'
 import { useUpdateLead } from '@/hooks/useLeads'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
-import { LEAD_STATUS_LABEL, type Lead } from '@/types/lead'
+import { LEAD_GENDER_LABEL, LEAD_STATUS_LABEL, type Lead, type LeadGender } from '@/types/lead'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,6 +19,8 @@ const schema = z.object({
   phone: z.string().min(1, 'Informe o telefone'),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
   status: z.enum(['ACTIVE', 'INACTIVE']),
+  gender: z.enum(['MALE', 'FEMALE', 'OTHER']).optional(),
+  birth_date: z.string().optional(),
 })
 
 type FormValues = z.infer<typeof schema>
@@ -51,6 +53,8 @@ export function EditLeadDialog({ open, onOpenChange, lead }: EditLeadDialogProps
       phone: lead.phone,
       email: lead.email ?? '',
       status: lead.status,
+      gender: lead.gender ?? undefined,
+      birth_date: lead.birth_date ?? '',
     },
   })
 
@@ -59,7 +63,12 @@ export function EditLeadDialog({ open, onOpenChange, lead }: EditLeadDialogProps
     try {
       await updateLead.mutateAsync({
         id: lead.id,
-        payload: { ...data, full_name: data.full_name || undefined, email: data.email || undefined },
+        payload: {
+          ...data,
+          full_name: data.full_name || undefined,
+          email: data.email || undefined,
+          birth_date: data.birth_date || undefined,
+        },
       })
       toast({ title: 'Lead atualizado', variant: 'success' })
       onOpenChange(false)
@@ -123,6 +132,33 @@ export function EditLeadDialog({ open, onOpenChange, lead }: EditLeadDialogProps
                 </Select>
               )}
             />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit_lead_gender">Sexo (opcional)</Label>
+              <Controller
+                control={control}
+                name="gender"
+                render={({ field }) => (
+                  <Select value={field.value ?? ''} onValueChange={(value) => field.onChange(value as LeadGender)}>
+                    <SelectTrigger id="edit_lead_gender">
+                      <SelectValue placeholder="Não informado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(LEAD_GENDER_LABEL) as LeadGender[]).map((value) => (
+                        <SelectItem key={value} value={value}>
+                          {LEAD_GENDER_LABEL[value]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit_lead_birth_date">Nascimento (opcional)</Label>
+              <Input id="edit_lead_birth_date" type="date" {...register('birth_date')} />
+            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

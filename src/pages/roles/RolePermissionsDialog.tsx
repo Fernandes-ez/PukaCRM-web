@@ -15,6 +15,7 @@ import {
   Plug,
   Settings,
   CreditCard,
+  Megaphone,
   type LucideIcon,
 } from 'lucide-react'
 import { usePermissionsCatalog, useRolePermissions, useSetRolePermissions } from '@/hooks/useRoles'
@@ -50,6 +51,7 @@ const MODULE_ICON: Record<PermissionModule, LucideIcon> = {
   INTEGRATIONS: Plug,
   SETTINGS: Settings,
   SUBSCRIPTION: CreditCard,
+  CAMPAIGNS: Megaphone,
 }
 
 interface ModuleGroup {
