@@ -42,7 +42,20 @@ export interface EmployeeMe {
   role_id: string
   full_name: string
   email: string
+  phone: string | null
   is_owner: boolean
   must_change_password: boolean
   status: EmployeeStatus
+}
+
+/** Autoedição - bem mais restrita que `EmployeeUpdateRequest` (sem cargo/status/distribuição). */
+export interface EmployeeMeUpdateRequest {
+  full_name?: string
+  email?: string
+  phone?: string
+}
+
+export interface ChangePasswordRequest {
+  current_password: string
+  new_password: string
 }

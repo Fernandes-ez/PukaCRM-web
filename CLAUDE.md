@@ -1130,6 +1130,43 @@ valor no union; `NotificationBell.tsx` ganhou o ícone
 `handleSelect` já navegava por `related_conversation_id`, que esse tipo
 novo também preenche.
 
+## ✅ Novo em 2026-08-12 — autoedição de perfil + troca de senha obrigatória
+
+Backend ganhou `PATCH /employees/me` e `POST /employees/me/change-password`
+(ver `CLAUDE.MD` do backend, decisão #37) - faltava uma tela pra pessoa
+editar os próprios dados, e a senha temporária do primeiro acesso
+(`must_change_password`) nunca era cobrada em lugar nenhum.
+
+- **`src/pages/profile/EditProfileDialog.tsx`** (novo) - form
+  nome/email/telefone, usa `useUpdateMyProfile()`.
+- **`src/pages/profile/ChangePasswordDialog.tsx`** (novo) - **mesmo
+  componente** pros dois fluxos: troca voluntária (item de menu) e a
+  troca obrigatória do primeiro acesso, diferenciados por uma prop
+  `mandatory`. Com `mandatory=true`: sem botão Cancelar, sem X de
+  fechar, `onInteractOutside`/`onEscapeKeyDown` bloqueados - a pessoa
+  não consegue sair da tela sem trocar a senha. Sempre exige
+  `current_password` (mesmo na temporária, o backend valida contra o
+  hash atual).
+- **`DialogContent` (`components/ui/dialog.tsx`) ganhou a prop
+  `hideClose`** - antes o X de fechar era sempre renderizado
+  incondicionalmente; precisou virar opcional pra viabilizar o popup
+  obrigatório.
+- **`src/hooks/useProfile.ts`** (novo) - `useUpdateMyProfile()`/
+  `useChangeMyPassword()`, os dois escrevem o resultado direto na
+  query key `['auth','me']` (mesma usada pelo `AuthContext`) - reflete
+  em todo o app na hora, sem precisar de refetch nem re-login.
+- **`Topbar.tsx`** - dropdown do avatar ganhou "Meu perfil"/"Alterar
+  senha" entre o cabeçalho (nome/email) e "Sair".
+- **`AppLayout.tsx`** - monta `<ChangePasswordDialog mandatory>` com
+  `open={employee?.must_change_password === true}` - assim que a troca
+  dá certo, o cache de `employee` atualiza e o popup some sozinho.
+- **`types/auth.ts`** - `EmployeeMe` ganhou `phone` (o backend não
+  expunha, precisava pro form vir pré-preenchido).
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos. UI no navegador não
+  verificada visualmente nesta entrega (sem ferramenta de automação de
+  browser disponível na sessão) - lógica conferida via build/lint e
+  pelos testes ponta a ponta do backend (decisão #37).
+
 ## Comandos úteis
 
 ```bash

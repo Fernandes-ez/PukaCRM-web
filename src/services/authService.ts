@@ -1,5 +1,12 @@
 import { api, normalizeApiError } from '@/services/apiClient'
-import type { EmployeeMe, LoginRequest, LoginResponse, SelectCompanyRequest } from '@/types/auth'
+import type {
+  ChangePasswordRequest,
+  EmployeeMe,
+  EmployeeMeUpdateRequest,
+  LoginRequest,
+  LoginResponse,
+  SelectCompanyRequest,
+} from '@/types/auth'
 import type { Permission } from '@/types/role'
 
 export const authService = {
@@ -34,6 +41,25 @@ export const authService = {
   async myPermissions(): Promise<Permission[]> {
     try {
       const { data } = await api.get<Permission[]>('/employees/me/permissions')
+      return data
+    } catch (error) {
+      throw normalizeApiError(error)
+    }
+  },
+
+  /** Autoedição — nunca exige EMPLOYEES/employee/UPDATE (a maioria dos cargos não tem por padrão). */
+  async updateMe(payload: EmployeeMeUpdateRequest): Promise<EmployeeMe> {
+    try {
+      const { data } = await api.patch<EmployeeMe>('/employees/me', payload)
+      return data
+    } catch (error) {
+      throw normalizeApiError(error)
+    }
+  },
+
+  async changePassword(payload: ChangePasswordRequest): Promise<EmployeeMe> {
+    try {
+      const { data } = await api.post<EmployeeMe>('/employees/me/change-password', payload)
       return data
     } catch (error) {
       throw normalizeApiError(error)

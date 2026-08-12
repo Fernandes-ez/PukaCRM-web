@@ -1,7 +1,10 @@
-import { Menu, LogOut, User } from 'lucide-react'
+import { useState } from 'react'
+import { Menu, LogOut, User, UserCog, KeyRound } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { ThemeToggle } from '@/modules/layout/ThemeToggle'
 import { NotificationBell } from '@/modules/layout/NotificationBell'
+import { EditProfileDialog } from '@/pages/profile/EditProfileDialog'
+import { ChangePasswordDialog } from '@/pages/profile/ChangePasswordDialog'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -28,6 +31,8 @@ interface TopbarProps {
 
 export function Topbar({ onOpenMobileMenu }: TopbarProps) {
   const { employee, logout } = useAuth()
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [passwordOpen, setPasswordOpen] = useState(false)
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-background/95 px-4 backdrop-blur">
@@ -57,6 +62,15 @@ export function Topbar({ onOpenMobileMenu }: TopbarProps) {
               <p className="font-normal text-xs text-muted-foreground">{employee?.email}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setProfileOpen(true)}>
+              <UserCog className="mr-2 h-4 w-4" />
+              Meu perfil
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setPasswordOpen(true)}>
+              <KeyRound className="mr-2 h-4 w-4" />
+              Alterar senha
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
               Sair
@@ -64,6 +78,9 @@ export function Topbar({ onOpenMobileMenu }: TopbarProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {employee && <EditProfileDialog open={profileOpen} onOpenChange={setProfileOpen} employee={employee} />}
+      <ChangePasswordDialog open={passwordOpen} onOpenChange={setPasswordOpen} />
     </header>
   )
 }

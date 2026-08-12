@@ -4,10 +4,13 @@ import { Sidebar } from '@/modules/layout/Sidebar'
 import { Topbar } from '@/modules/layout/Topbar'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { useNotificationSocket } from '@/hooks/useNotifications'
+import { useAuth } from '@/contexts/AuthContext'
+import { ChangePasswordDialog } from '@/pages/profile/ChangePasswordDialog'
 
 export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
+  const { employee } = useAuth()
   useNotificationSocket()
 
   return (
@@ -21,6 +24,9 @@ export function AppLayout() {
           </ErrorBoundary>
         </main>
       </div>
+
+      {/* Senha temporária do primeiro acesso - some sozinho quando muda, `useChangeMyPassword` já atualiza o cache de `employee`. */}
+      <ChangePasswordDialog open={employee?.must_change_password === true} onOpenChange={() => {}} mandatory />
     </div>
   )
 }
