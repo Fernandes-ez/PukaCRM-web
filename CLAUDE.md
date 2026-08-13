@@ -1619,6 +1619,18 @@ VIEW` pro segundo).
   validada ponta a ponta no backend; UI no navegador não verificada
   visualmente (sem ferramenta de automação de browser disponível na
   sessão).
+- **Corrigido no mesmo dia, achado testando em produção**: usuário
+  preencheu o CPF/CNPJ de verdade e salvou, mas o banner e o popup
+  continuaram achando que faltava documento. Causa do lado do backend
+  (ver decisão #48 - preencher o documento não muda `Subscription.status`
+  sozinho, só o webhook de pagamento confirmado faz isso).
+  `SubscriptionStatusInfo` ganhou `has_billing_configured: boolean` -
+  `BillingBanner.tsx` agora distingue 3 situações em vez de 2: trial
+  acabou sem documento (mostra o popup) vs trial acabou **com**
+  documento já preenchido, aguardando confirmação de pagamento ("há um
+  débito em aberto", sem popup) vs `PAST_DUE` de verdade. O popup
+  (`BillingSetupDialog.tsx`) só monta quando realmente falta o
+  documento, então some sozinho assim que resolvido.
 
 ## Comandos úteis
 

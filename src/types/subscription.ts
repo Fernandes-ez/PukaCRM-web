@@ -44,6 +44,8 @@ export interface SubscriptionPlanChangeRequest {
 export interface SubscriptionStatusInfo {
   status: SubscriptionStatus
   trial_ends_at: string | null
+  /** Derivado de asaas_subscription_id no backend (nunca o id em si). */
+  has_billing_configured: boolean
 }
 
 export type ChargeStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'REFUNDED' | 'OTHER'
