@@ -35,6 +35,17 @@ export interface SubscriptionPlanChangeRequest {
   plan: SubscriptionPlan
 }
 
+/**
+ * Versão minimalista de Subscription - só status/trial_ends_at, usada
+ * pelo banner/popup de cobrança (`GET /subscription/status`, sem exigir
+ * a permissão de ver Assinatura - visível pra qualquer funcionário
+ * logado).
+ */
+export interface SubscriptionStatusInfo {
+  status: SubscriptionStatus
+  trial_ends_at: string | null
+}
+
 export type ChargeStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'REFUNDED' | 'OTHER'
 
 export const CHARGE_STATUS_LABEL: Record<ChargeStatus, string> = {

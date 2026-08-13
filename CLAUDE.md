@@ -1567,6 +1567,59 @@ Lead que já tem uma conversa `OPEN`.
   UI no navegador não verificada visualmente (sem ferramenta de
   automação de browser disponível na sessão).
 
+## ✅ Novo em 2026-08-13 — banner e popup de trial vencido sem cobrança
+
+Pedido do usuário depois de reportar um caso real (Aqua Fit Club, trial
+vencido sem nenhuma cobrança gerada nem no Asaas nem na plataforma - ver
+decisão #48 do backend pro root cause completo). Duas peças novas,
+ambas em `src/modules/layout/` ao lado de `Topbar.tsx`/`Sidebar.tsx`/
+`NotificationBell.tsx`:
+
+- **`BillingBanner.tsx`** - faixa persistente (não dispensável) logo
+  abaixo do `Topbar`, renderizada em `AppLayout.tsx` pra qualquer
+  funcionário logado. Alimentada por `useSubscriptionStatus()` (novo
+  hook, `GET /subscription/status` - endpoint enxuto sem exigir
+  `SUBSCRIPTION/subscription/VIEW`, já que a matriz da decisão #29 não
+  dá essa permissão pra Supervisor/Consultora/Recepção, e o banner
+  precisa aparecer pra todo mundo). Dois textos diferentes: "O período
+  de teste acabou..." (`TRIALING` com `trial_ends_at` no passado,
+  cor `warning`) ou "Sua assinatura está com pagamento pendente."
+  (`PAST_DUE`, cor `destructive`) - o link/botão de ação em cada um só
+  aparece pra quem tem a permissão correspondente
+  (`COMPANY/company/UPDATE` pro primeiro, `SUBSCRIPTION/subscription/
+VIEW` pro segundo).
+- **`BillingSetupDialog.tsx`** - popup **dispensável** (diferente do
+  popup obrigatório de trocar senha no primeiro acesso, decisão #37) -
+  abre sozinho uma vez por carregamento do app quando o trial já
+  acabou, mas pode ser fechado e continua usando a plataforma
+  normalmente (o banner segue ali até resolver). Quem tem
+  `COMPANY/company/UPDATE` vê um campo de CPF/CNPJ que já chama `PATCH
+  /companies/me` (`useUpdateCompany`, existente) - o backend já
+  tenta provisionar a assinatura no Asaas de novo sozinho ao salvar,
+  sem passo manual extra. Quem não tem essa permissão só vê "fale com o
+  Dono ou Administrador da sua empresa".
+- **Ações de maior custo bloqueadas pelo backend** (Campanhas, iniciar
+  conversa via Template, criar Funcionário/Cargo, Assistente/WhatsApp)
+  quando o trial vence sem assinatura no Asaas - decisão do usuário
+  depois de apontar que só avisar deixaria a empresa usar o sistema
+  indefinidamente sem pagar. **Não precisou de nenhuma tela de "bloqueado"
+  nova** - o backend devolve `402` com uma mensagem clara no `detail`, e
+  o padrão de toast já usado em toda mutação do app (`error instanceof
+  ApiError ? error.message : undefined`) já exibe isso automaticamente,
+  sem código novo por tela. `POST /conversations/{id}/messages`
+  (responder Lead) tem 1 dia de carência a mais que as outras - decisão
+  explícita do usuário de manter o atendimento básico liberado por mais
+  tempo.
+- **`NotificationBell.tsx`** ganhou `TRIAL_ENDED_NO_BILLING` (ícone
+  `CreditCard`, navega pra `/empresa`) - a notificação em si (avisando o
+  Owner quando o job do backend detecta o trial vencido) já existia do
+  lado do backend, decisão #48.
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos. Lógica de bloqueio
+  (`require_active_billing`, com e sem carência) e do job de aviso
+  validada ponta a ponta no backend; UI no navegador não verificada
+  visualmente (sem ferramenta de automação de browser disponível na
+  sessão).
+
 ## Comandos úteis
 
 ```bash

@@ -8,6 +8,7 @@ export type NotificationType =
   | 'TEMPLATE_REJECTED'
   | 'CAMPAIGN_COMPLETED'
   | 'CAMPAIGN_CANCELED'
+  | 'TRIAL_ENDED_NO_BILLING'
 
 export interface Notification {
   id: string

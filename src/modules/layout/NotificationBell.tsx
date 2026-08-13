@@ -10,6 +10,7 @@ import {
   BadgeX,
   Megaphone,
   MegaphoneOff,
+  CreditCard,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -36,6 +37,7 @@ const NOTIFICATION_ICON: Record<Notification['type'], typeof UserPlus> = {
   TEMPLATE_REJECTED: BadgeX,
   CAMPAIGN_COMPLETED: Megaphone,
   CAMPAIGN_CANCELED: MegaphoneOff,
+  TRIAL_ENDED_NO_BILLING: CreditCard,
 }
 
 export function NotificationBell() {
@@ -59,6 +61,8 @@ export function NotificationBell() {
       navigate('/leads')
     } else if (notification.type === 'TEMPLATE_APPROVED' || notification.type === 'TEMPLATE_REJECTED') {
       navigate('/whatsapp/templates')
+    } else if (notification.type === 'TRIAL_ENDED_NO_BILLING') {
+      navigate('/empresa')
     }
   }
 
