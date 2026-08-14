@@ -5,6 +5,7 @@ import { RequirePermission } from '@/routes/RequirePermission'
 import { AppLayout } from '@/modules/layout/AppLayout'
 import { DashboardPage } from '@/pages/dashboard/DashboardPage'
 import { EmployeesPage } from '@/pages/employees/EmployeesPage'
+import { WorkSchedulesPage } from '@/pages/employees/WorkSchedulesPage'
 import { RolesPage } from '@/pages/roles/RolesPage'
 import { AssistantPage } from '@/pages/assistant/AssistantPage'
 import { WhatsappPage } from '@/pages/whatsapp/WhatsappPage'
@@ -46,6 +47,9 @@ function App() {
             <Route element={<RequirePermission module="EMPLOYEES" resource="employee" action="VIEW" />}>
               <Route path="/employees" element={<EmployeesPage />} />
               <Route path="/distribuicao" element={<DistributionPage />} />
+            </Route>
+            <Route element={<RequirePermission module="EMPLOYEES" resource="work_schedule" action="VIEW" />}>
+              <Route path="/employees/work-schedules" element={<WorkSchedulesPage />} />
             </Route>
             <Route element={<RequirePermission module="ROLES" resource="role" action="VIEW" />}>
               <Route path="/roles" element={<RolesPage />} />

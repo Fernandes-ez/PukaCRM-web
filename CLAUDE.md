@@ -1632,6 +1632,103 @@ VIEW` pro segundo).
   (`BillingSetupDialog.tsx`) só monta quando realmente falta o
   documento, então some sozinho assim que resolvido.
 
+## ✅ Novo em 2026-08-14 — Agenda de agendamentos
+
+Acompanha a Agenda nova do `crm-backend` (decisão #49 do `CLAUDE.md` de
+lá) - opcional por empresa, com uma segunda camada opcional de
+agendamento conduzido pela própria IA. **Esta entrada nunca tinha sido
+escrita até agora** - a implementação foi commitada (`b989d58`) e
+deployada em produção sem passar por aqui; corrigida junto com o resto
+desta sessão.
+
+- **Corrigido de quebra, pré-requisito técnico**: `src/types/
+workSchedule.ts`/`workScheduleService.ts`/`WorkSchedulesDialog.tsx`
+  mandavam `weekday` pro backend, que sempre esperou `day_of_week` - sem
+  tradução nenhuma no meio, `POST /employees/{id}/work-schedules` dava
+  422 sempre. Sem esse conserto a Agenda nunca teria nenhuma
+  disponibilidade real pra mostrar.
+- **`src/pages/agenda/AgendaPage.tsx`** (rota `/agenda`) - alternância
+  Dia/Semana construída do zero (`src/components/agenda/WeekCalendar.tsx`,
+  CSS grid de slots de 30min), sem lib de calendário nova (o projeto já
+  tinha provado que dava - `components/ui/calendar.tsx`, seletor de data
+  única). Cada `Appointment` vira um bloco colorido (cor do
+  `AppointmentType`) com badge diferenciando `created_by=AI` de humano.
+  Filtro por funcionário, navegação anterior/próximo/hoje.
+- **`AppointmentFormDialog.tsx`** - reaproveita `components/ui/calendar.tsx`
+  pro dia + lista de horários livres vindos de `GET /appointments/
+availability` - **nunca** um `<input type="time">` livre, de propósito
+  (evita o usuário digitar um horário que o backend vai recusar de
+  qualquer jeito).
+- **`AppointmentTypesDialog.tsx`** - catálogo de tipos, atrás da
+  permissão `SCHEDULING/appointment_type/MANAGE` (separada de
+  `appointment/CREATE`, mesmo racional de `PIPELINE/pipeline/MANAGE` já
+  usado - quem marca hora no dia a dia não é quem define o catálogo de
+  serviços).
+- **`LeadAppointmentsTab.tsx`** - aba nova no `LeadDetailDialog`, histórico
+  de compromissos daquele cliente específico (a `AgendaPage` é a visão
+  operacional do dia/semana; esta é a visão por cliente - as duas
+  consomem os mesmos `useAppointments`/`appointmentService`).
+- **Toggles**: "Ativar Agenda" em `CompanyPage.tsx` (padrão
+  `DistributionPage.tsx` - `Switch` que salva na hora, campos de
+  política desabilitados enquanto off) e "A IA pode marcar horário" em
+  `AssistantPage.tsx` (desabilitado com texto explicativo quando a
+  Agenda está desligada ou o Assistente não está `ACTIVE`).
+- **Item "Agenda" na Sidebar** - gated por permissão **e** por uma
+  feature flag (`EmployeeMe.company_scheduling_enabled`), pra não
+  depender de `GET /company` (a maioria dos cargos não tem
+  `COMPANY/company/VIEW`, decisão #29 do backend).
+- **Corrigido no mesmo dia, achado testando em produção logo após o
+  deploy** (`15d3a58`): `useUpdateCompany` só invalidava o cache
+  `['company']` - o toggle de `scheduling_enabled` em Minha Empresa não
+  refletia em `EmployeeMe.company_scheduling_enabled` (o que a Sidebar
+  lê) até a próxima vez que essa query rodasse sozinha, então o item
+  "Agenda" só aparecia depois de um refresh manual da página. Corrigido
+  invalidando `['auth','me']` também - mesmo padrão já usado em
+  `useUpdateMyProfile`.
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos. Lógica de
+  disponibilidade/double-booking validada ponta a ponta no backend
+  (decisão #49); UI no navegador não verificada visualmente nesta
+  entrega (sem ferramenta de automação de browser disponível na
+  sessão) - só confirmada em produção pelo próprio usuário depois do
+  deploy.
+
+## ✅ Novo em 2026-08-14 — seção "Funcionários" vira grupo + tela dedicada de Horários de trabalho
+
+Pedido do usuário: horário de trabalho estava "meio escondido" (só
+acessível clicando em "Horários de trabalho" no menu de ações de cada
+funcionário, um por vez, em `EmployeesPage.tsx`) - e, junto disso,
+confirmado que a Agenda (acima) devia mesmo respeitar esse horário, não
+só quando a IA agenda (ver correção do lado do backend, decisão #49:
+`AppointmentService.create`/`update` não checavam `WorkSchedule` no
+caminho manual).
+
+- **`Sidebar.tsx`** - "Funcionários" deixou de ser um item solto e virou
+  um grupo expansível (mesmo padrão de "WhatsApp: Conexão + Templates",
+  decisão de 2026-08-10), com dois filhos: "Funcionários" (`/employees`,
+  como já era) e "Horários de trabalho" (`/employees/work-schedules`,
+  novo), cada um com a própria permissão -
+  `EMPLOYEES/work_schedule/VIEW` pro segundo (resource que já existia
+  no catálogo desde a Fase 1, só nunca tinha tela própria).
+- **`WorkScheduleEditor.tsx`** (novo) - extraído do miolo de
+  `WorkSchedulesDialog.tsx` (lista + formulário de horário), sem a
+  moldura de `Dialog`, pra ser reaproveitado nos dois lugares sem
+  duplicar lógica. `WorkSchedulesDialog.tsx` virou um wrapper fino em
+  cima dele - continua funcionando exatamente igual no dropdown de cada
+  funcionário.
+- **`WorkSchedulesPage.tsx`** (novo, `/employees/work-schedules`) - lista
+  todos os funcionários ativos de uma vez, cada um num
+  `EmployeeScheduleCard.tsx` (novo) com uma faixa de 7 dias (Dom-Sáb,
+  mesma abreviação `WEEKDAY_SHORT_LABELS` nova em `types/workSchedule.ts`)
+  destacando os dias com expediente cadastrado (`title` do dia mostra o
+  intervalo exato no hover), badge "Sem horário cadastrado" pra quem
+  ainda não tem nenhum - sinaliza visualmente quem não vai aparecer na
+  disponibilidade da Agenda nem no rodízio de leads sem precisar abrir
+  cada funcionário um por um. Botão "Editar horários" abre o mesmo
+  `WorkSchedulesDialog` de sempre.
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos. UI no navegador não
+  verificada visualmente (sem ferramenta de automação de browser
+  disponível na sessão).
+
 ## Comandos úteis
 
 ```bash

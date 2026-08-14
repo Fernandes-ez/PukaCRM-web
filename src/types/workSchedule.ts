@@ -33,3 +33,13 @@ export const WEEKDAY_LABELS: Record<Weekday, string> = {
   5: 'Sexta',
   6: 'Sábado',
 }
+
+export const WEEKDAY_SHORT_LABELS: Record<Weekday, string> = {
+  0: 'Dom',
+  1: 'Seg',
+  2: 'Ter',
+  3: 'Qua',
+  4: 'Qui',
+  5: 'Sex',
+  6: 'Sáb',
+}
