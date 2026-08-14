@@ -12,7 +12,14 @@ export function useUpdateCompany() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (payload: CompanyUpdateRequest) => companyService.update(payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: companyKey }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: companyKey })
+      // scheduling_enabled é espelhado em EmployeeMe.company_scheduling_enabled
+      // (['auth','me'], AuthContext) pra a Sidebar decidir se mostra "Agenda"
+      // sem precisar de GET /company - sem invalidar aqui também, o toggle só
+      // refletia depois de um refresh manual da página.
+      queryClient.invalidateQueries({ queryKey: ['auth', 'me'] })
+    },
   })
 }
 
