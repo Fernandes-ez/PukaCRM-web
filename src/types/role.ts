@@ -33,6 +33,7 @@ export type PermissionModule =
   | 'SETTINGS'
   | 'SUBSCRIPTION'
   | 'CAMPAIGNS'
+  | 'SCHEDULING'
 
 export type PermissionAction =
   | 'VIEW'
@@ -81,4 +82,5 @@ export const PERMISSION_MODULE_LABEL: Record<PermissionModule, string> = {
   SETTINGS: 'Configurações',
   SUBSCRIPTION: 'Assinatura',
   CAMPAIGNS: 'Campanhas',
+  SCHEDULING: 'Agenda',
 }

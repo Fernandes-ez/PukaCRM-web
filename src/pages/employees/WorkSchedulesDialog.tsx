@@ -18,7 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 const schema = z
   .object({
-    weekday: z.string().min(1),
+    day_of_week: z.string().min(1),
     start_time: z.string().min(1, 'Informe o horário de início'),
     end_time: z.string().min(1, 'Informe o horário de término'),
   })
@@ -49,21 +49,21 @@ export function WorkSchedulesDialog({ open, onOpenChange, employee }: WorkSchedu
     reset,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { weekday: '1' } })
+  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { day_of_week: '1' } })
 
-  const selectedWeekday = watch('weekday')
+  const selectedWeekday = watch('day_of_week')
   const hasOverlapWarning =
-    !!selectedWeekday && (schedules ?? []).some((s) => String(s.weekday) === selectedWeekday)
+    !!selectedWeekday && (schedules ?? []).some((s) => String(s.day_of_week) === selectedWeekday)
 
   async function onSubmit(data: FormValues) {
     setFormError(null)
     try {
       await createSchedule.mutateAsync({
-        weekday: Number(data.weekday) as Weekday,
+        day_of_week: Number(data.day_of_week) as Weekday,
         start_time: data.start_time,
         end_time: data.end_time,
       })
-      reset({ weekday: data.weekday, start_time: '', end_time: '' })
+      reset({ day_of_week: data.day_of_week, start_time: '', end_time: '' })
     } catch (error) {
       setFormError(error instanceof ApiError ? error.message : 'Ocorreu um erro inesperado. Tente novamente.')
     }
@@ -96,11 +96,11 @@ export function WorkSchedulesDialog({ open, onOpenChange, employee }: WorkSchedu
           ) : schedules && schedules.length > 0 ? (
             schedules
               .slice()
-              .sort((a, b) => a.weekday - b.weekday)
+              .sort((a, b) => a.day_of_week - b.day_of_week)
               .map((schedule) => (
                 <div key={schedule.id} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
                   <span>
-                    <strong>{WEEKDAY_LABELS[schedule.weekday]}</strong> · {schedule.start_time} - {schedule.end_time}
+                    <strong>{WEEKDAY_LABELS[schedule.day_of_week]}</strong> · {schedule.start_time} - {schedule.end_time}
                   </span>
                   <Button
                     type="button"
@@ -131,13 +131,13 @@ export function WorkSchedulesDialog({ open, onOpenChange, employee }: WorkSchedu
           )}
           <div className="grid grid-cols-3 gap-2">
             <div className="space-y-1.5">
-              <Label htmlFor="weekday">Dia</Label>
+              <Label htmlFor="day_of_week">Dia</Label>
               <Controller
                 control={control}
-                name="weekday"
+                name="day_of_week"
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="weekday">
+                    <SelectTrigger id="day_of_week">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

@@ -118,6 +118,13 @@ function EmployeeDistributionRow({ employee }: { employee: Employee }) {
           onBlur={handleSaveMaxActiveLeads}
         />
       </TableCell>
+      <TableCell>
+        <Switch
+          checked={employee.accepts_appointments}
+          onCheckedChange={(checked) => updateEmployee.mutateAsync({ id: employee.id, payload: { accepts_appointments: checked } })}
+          disabled={updateEmployee.isPending}
+        />
+      </TableCell>
     </TableRow>
   )
 }
@@ -200,6 +207,7 @@ export function DistributionPage() {
                   <TableHead>Participa do rodízio</TableHead>
                   <TableHead>Prioridade</TableHead>
                   <TableHead>Limite de leads ativos</TableHead>
+                  <TableHead>Recebe agendamentos</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -208,7 +216,7 @@ export function DistributionPage() {
                 ))}
                 {employees?.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
                       Nenhum funcionário cadastrado ainda.
                     </TableCell>
                   </TableRow>

@@ -16,6 +16,8 @@ export interface Assistant {
   compiled_prompt_updated_at: string
   welcome_message: string | null
   transfer_message: string | null
+  can_schedule_appointments: boolean
+  scheduling_instructions: string | null
   status: AssistantStatus
 }
 
@@ -34,6 +36,8 @@ export interface AssistantCreateRequest {
    */
   welcome_message?: string
   transfer_message?: string
+  can_schedule_appointments?: boolean
+  scheduling_instructions?: string
 }
 
 export interface AssistantUpdateRequest {
@@ -47,5 +51,7 @@ export interface AssistantUpdateRequest {
   additional_instructions?: string
   welcome_message?: string
   transfer_message?: string
+  can_schedule_appointments?: boolean
+  scheduling_instructions?: string
   status?: AssistantStatus
 }

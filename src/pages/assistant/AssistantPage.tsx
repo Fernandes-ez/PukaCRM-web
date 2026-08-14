@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, Info, Bot } from 'lucide-react'
+import { Loader2, Info, Bot, CalendarClock } from 'lucide-react'
 import { useAssistant, useCreateAssistant, useUpdateAssistant } from '@/hooks/useAssistant'
+import { useCompany } from '@/hooks/useCompany'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
@@ -86,6 +87,7 @@ export function AssistantPage() {
         assistant && (
           <>
             <StatusCard assistant={assistant} />
+            <SchedulingCard assistant={assistant} />
 
             <AssistantForm
               mode="edit"
@@ -159,6 +161,96 @@ function StatusCard({ assistant }: { assistant: Assistant }) {
           </p>
         </div>
         <Switch checked={isActive} onCheckedChange={handleToggle} disabled={updateAssistant.isPending} />
+      </CardContent>
+    </Card>
+  )
+}
+
+function SchedulingCard({ assistant }: { assistant: Assistant }) {
+  const { data: company } = useCompany()
+  const updateAssistant = useUpdateAssistant()
+  const { toast } = useToast()
+  const [instructions, setInstructions] = useState(assistant.scheduling_instructions ?? '')
+
+  useEffect(() => setInstructions(assistant.scheduling_instructions ?? ''), [assistant.scheduling_instructions])
+
+  const schedulingEnabled = !!company?.scheduling_enabled
+  const assistantActive = assistant.status === 'ACTIVE'
+  const canToggle = schedulingEnabled && assistantActive
+
+  async function handleToggle(checked: boolean) {
+    try {
+      await updateAssistant.mutateAsync({ can_schedule_appointments: checked })
+      toast({ title: checked ? 'IA pode marcar horário agora' : 'IA não marca mais horário', variant: 'success' })
+    } catch (error) {
+      toast({
+        title: 'Não foi possível alterar',
+        description: error instanceof ApiError ? error.message : undefined,
+        variant: 'destructive',
+      })
+    }
+  }
+
+  async function handleSaveInstructions() {
+    try {
+      await updateAssistant.mutateAsync({ scheduling_instructions: instructions || undefined })
+      toast({ title: 'Regras de agendamento atualizadas' })
+    } catch (error) {
+      toast({
+        title: 'Não foi possível atualizar',
+        description: error instanceof ApiError ? error.message : undefined,
+        variant: 'destructive',
+      })
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <CalendarClock className="h-4 w-4" />
+          Agendamento por IA
+        </CardTitle>
+        <CardDescription>
+          {schedulingEnabled
+            ? 'A IA pode marcar horários reais na Agenda durante a conversa, sempre pedindo confirmação antes.'
+            : 'Ative a Agenda em Minha Empresa para poder ligar isso aqui.'}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="can_schedule">A IA pode marcar horário</Label>
+          <Switch
+            id="can_schedule"
+            checked={assistant.can_schedule_appointments}
+            onCheckedChange={handleToggle}
+            disabled={!canToggle || updateAssistant.isPending}
+          />
+        </div>
+        {schedulingEnabled && !assistantActive && (
+          <p className="text-xs text-muted-foreground">A IA precisa estar ativada (interruptor no topo) pra poder agendar.</p>
+        )}
+        {assistant.can_schedule_appointments && (
+          <div className="space-y-1.5">
+            <Label htmlFor="scheduling_instructions">Regras de agendamento (opcional)</Label>
+            <Textarea
+              id="scheduling_instructions"
+              rows={3}
+              placeholder="Ex: nunca marque no mesmo dia, sempre confirme o nome completo antes de finalizar"
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleSaveInstructions}
+              disabled={updateAssistant.isPending || instructions === (assistant.scheduling_instructions ?? '')}
+            >
+              Salvar
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

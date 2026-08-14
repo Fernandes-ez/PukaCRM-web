@@ -11,6 +11,8 @@ import {
   Megaphone,
   MegaphoneOff,
   CreditCard,
+  CalendarCheck,
+  CalendarX,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -38,6 +40,8 @@ const NOTIFICATION_ICON: Record<Notification['type'], typeof UserPlus> = {
   CAMPAIGN_COMPLETED: Megaphone,
   CAMPAIGN_CANCELED: MegaphoneOff,
   TRIAL_ENDED_NO_BILLING: CreditCard,
+  APPOINTMENT_SCHEDULED: CalendarCheck,
+  APPOINTMENT_CANCELED: CalendarX,
 }
 
 export function NotificationBell() {
@@ -51,7 +55,14 @@ export function NotificationBell() {
 
   function handleSelect(notification: Notification) {
     if (!notification.read_at) markRead.mutate(notification.id)
-    if (notification.related_conversation_id) {
+    // related_appointment_id precisa vir ANTES de related_conversation_id:
+    // um agendamento criado pela IA carrega os dois, e clicar deve levar
+    // pra Agenda, não pra conversa (ainda sem tela de detalhe de um
+    // agendamento específico - fica só na página, mesmo padrão já usado
+    // pra related_task_id).
+    if (notification.related_appointment_id) {
+      navigate('/agenda')
+    } else if (notification.related_conversation_id) {
       navigate(`/conversations/${notification.related_conversation_id}`)
     } else if (notification.related_task_id) {
       navigate('/pipeline')

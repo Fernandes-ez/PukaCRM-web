@@ -17,6 +17,7 @@ import {
   Megaphone,
   ChevronDown,
   X,
+  CalendarDays,
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { LogoMark } from '@/components/brand/LogoMark'
@@ -28,6 +29,9 @@ interface NavItem {
   label: string
   icon: typeof LayoutDashboard
   end?: boolean
+  /** Item condicionado a uma feature flag além de rota/permissão (ex: Agenda só existe se a empresa ligou). */
+  featureFlag?: 'scheduling'
+  permission?: { module: PermissionModule; resource: string; action: PermissionAction }
 }
 
 interface AdminLeafItem {
@@ -56,6 +60,13 @@ const generalItems: NavItem[] = [
   { to: '/conversations', label: 'Conversas', icon: MessageSquare },
   { to: '/leads', label: 'Leads', icon: Contact },
   { to: '/pipeline', label: 'Pipeline', icon: Kanban },
+  {
+    to: '/agenda',
+    label: 'Agenda',
+    icon: CalendarDays,
+    featureFlag: 'scheduling',
+    permission: { module: 'SCHEDULING', resource: 'appointment', action: 'VIEW' },
+  },
 ]
 
 const allAdminItems: AdminNavEntry[] = [
@@ -98,11 +109,22 @@ interface SidebarProps {
 
 export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
   const location = useLocation()
-  const { hasPermission } = useAuth()
+  const { hasPermission, employee } = useAuth()
 
   function canSee(item: AdminLeafItem) {
     return hasPermission(item.permission.module, item.permission.resource, item.permission.action)
   }
+
+  const visibleGeneralItems = useMemo(
+    () =>
+      generalItems.filter((item) => {
+        if (item.featureFlag === 'scheduling' && !employee?.company_scheduling_enabled) return false
+        if (item.permission && !hasPermission(item.permission.module, item.permission.resource, item.permission.action)) return false
+        return true
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [hasPermission, employee?.company_scheduling_enabled],
+  )
 
   const adminItems = useMemo(
     () =>
@@ -148,7 +170,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
     })
   }
 
-  const items = tab === 'admin' && hasAdminAccess ? adminItems : generalItems
+  const items = tab === 'admin' && hasAdminAccess ? adminItems : visibleGeneralItems
 
   return (
     <>

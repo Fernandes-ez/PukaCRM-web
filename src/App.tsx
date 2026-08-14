@@ -20,6 +20,7 @@ import { DistributionPage } from '@/pages/distribution/DistributionPage'
 import { CampaignsPage } from '@/pages/campaigns/CampaignsPage'
 import { CreateCampaignPage } from '@/pages/campaigns/CreateCampaignPage'
 import { CampaignDetailPage } from '@/pages/campaigns/CampaignDetailPage'
+import { AgendaPage } from '@/pages/agenda/AgendaPage'
 
 function App() {
   return (
@@ -36,6 +37,10 @@ function App() {
 
             <Route element={<RequirePermission module="PIPELINE" resource="pipeline" action="VIEW" />}>
               <Route path="/pipeline" element={<PipelinePage />} />
+            </Route>
+
+            <Route element={<RequirePermission module="SCHEDULING" resource="appointment" action="VIEW" />}>
+              <Route path="/agenda" element={<AgendaPage />} />
             </Route>
 
             <Route element={<RequirePermission module="EMPLOYEES" resource="employee" action="VIEW" />}>

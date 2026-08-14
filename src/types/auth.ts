@@ -46,6 +46,8 @@ export interface EmployeeMe {
   is_owner: boolean
   must_change_password: boolean
   status: EmployeeStatus
+  /** Feature flag da Agenda - exposto aqui pra Sidebar decidir sem precisar de GET /company (COMPANY/company/VIEW). */
+  company_scheduling_enabled: boolean
 }
 
 /** Autoedição - bem mais restrita que `EmployeeUpdateRequest` (sem cargo/status/distribuição). */

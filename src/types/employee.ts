@@ -24,6 +24,8 @@ export interface Employee {
   /** Maior primeiro no rodízio - desempate por quem está há mais tempo sem receber. */
   distribution_priority: number
   max_active_leads: number
+  /** Participa da Agenda como profissional agendável - ver DistributionPage. */
+  accepts_appointments: boolean
   created_at: string
   updated_at: string
 }
@@ -48,4 +50,5 @@ export interface EmployeeUpdateRequest {
   distribution_enabled?: boolean
   distribution_priority?: number
   max_active_leads?: number
+  accepts_appointments?: boolean
 }

@@ -15,8 +15,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Switch } from '@/components/ui/switch'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useMessageTemplates } from '@/hooks/useMessageTemplates'
 import { formatDate } from '@/utils/date'
-import { COMPANY_STATUS_LABEL, type CompanyStatus } from '@/types/company'
+import { COMPANY_STATUS_LABEL, SCHEDULING_VISIBILITY_MODE_LABEL, type CompanyStatus, type SchedulingVisibilityMode } from '@/types/company'
 import { CloseAccountDialog } from '@/pages/company/CloseAccountDialog'
 
 const companySchema = z.object({
@@ -79,9 +82,79 @@ export function CompanyPage() {
       : undefined,
   })
 
+  const { data: templates } = useMessageTemplates()
+  const utilityApprovedTemplates = (templates ?? []).filter((t) => t.category === 'UTILITY' && t.status === 'APPROVED')
+
+  const [minNotice, setMinNotice] = useState('60')
+  const [maxDaysAhead, setMaxDaysAhead] = useState('30')
+  const [reminderHours, setReminderHours] = useState('24')
+
   useEffect(() => {
     if (company) setClosingMessage(company.closing_message ?? '')
   }, [company])
+
+  useEffect(() => {
+    if (!company) return
+    setMinNotice(String(company.scheduling_min_notice_minutes))
+    setMaxDaysAhead(String(company.scheduling_max_days_ahead))
+    setReminderHours(String(company.scheduling_reminder_hours_before))
+  }, [company])
+
+  async function handleToggleScheduling(enabled: boolean) {
+    try {
+      await updateCompany.mutateAsync({ scheduling_enabled: enabled })
+      toast({ title: enabled ? 'Agenda ativada' : 'Agenda desativada' })
+    } catch (error) {
+      toast({
+        title: 'Não foi possível atualizar',
+        description: error instanceof ApiError ? error.message : undefined,
+        variant: 'destructive',
+      })
+    }
+  }
+
+  async function handleChangeVisibility(mode: SchedulingVisibilityMode) {
+    try {
+      await updateCompany.mutateAsync({ scheduling_visibility_mode: mode })
+      toast({ title: 'Visibilidade da agenda atualizada' })
+    } catch (error) {
+      toast({
+        title: 'Não foi possível atualizar',
+        description: error instanceof ApiError ? error.message : undefined,
+        variant: 'destructive',
+      })
+    }
+  }
+
+  async function handleSaveSchedulingPolicy() {
+    try {
+      await updateCompany.mutateAsync({
+        scheduling_min_notice_minutes: Number(minNotice) || 0,
+        scheduling_max_days_ahead: Number(maxDaysAhead) || 1,
+        scheduling_reminder_hours_before: Number(reminderHours) || 0,
+      })
+      toast({ title: 'Política de agendamento atualizada' })
+    } catch (error) {
+      toast({
+        title: 'Não foi possível atualizar',
+        description: error instanceof ApiError ? error.message : undefined,
+        variant: 'destructive',
+      })
+    }
+  }
+
+  async function handleChangeReminderTemplate(templateId: string) {
+    try {
+      await updateCompany.mutateAsync({ scheduling_reminder_template_id: templateId === '__none__' ? null : templateId })
+      toast({ title: 'Template de lembrete atualizado' })
+    } catch (error) {
+      toast({
+        title: 'Não foi possível atualizar',
+        description: error instanceof ApiError ? error.message : undefined,
+        variant: 'destructive',
+      })
+    }
+  }
 
   async function handleSaveClosingMessage() {
     try {
@@ -293,6 +366,88 @@ export function CompanyPage() {
                 >
                   Salvar
                 </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Agenda</CardTitle>
+                <CardDescription>
+                  Ativa o módulo de agendamentos - opcionalmente, também deixa a IA marcar horário sozinha durante a
+                  conversa (configurável em Assistente IA).
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="scheduling_enabled">Ativar Agenda</Label>
+                  <Switch
+                    id="scheduling_enabled"
+                    checked={company.scheduling_enabled}
+                    onCheckedChange={handleToggleScheduling}
+                    disabled={updateCompany.isPending}
+                  />
+                </div>
+
+                {company.scheduling_enabled && (
+                  <>
+                    <div className="space-y-1.5">
+                      <Label>Visibilidade</Label>
+                      <Select value={company.scheduling_visibility_mode} onValueChange={handleChangeVisibility}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(Object.keys(SCHEDULING_VISIBILITY_MODE_LABEL) as SchedulingVisibilityMode[]).map((mode) => (
+                            <SelectItem key={mode} value={mode}>
+                              {SCHEDULING_VISIBILITY_MODE_LABEL[mode]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="min_notice">Antecedência mínima (min)</Label>
+                        <Input id="min_notice" type="number" min={0} value={minNotice} onChange={(e) => setMinNotice(e.target.value)} onBlur={handleSaveSchedulingPolicy} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="max_days">Dias à frente</Label>
+                        <Input id="max_days" type="number" min={1} value={maxDaysAhead} onChange={(e) => setMaxDaysAhead(e.target.value)} onBlur={handleSaveSchedulingPolicy} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="reminder_hours">Lembrete (h antes)</Label>
+                        <Input id="reminder_hours" type="number" min={0} value={reminderHours} onChange={(e) => setReminderHours(e.target.value)} onBlur={handleSaveSchedulingPolicy} />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label>Template de lembrete (categoria Utilitário, aprovado)</Label>
+                      <Select
+                        value={company.scheduling_reminder_template_id ?? '__none__'}
+                        onValueChange={handleChangeReminderTemplate}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Nenhum - lembrete não será enviado" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">Nenhum</SelectItem>
+                          {utilityApprovedTemplates.map((template) => (
+                            <SelectItem key={template.id} value={template.id}>
+                              {template.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {utilityApprovedTemplates.length === 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          Nenhum template Utilitário aprovado ainda - crie um em WhatsApp &gt; Templates pra habilitar o
+                          lembrete automático.
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
 

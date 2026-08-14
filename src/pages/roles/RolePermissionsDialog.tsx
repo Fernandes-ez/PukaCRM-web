@@ -16,6 +16,7 @@ import {
   Settings,
   CreditCard,
   Megaphone,
+  CalendarDays,
   type LucideIcon,
 } from 'lucide-react'
 import { usePermissionsCatalog, useRolePermissions, useSetRolePermissions } from '@/hooks/useRoles'
@@ -52,6 +53,7 @@ const MODULE_ICON: Record<PermissionModule, LucideIcon> = {
   SETTINGS: Settings,
   SUBSCRIPTION: CreditCard,
   CAMPAIGNS: Megaphone,
+  SCHEDULING: CalendarDays,
 }
 
 interface ModuleGroup {

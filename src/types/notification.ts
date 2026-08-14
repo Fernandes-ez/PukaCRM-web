@@ -9,6 +9,8 @@ export type NotificationType =
   | 'CAMPAIGN_COMPLETED'
   | 'CAMPAIGN_CANCELED'
   | 'TRIAL_ENDED_NO_BILLING'
+  | 'APPOINTMENT_SCHEDULED'
+  | 'APPOINTMENT_CANCELED'
 
 export interface Notification {
   id: string
@@ -18,6 +20,7 @@ export interface Notification {
   related_conversation_id: string | null
   related_task_id: string | null
   related_campaign_id: string | null
+  related_appointment_id: string | null
   read_at: string | null
   created_at: string
 }

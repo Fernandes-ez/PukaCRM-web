@@ -13,6 +13,8 @@ import { ApiError } from '@/services/apiClient'
 import { useEmployees } from '@/hooks/useEmployees'
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '@/hooks/useTasks'
 import { useNotes, useCreateNote, useDeleteNote } from '@/hooks/useNotes'
+import { useAuth } from '@/contexts/AuthContext'
+import { LeadAppointmentsTab } from '@/pages/pipeline/LeadAppointmentsTab'
 import { formatDate, formatRelativeTime } from '@/utils/date'
 import { cn } from '@/utils/cn'
 import { formatPhone } from '@/utils/phone'
@@ -25,6 +27,9 @@ interface LeadDetailDialogProps {
 }
 
 export function LeadDetailDialog({ lead, open, onOpenChange }: LeadDetailDialogProps) {
+  const { employee } = useAuth()
+  const schedulingEnabled = !!employee?.company_scheduling_enabled
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
@@ -33,9 +38,10 @@ export function LeadDetailDialog({ lead, open, onOpenChange }: LeadDetailDialogP
           <DialogDescription>{formatPhone(lead.phone)}</DialogDescription>
         </DialogHeader>
         <Tabs defaultValue="tasks">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className={cn('grid w-full', schedulingEnabled ? 'grid-cols-3' : 'grid-cols-2')}>
             <TabsTrigger value="tasks">Tarefas</TabsTrigger>
             <TabsTrigger value="notes">Observações</TabsTrigger>
+            {schedulingEnabled && <TabsTrigger value="appointments">Agendamentos</TabsTrigger>}
           </TabsList>
           <TabsContent value="tasks">
             <TasksTab leadId={lead.id} />
@@ -43,6 +49,11 @@ export function LeadDetailDialog({ lead, open, onOpenChange }: LeadDetailDialogP
           <TabsContent value="notes">
             <NotesTab leadId={lead.id} />
           </TabsContent>
+          {schedulingEnabled && (
+            <TabsContent value="appointments">
+              <LeadAppointmentsTab leadId={lead.id} />
+            </TabsContent>
+          )}
         </Tabs>
       </DialogContent>
     </Dialog>
