@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Menu, LogOut, User, UserCog, KeyRound } from 'lucide-react'
+import { Menu, LogOut, User, UserCog, KeyRound, CalendarDays } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { ThemeToggle } from '@/modules/layout/ThemeToggle'
 import { NotificationBell } from '@/modules/layout/NotificationBell'
 import { EditProfileDialog } from '@/pages/profile/EditProfileDialog'
 import { ChangePasswordDialog } from '@/pages/profile/ChangePasswordDialog'
+import { GoogleCalendarDialog } from '@/pages/profile/GoogleCalendarDialog'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -33,6 +34,7 @@ export function Topbar({ onOpenMobileMenu }: TopbarProps) {
   const { employee, logout } = useAuth()
   const [profileOpen, setProfileOpen] = useState(false)
   const [passwordOpen, setPasswordOpen] = useState(false)
+  const [googleCalendarOpen, setGoogleCalendarOpen] = useState(false)
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-background/95 px-4 backdrop-blur">
@@ -70,6 +72,10 @@ export function Topbar({ onOpenMobileMenu }: TopbarProps) {
               <KeyRound className="mr-2 h-4 w-4" />
               Alterar senha
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setGoogleCalendarOpen(true)}>
+              <CalendarDays className="mr-2 h-4 w-4" />
+              Google Calendar
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
@@ -81,6 +87,7 @@ export function Topbar({ onOpenMobileMenu }: TopbarProps) {
 
       {employee && <EditProfileDialog open={profileOpen} onOpenChange={setProfileOpen} employee={employee} />}
       <ChangePasswordDialog open={passwordOpen} onOpenChange={setPasswordOpen} />
+      <GoogleCalendarDialog open={googleCalendarOpen} onOpenChange={setGoogleCalendarOpen} />
     </header>
   )
 }

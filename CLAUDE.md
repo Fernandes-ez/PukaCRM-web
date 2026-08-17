@@ -1778,6 +1778,49 @@ antemão, não só falhar na tentativa.
   verificada visualmente** (sem ferramenta de automação de browser
   disponível na sessão).
 
+## ✅ Novo em 2026-08-17 — sincronização da Agenda com Google Calendar
+
+Pedido do usuário: "preciso que a nossa agenda de agendamentos
+sincronize com o google calendar". Ver decisão #52 do `CLAUDE.MD` do
+backend pro desenho completo (primeiro fluxo OAuth2 authorization-code
+do projeto, one-way push, por Employee). Do lado do frontend é só um
+"Conectar/Desconectar", sem nenhuma tela nova na Agenda em si.
+
+- **`GoogleCalendarDialog.tsx`** (`src/pages/profile/`, novo) - mesmo
+  formato de `ChangePasswordDialog.tsx`: mostra o status
+  (`GET /google-calendar/status`, `useGoogleCalendarStatus()`) e um
+  botão "Conectar Google Calendar" (pega `authorize_url` de
+  `GET /google-calendar/connect` e navega `window.location.href` -
+  **não** é um XHR, o próximo salto é o consentimento do próprio Google)
+  ou "Desconectar" quando já conectado.
+- **`Topbar.tsx`** ganhou um item novo no dropdown do avatar ("Google
+  Calendar", entre "Alterar senha" e o separador) - mesmo padrão de
+  `profileOpen`/`passwordOpen`.
+- **Volta do redirect**: o backend troca o código OAuth inteiro no
+  servidor (nunca expõe o client_secret ao browser) e redireciona pra
+  `/?google_calendar=connected|error`. Um `useEffect` em `AppLayout.tsx`
+  (raiz do app autenticado, sempre montado) lê esse query param via
+  `useSearchParams`, mostra um toast, invalida
+  `googleCalendarStatusKey` e limpa o param da URL - sem precisar de
+  rota dedicada só pra isso, o redirect cai em qualquer página que
+  estivesse aberta.
+- **`src/services/googleCalendarService.ts`** + **`src/hooks/
+useGoogleCalendar.ts`** (novos) - `getStatus`/`getConnectUrl`/
+  `disconnect`, mesmo formato de `subscriptionService.ts`/
+  `useSubscription.ts`.
+- **Sem mudança em `AgendaPage.tsx`** - v1 não expõe status de sync por
+  agendamento na UI (sem badge, sem botão de resync manual) - reflete a
+  mesma decisão de escopo do backend.
+- **Depende de setup manual no Google Cloud Console que ainda não foi
+  feito** (ver pendência #4 no `CLAUDE.MD` do backend) - até lá, clicar
+  em "Conectar" chama o backend normalmente mas a troca de token falha
+  (`NotImplementedError` do lado de lá), então o fluxo não completa de
+  verdade em produção ainda.
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos. **UI no navegador não
+  verificada visualmente** (sem ferramenta de automação de browser
+  disponível na sessão, e sem credencial real do Google configurada
+  pra completar o fluxo ponta a ponta de qualquer forma).
+
 ## Comandos úteis
 
 ```bash
