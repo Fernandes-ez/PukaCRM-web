@@ -4,6 +4,7 @@ import { Megaphone, Plus, Repeat, X } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useCampaigns, useCancelCampaign } from '@/hooks/useCampaigns'
 import { useMessageTemplates } from '@/hooks/useMessageTemplates'
+import { useBillingGate } from '@/hooks/useBillingGate'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
@@ -115,6 +116,7 @@ export function CampaignsPage() {
   const { data: campaigns, isLoading } = useCampaigns()
   const { data: templates } = useMessageTemplates()
   const { hasPermission } = useAuth()
+  const { blocked: billingBlocked, reason: billingBlockedReason } = useBillingGate()
   const navigate = useNavigate()
 
   const templateNameById = new Map((templates ?? []).map((t) => [t.id, t.name]))
@@ -127,7 +129,11 @@ export function CampaignsPage() {
           <p className="text-sm text-muted-foreground">Envie um template pra um público filtrado, com acompanhamento</p>
         </div>
         {hasPermission('CAMPAIGNS', 'campaign', 'CREATE') && (
-          <Button onClick={() => navigate('/campanhas/nova')}>
+          <Button
+            onClick={() => navigate('/campanhas/nova')}
+            disabled={billingBlocked}
+            title={billingBlocked ? (billingBlockedReason ?? undefined) : undefined}
+          >
             <Plus className="h-4 w-4" />
             Nova campanha
           </Button>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { MoreHorizontal, Plus, CalendarClock, Pencil, UserX, UserCheck, KeyRound } from 'lucide-react'
 import { useEmployees, useDeactivateEmployee, useUpdateEmployee, useResetEmployeePassword } from '@/hooks/useEmployees'
 import { useRoles } from '@/hooks/useRoles'
+import { useBillingGate } from '@/hooks/useBillingGate'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
@@ -37,6 +38,7 @@ export function EmployeesPage() {
   const deactivateEmployee = useDeactivateEmployee()
   const updateEmployee = useUpdateEmployee()
   const resetPassword = useResetEmployeePassword()
+  const { blocked: billingBlocked, reason: billingBlockedReason } = useBillingGate()
   const { toast } = useToast()
 
   const [createOpen, setCreateOpen] = useState(false)
@@ -98,7 +100,11 @@ export function EmployeesPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Funcionários</h1>
           <p className="text-sm text-muted-foreground">Gerencie a equipe que atende seus clientes</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
+        <Button
+          onClick={() => setCreateOpen(true)}
+          disabled={billingBlocked}
+          title={billingBlocked ? (billingBlockedReason ?? undefined) : undefined}
+        >
           <Plus className="h-4 w-4" />
           Novo funcionário
         </Button>

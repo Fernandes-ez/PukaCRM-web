@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { MoreHorizontal, Plus, Pencil, UserCheck, Archive, Download, Upload, FileDown, Loader2, MessageCircle } from 'lucide-react'
 import { useLeads, useArchiveLead, useExportLeads, useImportLeads, useDownloadImportTemplate } from '@/hooks/useLeads'
 import { useEmployees } from '@/hooks/useEmployees'
+import { useBillingGate } from '@/hooks/useBillingGate'
 import { useAuth } from '@/contexts/AuthContext'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
@@ -40,6 +41,7 @@ export function LeadsPage() {
   const importLeads = useImportLeads()
   const downloadTemplate = useDownloadImportTemplate()
   const { hasPermission } = useAuth()
+  const { blocked: billingBlocked, reason: billingBlockedReason } = useBillingGate()
   const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -252,7 +254,11 @@ export function LeadsPage() {
                             Atribuir responsável
                           </DropdownMenuItem>
                           {hasPermission('CONVERSATIONS', 'conversation', 'CREATE') && (
-                            <DropdownMenuItem onClick={() => setStartConversationLead(lead)}>
+                            <DropdownMenuItem
+                              onClick={() => setStartConversationLead(lead)}
+                              disabled={billingBlocked}
+                              title={billingBlocked ? (billingBlockedReason ?? undefined) : undefined}
+                            >
                               <MessageCircle className="mr-2 h-4 w-4" />
                               Iniciar conversa
                             </DropdownMenuItem>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { MoreHorizontal, Plus, Pencil, Trash2, KeyRound, Lock } from 'lucide-react'
 import { useRoles, useDeleteRole } from '@/hooks/useRoles'
+import { useBillingGate } from '@/hooks/useBillingGate'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
@@ -24,6 +25,7 @@ import { RolePermissionsDialog } from '@/pages/roles/RolePermissionsDialog'
 export function RolesPage() {
   const { data: roles, isLoading } = useRoles()
   const deleteRole = useDeleteRole()
+  const { blocked: billingBlocked, reason: billingBlockedReason } = useBillingGate()
   const { toast } = useToast()
 
   const [createOpen, setCreateOpen] = useState(false)
@@ -53,7 +55,11 @@ export function RolesPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Cargos</h1>
           <p className="text-sm text-muted-foreground">Defina cargos e as permissões de cada um</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
+        <Button
+          onClick={() => setCreateOpen(true)}
+          disabled={billingBlocked}
+          title={billingBlocked ? (billingBlockedReason ?? undefined) : undefined}
+        >
           <Plus className="h-4 w-4" />
           Novo cargo
         </Button>

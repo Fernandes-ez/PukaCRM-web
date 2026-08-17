@@ -1729,6 +1729,55 @@ caminho manual).
   verificada visualmente (sem ferramenta de automação de browser
   disponível na sessão).
 
+## ✅ Novo em 2026-08-17 — bloqueio de ações visível na UI (não só o 402)
+
+Achado real: `Company.status=SUSPENDED` virou bloqueio parcial no
+backend nesse mesmo dia (decisão #50 do `CLAUDE.md` de lá), mas o
+frontend não tinha nada refletindo isso visualmente - o funcionário só
+descobria que estava bloqueado ao clicar em "Enviar"/"Nova campanha"/
+etc. e ver o toast de erro (`error instanceof ApiError`). Pedido do
+usuário: os pontos afetados precisam **parecer** bloqueados de
+antemão, não só falhar na tentativa.
+
+- **`useBillingGate()`** (`hooks/useBillingGate.ts`, novo) - espelha
+  `require_active_billing` do backend a partir do mesmo
+  `useSubscriptionStatus()` que já alimenta o `BillingBanner` - dois
+  motivos possíveis (`status === 'PAST_DUE' || 'CANCELED'`, bloqueia na
+  hora; ou trial acabado sem `has_billing_configured`, bloqueia depois
+  da carência), devolve `{ blocked, blockedForMessaging, reason }`.
+  `blockedForMessaging` existe separado de `blocked` porque responder
+  Conversa tem 1 dia de carência a mais que as outras ações (mesmo
+  `grace_period_days=1` do backend) - só diverge de `blocked` no
+  cenário de trial sem cobrança, no cenário `SUSPENDED` os dois são
+  iguais (bloqueio imediato).
+- **Pontos desabilitados** (botão com `disabled` + `title` explicando o
+  motivo, mesmo texto do backend): "Nova campanha"
+  (`CampaignsPage.tsx`) + submit final (`CreateCampaignPage.tsx`,
+  defesa em profundidade contra navegação direta pela URL, com
+  `Alert` visível no topo também); "Novo template"
+  (`MessageTemplatesPage.tsx`); "Novo funcionário" (`EmployeesPage.tsx`);
+  "Novo cargo" (`RolesPage.tsx`); salvar Assistente
+  (`AssistantPage.tsx`) e salvar/criar WhatsApp
+  (`WhatsappPage.tsx`, os dois formulários - criar instância e editar);
+  "Iniciar conversa" tanto no botão de multi-seleção
+  (`ConversationsPage.tsx`) quanto no item do menu por Lead
+  (`LeadsPage.tsx`).
+- **`ConversationDetail.tsx`** - formulário de resposta vira um terceiro
+  estado (`isClosed` / `!isAssignedToMe` / agora **`blockedForMessaging`**),
+  mesmo padrão visual dos outros dois (faixa no lugar do formulário,
+  aqui com fundo `destructive` já que é bloqueio de cobrança, não regra
+  de atribuição) - com link "Ver assinatura" pra quem tem
+  `SUBSCRIPTION/subscription/VIEW`.
+- **Achado corrigindo isso**: `POST /message-templates` nunca tinha
+  `require_active_billing` no backend (só permissão) - diferente de
+  Campanhas/Funcionário/Cargo/Assistente/WhatsApp, que já tinham desde
+  a decisão #48. Corrigido lá também (ver `CLAUDE.md` do backend).
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos. Lógica de
+  `require_active_billing` (incluindo o `SUSPENDED` novo) validada
+  ponta a ponta no backend com `TestClient` real. **UI no navegador não
+  verificada visualmente** (sem ferramenta de automação de browser
+  disponível na sessão).
+
 ## Comandos úteis
 
 ```bash

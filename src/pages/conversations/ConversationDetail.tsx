@@ -11,6 +11,7 @@ import {
   useCloseConversation,
 } from '@/hooks/useConversations'
 import { useEmployees } from '@/hooks/useEmployees'
+import { useBillingGate } from '@/hooks/useBillingGate'
 import { useAuth } from '@/contexts/AuthContext'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
@@ -44,7 +45,8 @@ export function ConversationDetail({ conversationId, draftMessage, onDraftMessag
   const { data: conversation, isLoading: isLoadingConversation } = useConversation(conversationId)
   const { data: messages, isLoading: isLoadingMessages } = useMessages(conversationId)
   const { data: employees } = useEmployees()
-  const { employee: currentEmployee } = useAuth()
+  const { employee: currentEmployee, hasPermission } = useAuth()
+  const { blockedForMessaging, reason: billingBlockedReason } = useBillingGate()
   const sendMessage = useSendMessage(conversationId)
   const unassignConversation = useUnassignConversation()
   const closeConversation = useCloseConversation()
@@ -227,6 +229,18 @@ export function ConversationDetail({ conversationId, draftMessage, onDraftMessag
           {conversation.assigned_employee_id
             ? `Esta conversa está com ${assignedEmployeeName ?? 'outro atendente'} — só quem está atribuído pode responder.`
             : 'A IA está respondendo essa conversa — clique em "Atribuir" pra assumir e poder responder.'}
+        </div>
+      ) : blockedForMessaging ? (
+        <div className="border-t bg-destructive/10 p-3 text-center text-sm text-destructive">
+          {billingBlockedReason}
+          {hasPermission('SUBSCRIPTION', 'subscription', 'VIEW') && (
+            <>
+              {' '}
+              <a href="/assinatura" className="underline underline-offset-2 hover:no-underline">
+                Ver assinatura
+              </a>
+            </>
+          )}
         </div>
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="flex items-end gap-2 border-t p-3">

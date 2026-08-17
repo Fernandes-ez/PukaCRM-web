@@ -12,6 +12,7 @@ import {
   useRegenerateApiKey,
 } from '@/hooks/useWhatsappInstance'
 import { useAuth } from '@/contexts/AuthContext'
+import { useBillingGate } from '@/hooks/useBillingGate'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
@@ -243,6 +244,7 @@ function CreateInstanceCard({
   createInstance: ReturnType<typeof useCreateWhatsappInstance>
 }) {
   const [formError, setFormError] = useState<string | null>(null)
+  const { blocked: billingBlocked, reason: billingBlockedReason } = useBillingGate()
   const {
     register,
     handleSubmit,
@@ -302,7 +304,12 @@ function CreateInstanceCard({
             <Label htmlFor="label">Nome de identificação (opcional)</Label>
             <Input id="label" placeholder="Ex: WhatsApp Principal" {...register('label')} />
           </div>
-          <Button type="submit" disabled={isSubmitting}>
+          {billingBlocked && (
+            <Alert variant="destructive">
+              <AlertDescription>{billingBlockedReason}</AlertDescription>
+            </Alert>
+          )}
+          <Button type="submit" disabled={isSubmitting || billingBlocked}>
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
             Criar instância
           </Button>
@@ -322,6 +329,7 @@ function UpdateInstanceForm({
   toast: ReturnType<typeof useToast>['toast']
 }) {
   const [formError, setFormError] = useState<string | null>(null)
+  const { blocked: billingBlocked, reason: billingBlockedReason } = useBillingGate()
   const {
     register,
     handleSubmit,
@@ -388,7 +396,12 @@ function UpdateInstanceForm({
         <Label htmlFor="edit_label">Nome de identificação (opcional)</Label>
         <Input id="edit_label" placeholder="Ex: WhatsApp Principal" {...register('label')} />
       </div>
-      <Button type="submit" disabled={isSubmitting}>
+      {billingBlocked && (
+        <Alert variant="destructive">
+          <AlertDescription>{billingBlockedReason}</AlertDescription>
+        </Alert>
+      )}
+      <Button type="submit" disabled={isSubmitting || billingBlocked}>
         {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
         {isDisconnected ? 'Salvar e reconectar' : 'Salvar alterações'}
       </Button>

@@ -4,6 +4,7 @@ import { ArrowLeft, Calendar as CalendarIcon, Check, Clock, Loader2, Megaphone, 
 import { usePipeline } from '@/hooks/usePipeline'
 import { useMessageTemplates } from '@/hooks/useMessageTemplates'
 import { useCampaignPreview, useCreateCampaign } from '@/hooks/useCampaigns'
+import { useBillingGate } from '@/hooks/useBillingGate'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
@@ -140,7 +141,8 @@ export function CreateCampaignPage() {
   const scheduleValid = sendMode === 'now' || scheduleDate !== null
   const recurrenceValid = sendMode !== 'recurring' || (recurrenceDays.length > 0 && recurrenceEndDate !== null)
   const canAdvanceFromSchedule = scheduleValid && recurrenceValid
-  const canSubmit = name.trim() !== '' && canAdvanceFromSchedule
+  const { blocked: billingBlocked, reason: billingBlockedReason } = useBillingGate()
+  const canSubmit = name.trim() !== '' && canAdvanceFromSchedule && !billingBlocked
 
   async function handleCreate() {
     if (!templateId || !canSubmit) return
@@ -185,6 +187,12 @@ export function CreateCampaignPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Nova campanha</h1>
         <p className="text-sm text-muted-foreground">Filtre o público, escolha o template e quando disparar</p>
       </div>
+
+      {billingBlocked && (
+        <Alert variant="destructive">
+          <AlertDescription>{billingBlockedReason}</AlertDescription>
+        </Alert>
+      )}
 
       <Stepper current={step} />
 

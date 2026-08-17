@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { Loader2, Plus, Trash2, Tag, ArrowRight, Link2, Phone, MessageSquareReply } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useMessageTemplates, useCreateMessageTemplate, useDeleteMessageTemplate } from '@/hooks/useMessageTemplates'
+import { useBillingGate } from '@/hooks/useBillingGate'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
@@ -103,6 +104,7 @@ export function MessageTemplatesPage() {
   const createTemplate = useCreateMessageTemplate()
   const deleteTemplate = useDeleteMessageTemplate()
   const { hasPermission } = useAuth()
+  const { blocked: billingBlocked, reason: billingBlockedReason } = useBillingGate()
   const { toast } = useToast()
 
   const [createOpen, setCreateOpen] = useState(false)
@@ -149,7 +151,13 @@ export function MessageTemplatesPage() {
             <CardDescription>Precisam de um WABA ID configurado em WhatsApp pra poderem ser criados</CardDescription>
           </div>
           {hasPermission('WHATSAPP', 'message_template', 'CREATE') && (
-            <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setCreateOpen(true)}
+              disabled={billingBlocked}
+              title={billingBlocked ? (billingBlockedReason ?? undefined) : undefined}
+            >
               <Plus className="h-4 w-4" />
               Novo template
             </Button>

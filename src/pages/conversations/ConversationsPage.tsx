@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AlertCircle, MessageSquare, MessageSquarePlus } from 'lucide-react'
 import { useConversation, useConversations } from '@/hooks/useConversations'
+import { useBillingGate } from '@/hooks/useBillingGate'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/utils/cn'
 import { compareDatesDesc } from '@/utils/date'
@@ -36,6 +37,7 @@ export function ConversationsPage() {
   const { data: conversations, isLoading } = useConversations()
   const { data: activeConversation } = useConversation(id)
   const { employee, hasPermission } = useAuth()
+  const { blocked: billingBlocked, reason: billingBlockedReason } = useBillingGate()
   const [draftMessage, setDraftMessage] = useState('')
   const [startConversationOpen, setStartConversationOpen] = useState(false)
 
@@ -48,7 +50,14 @@ export function ConversationsPage() {
             <p className="text-xs text-muted-foreground">{conversations?.length ?? 0} no total</p>
           </div>
           {hasPermission('CONVERSATIONS', 'conversation', 'CREATE') && (
-            <Button size="icon" variant="outline" onClick={() => setStartConversationOpen(true)} aria-label="Iniciar conversa">
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => setStartConversationOpen(true)}
+              aria-label="Iniciar conversa"
+              disabled={billingBlocked}
+              title={billingBlocked ? (billingBlockedReason ?? undefined) : undefined}
+            >
               <MessageSquarePlus className="h-4 w-4" />
             </Button>
           )}
