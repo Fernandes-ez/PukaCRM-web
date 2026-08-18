@@ -1938,6 +1938,43 @@ tinham ficado desatualizados em relação ao que a landing anuncia desde
 - Testado: `tsc -b`/`vite build`/`oxlint` limpos. **UI no navegador não
   verificada visualmente** (mesma ressalva de sempre nesta sessão).
 
+## ✅ Novo em 2026-08-19 — reprecificação: 2 planos, ciclos, Agenda exclusiva do Completo
+
+Pedido do usuário: reduzir de 3 pra 2 planos, adicionar cobrança
+trimestral/semestral/anual (além do mensal), e restringir a Agenda ao
+plano mais caro. Ver decisão #54 do `CLAUDE.MD` do backend pro desenho
+completo (pesquisa de mercado, valores de desconto, enforcement real).
+
+- **`SubscriptionPage.tsx`** - `PLAN_ORDER`/`SUBSCRIPTION_PLAN_LABEL`
+  reduzidos pra `ESSENCIAL`/`COMPLETO`; Enterprise saiu como coluna
+  formal (diferenciais entraram no Completo). Novo **seletor de ciclo**
+  no topo da seção de planos (Mensal/Trimestral/Semestral/Anual, mesmo
+  padrão de botão-grupo já usado em `AgendaPage.tsx` pro toggle Dia/
+  Semana) - muda o preço exibido nos 2 cards em tempo real, com badge
+  de desconto (`GET /subscription/plans`, matriz de 8 linhas plano x
+  ciclo, nunca hardcode local).
+  - **Trocar só o ciclo** (mesmo plano) não busca prévia de rateio (não
+    existe rateio pra isso, sempre passa a valer no próximo ciclo) - só
+    troca de TIER busca `GET /subscription/plan-preview`. O diálogo de
+    confirmação distingue os dois casos automaticamente
+    (`planChanged`/`cycleChanged`), com fallback pro `current_period_end`
+    da própria assinatura quando a prévia não foi buscada.
+  - Lista de diferenças por plano atualizada - "Agenda de agendamentos"
+    aparece como exclusiva do Completo (✕ explícito no card Essencial).
+- **`CompanyPage.tsx`** - o switch "Ativar Agenda" agora verifica
+  `useSubscription()`: fica desabilitado (com link "Ver planos" pra
+  `/assinatura`) se a empresa não estiver no plano Completo **e** a
+  Agenda ainda não estiver ligada - só um atalho de UX pra evitar o
+  clique que já ia falhar; o enforcement de verdade continua sendo o
+  backend (`SchedulingRequiresCompletoPlanError`, 409), então o
+  `try/catch` que já existia no `handleToggleScheduling` continua como
+  rede de segurança. Permissivo por padrão (não bloqueia) enquanto a
+  assinatura ainda está carregando ou se o cargo não tem permissão de
+  ver Assinatura - nunca impede quem tem o plano certo de usar a
+  feature por causa de uma corrida de carregamento.
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos. **UI no navegador não
+  verificada visualmente** (mesma ressalva de sempre).
+
 ## Comandos úteis
 
 ```bash

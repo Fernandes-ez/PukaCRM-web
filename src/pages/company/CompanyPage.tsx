@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Loader2, AlertTriangle } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useCompany, useUpdateCompany } from '@/hooks/useCompany'
+import { useSubscription } from '@/hooks/useSubscription'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
@@ -50,6 +52,13 @@ const statusVariant: Record<CompanyStatus, 'success' | 'secondary' | 'warning' |
 export function CompanyPage() {
   const { data: company, isLoading, isError, error } = useCompany()
   const updateCompany = useUpdateCompany()
+  // Permissivo por padrão (enquanto carrega, ou se o cargo não tem
+  // permissão de ver Assinatura) - o backend é quem garante o
+  // enforcement de verdade (SchedulingRequiresCompletoPlanError), isso
+  // aqui é só pra desabilitar o switch de antemão pra quem sabidamente
+  // não está no plano Completo, evitando o clique que ia falhar mesmo.
+  const { data: subscription } = useSubscription()
+  const canUseScheduling = subscription ? subscription.plan === 'COMPLETO' : true
   const { employee } = useAuth()
   const { toast } = useToast()
   const [formError, setFormError] = useState<string | null>(null)
@@ -384,9 +393,18 @@ export function CompanyPage() {
                     id="scheduling_enabled"
                     checked={company.scheduling_enabled}
                     onCheckedChange={handleToggleScheduling}
-                    disabled={updateCompany.isPending}
+                    disabled={updateCompany.isPending || (!company.scheduling_enabled && !canUseScheduling)}
                   />
                 </div>
+
+                {!company.scheduling_enabled && !canUseScheduling && (
+                  <p className="text-xs text-muted-foreground">
+                    Disponível só no plano Completo.{' '}
+                    <Link to="/assinatura" className="font-medium text-brand-600 underline underline-offset-2 dark:text-brand-400">
+                      Ver planos
+                    </Link>
+                  </p>
+                )}
 
                 {company.scheduling_enabled && (
                   <>

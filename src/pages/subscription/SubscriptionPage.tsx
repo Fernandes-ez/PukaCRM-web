@@ -20,11 +20,14 @@ import { formatDate, compareDatesDesc } from '@/utils/date'
 import {
   SUBSCRIPTION_PLAN_LABEL,
   SUBSCRIPTION_STATUS_LABEL,
+  SUBSCRIPTION_BILLING_CYCLE_LABEL,
   CHARGE_STATUS_LABEL,
   type Charge,
   type ChargeStatus,
   type Subscription,
+  type SubscriptionBillingCycle,
   type SubscriptionPlan,
+  type SubscriptionPlanOption,
   type SubscriptionPlanPreview,
   type SubscriptionStatus,
 } from '@/types/subscription'
@@ -56,19 +59,21 @@ const statusVariant: Record<SubscriptionStatus, 'success' | 'secondary' | 'warni
   CANCELED: 'secondary',
 }
 
-const PLAN_ORDER: SubscriptionPlan[] = ['STARTER', 'PROFESSIONAL', 'ENTERPRISE']
+const PLAN_ORDER: SubscriptionPlan[] = ['ESSENCIAL', 'COMPLETO']
+const CYCLE_ORDER: SubscriptionBillingCycle[] = ['MONTHLY', 'QUARTERLY', 'SEMIANNUAL', 'ANNUAL']
 
 const PLAN_DESCRIPTION: Record<SubscriptionPlan, string> = {
-  STARTER: 'Começando a organizar o atendimento',
-  PROFESSIONAL: 'Equipe de atendimento com múltiplos funcionários',
-  ENTERPRISE: 'Operação grande, suporte prioritário',
+  ESSENCIAL: 'Começando a organizar o atendimento',
+  COMPLETO: 'Equipe de vendas, com Agenda e Puka Copilot',
 }
 
 // Mesmo conteúdo já usado na página de Preços do crm-landing (Pricing.tsx)
 // - mantido em sincronia manual, mesma ressalva já registrada no backend
-// sobre PLAN_PRICES precisar bater com o que a landing anuncia.
+// sobre PLAN_MONTHLY_PRICES precisar bater com o que a landing anuncia.
+// Reprecificação de 2026-08-19: Enterprise deixou de ser plano formal -
+// os diferenciais dele entraram no Completo sem aumentar o preço.
 const PLAN_FEATURES: Record<SubscriptionPlan, { included: string[]; excluded?: string[] }> = {
-  STARTER: {
+  ESSENCIAL: {
     included: [
       '1 número de WhatsApp (API oficial da Meta)',
       'Até 3 funcionários',
@@ -77,25 +82,18 @@ const PLAN_FEATURES: Record<SubscriptionPlan, { included: string[]; excluded?: s
       'Distribuição automática de leads',
       'Controle de acesso por cargo',
     ],
-    excluded: ['Puka Copilot'],
+    excluded: ['Agenda de agendamentos', 'Puka Copilot'],
   },
-  PROFESSIONAL: {
+  COMPLETO: {
     included: [
-      'Tudo do Starter',
-      'Até 10 funcionários',
+      'Tudo do Essencial',
+      'Funcionários ilimitados',
+      'Agenda de agendamentos — inclusive a IA marcando horário sozinha',
       'Puka Copilot — sugestão de venda em tempo real',
       'Campanhas segmentadas, com agendamento e recorrência',
       'Templates com botões (resposta rápida, link, telefone)',
-      'Suporte prioritário',
-    ],
-  },
-  ENTERPRISE: {
-    included: [
-      'Tudo do Professional',
-      'Funcionários ilimitados',
-      'Fila de campanha prioritária, maior volume de disparo',
-      'Onboarding assistido + gerente de conta dedicado',
-      'Suporte com SLA',
+      'Fila de campanha prioritária + onboarding assistido',
+      'Suporte prioritário com SLA',
     ],
   },
 }
@@ -106,31 +104,38 @@ export function SubscriptionPage() {
   const previewPlanChange = usePreviewPlanChange()
   const changePlan = useChangeSubscriptionPlan()
   const { toast } = useToast()
+  const [selectedCycle, setSelectedCycle] = useState<SubscriptionBillingCycle>('MONTHLY')
   const [confirmPlan, setConfirmPlan] = useState<SubscriptionPlan | null>(null)
   const [preview, setPreview] = useState<SubscriptionPlanPreview | null>(null)
 
-  const priceByPlan = new Map((planOptions ?? []).map((option) => [option.plan, option.monthly_price]))
+  const optionByPlanCycle = new Map(
+    (planOptions ?? []).map((option) => [`${option.plan}:${option.billing_cycle}`, option]),
+  )
 
   async function handleSelectPlan(plan: SubscriptionPlan) {
     setConfirmPlan(plan)
     setPreview(null)
-    try {
-      const result = await previewPlanChange.mutateAsync(plan)
-      setPreview(result)
-    } catch (err) {
-      toast({
-        title: 'Não foi possível calcular o valor da troca',
-        description: err instanceof ApiError ? err.message : undefined,
-        variant: 'destructive',
-      })
-      setConfirmPlan(null)
+    // Rateio só existe pra troca de TIER - trocar só o ciclo (mesmo plano)
+    // nunca gera cobrança agora, não precisa consultar a prévia.
+    if (subscription && plan !== subscription.plan) {
+      try {
+        const result = await previewPlanChange.mutateAsync(plan)
+        setPreview(result)
+      } catch (err) {
+        toast({
+          title: 'Não foi possível calcular o valor da troca',
+          description: err instanceof ApiError ? err.message : undefined,
+          variant: 'destructive',
+        })
+        setConfirmPlan(null)
+      }
     }
   }
 
   async function handleConfirmChangePlan() {
     if (!confirmPlan) return
     try {
-      await changePlan.mutateAsync({ plan: confirmPlan })
+      await changePlan.mutateAsync({ plan: confirmPlan, billing_cycle: selectedCycle })
       toast({ title: 'Plano atualizado', variant: 'success' })
       setConfirmPlan(null)
       setPreview(null)
@@ -142,6 +147,10 @@ export function SubscriptionPage() {
       })
     }
   }
+
+  const planChanged = subscription ? confirmPlan !== subscription.plan : false
+  const cycleChanged = subscription ? selectedCycle !== subscription.billing_cycle : false
+  const confirmOption = confirmPlan ? optionByPlanCycle.get(`${confirmPlan}:${selectedCycle}`) : undefined
 
   return (
     <div className="max-w-5xl space-y-6">
@@ -168,41 +177,65 @@ export function SubscriptionPage() {
             <SubscriptionSummary subscription={subscription} />
 
             <div>
-              <h2 className="text-base font-semibold">Planos</h2>
-              <p className="text-sm text-muted-foreground">
-                Trocar pra um plano mais caro no meio do ciclo gera uma cobrança proporcional aos dias restantes -
-                você vê o valor exato antes de confirmar.
-              </p>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-semibold">Planos</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Trocar pra um plano mais caro no meio do ciclo gera uma cobrança proporcional aos dias restantes -
+                    você vê o valor exato antes de confirmar.
+                  </p>
+                </div>
+                <div role="group" aria-label="Ciclo de cobrança" className="inline-flex items-center gap-1 rounded-md border p-1">
+                  {CYCLE_ORDER.map((cycle) => (
+                    <Button
+                      key={cycle}
+                      type="button"
+                      variant={selectedCycle === cycle ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setSelectedCycle(cycle)}
+                    >
+                      {SUBSCRIPTION_BILLING_CYCLE_LABEL[cycle]}
+                    </Button>
+                  ))}
+                </div>
+              </div>
 
               {loadingPlans ? (
-                <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                  <Skeleton className="h-96 w-full" />
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <Skeleton className="h-96 w-full" />
                   <Skeleton className="h-96 w-full" />
                 </div>
               ) : (
-                <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   {PLAN_ORDER.map((plan) => {
-                    const isCurrent = plan === subscription.plan
-                    const price = priceByPlan.get(plan)
+                    const isCurrentExact = plan === subscription.plan && selectedCycle === subscription.billing_cycle
+                    const option = optionByPlanCycle.get(`${plan}:${selectedCycle}`)
                     const features = PLAN_FEATURES[plan]
                     return (
                       <Card
                         key={plan}
-                        className={cn('flex flex-col', plan === 'PROFESSIONAL' && !isCurrent && 'border-brand-400')}
+                        className={cn('flex flex-col', plan === 'COMPLETO' && !isCurrentExact && 'border-brand-400')}
                       >
                         <CardHeader>
                           <div className="flex items-center gap-2">
                             <CardTitle className="text-base">{SUBSCRIPTION_PLAN_LABEL[plan]}</CardTitle>
-                            {isCurrent && <Badge variant="secondary">Plano atual</Badge>}
+                            {plan === subscription.plan && <Badge variant="secondary">Plano atual</Badge>}
                           </div>
                           <CardDescription>{PLAN_DESCRIPTION[plan]}</CardDescription>
                         </CardHeader>
                         <CardContent className="flex flex-1 flex-col">
-                          <p className="text-2xl font-bold tracking-tight">
-                            {price !== undefined ? currencyFormatter.format(price) : '—'}
-                            <span className="text-sm font-normal text-muted-foreground">/mês</span>
-                          </p>
+                          <div>
+                            <p className="text-2xl font-bold tracking-tight">
+                              {option !== undefined ? currencyFormatter.format(option.monthly_equivalent) : '—'}
+                              <span className="text-sm font-normal text-muted-foreground">/mês</span>
+                            </p>
+                            {option !== undefined && option.discount_percent > 0 && (
+                              <p className="text-xs text-success">
+                                {option.discount_percent}% de desconto · {currencyFormatter.format(option.total_charge)}{' '}
+                                cobrado a cada {SUBSCRIPTION_BILLING_CYCLE_LABEL[selectedCycle].toLowerCase()}
+                              </p>
+                            )}
+                          </div>
 
                           <ul className="mt-4 flex-1 space-y-2 text-sm">
                             {features.included.map((feature) => (
@@ -222,14 +255,14 @@ export function SubscriptionPage() {
                           <Button
                             type="button"
                             className="mt-6"
-                            variant={isCurrent ? 'outline' : 'default'}
-                            disabled={isCurrent || (previewPlanChange.isPending && confirmPlan === plan)}
+                            variant={isCurrentExact ? 'outline' : 'default'}
+                            disabled={isCurrentExact || (previewPlanChange.isPending && confirmPlan === plan)}
                             onClick={() => handleSelectPlan(plan)}
                           >
                             {previewPlanChange.isPending && confirmPlan === plan && (
                               <Loader2 className="h-4 w-4 animate-spin" />
                             )}
-                            {isCurrent ? 'Plano atual' : 'Selecionar'}
+                            {isCurrentExact ? 'Plano atual' : 'Selecionar'}
                           </Button>
                         </CardContent>
                       </Card>
@@ -257,17 +290,24 @@ export function SubscriptionPage() {
           <DialogHeader>
             <DialogTitle>Trocar de plano</DialogTitle>
             <DialogDescription>
-              {confirmPlan && `Confirme a troca pro plano ${SUBSCRIPTION_PLAN_LABEL[confirmPlan]}.`}
+              {confirmPlan &&
+                `Confirme a troca pro plano ${SUBSCRIPTION_PLAN_LABEL[confirmPlan]} (${SUBSCRIPTION_BILLING_CYCLE_LABEL[selectedCycle].toLowerCase()}).`}
             </DialogDescription>
           </DialogHeader>
 
-          {previewPlanChange.isPending || !preview ? (
+          {planChanged && (previewPlanChange.isPending || !preview) ? (
             <div className="space-y-2 py-2">
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-3/4" />
             </div>
           ) : (
-            <PlanChangeSummary preview={preview} />
+            <PlanChangeSummary
+              preview={planChanged ? preview : null}
+              cycleChanged={cycleChanged}
+              option={confirmOption}
+              cycle={selectedCycle}
+              currentPeriodEnd={subscription?.current_period_end ?? null}
+            />
           )}
 
           <DialogFooter>
@@ -282,7 +322,11 @@ export function SubscriptionPage() {
             >
               Cancelar
             </Button>
-            <Button type="button" onClick={handleConfirmChangePlan} disabled={changePlan.isPending || !preview}>
+            <Button
+              type="button"
+              onClick={handleConfirmChangePlan}
+              disabled={changePlan.isPending || (planChanged && !preview)}
+            >
               {changePlan.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               Confirmar troca
             </Button>
@@ -293,8 +337,24 @@ export function SubscriptionPage() {
   )
 }
 
-function PlanChangeSummary({ preview }: { preview: SubscriptionPlanPreview }) {
-  if (preview.prorated_charge && preview.prorated_charge > 0) {
+function PlanChangeSummary({
+  preview,
+  cycleChanged,
+  option,
+  cycle,
+  currentPeriodEnd,
+}: {
+  preview: SubscriptionPlanPreview | null
+  cycleChanged: boolean
+  option: SubscriptionPlanOption | undefined
+  cycle: SubscriptionBillingCycle
+  currentPeriodEnd: string | null
+}) {
+  const cycleSuffix = cycleChanged ? `, cobrada no ciclo ${SUBSCRIPTION_BILLING_CYCLE_LABEL[cycle].toLowerCase()}` : ''
+  const effectiveDate = preview?.current_period_end ?? currentPeriodEnd
+  const newMonthlyPrice = preview?.monthly_price ?? option?.monthly_equivalent
+
+  if (preview?.prorated_charge && preview.prorated_charge > 0) {
     return (
       <Alert variant="warning">
         <AlertDescription className="space-y-1.5">
@@ -305,8 +365,8 @@ function PlanChangeSummary({ preview }: { preview: SubscriptionPlanPreview }) {
           </p>
           <p>
             A cobrança fica pendente na aba de Cobranças (PIX, boleto ou cartão). A partir de{' '}
-            {preview.current_period_end ? formatDate(preview.current_period_end) : 'sua próxima renovação'}, sua
-            mensalidade passa a ser {currencyFormatter.format(preview.monthly_price)}/mês.
+            {effectiveDate ? formatDate(effectiveDate) : 'sua próxima renovação'}, sua mensalidade passa a ser{' '}
+            {newMonthlyPrice !== undefined ? currencyFormatter.format(newMonthlyPrice) : '—'}/mês{cycleSuffix}.
           </p>
         </AlertDescription>
       </Alert>
@@ -317,9 +377,11 @@ function PlanChangeSummary({ preview }: { preview: SubscriptionPlanPreview }) {
     <Alert>
       <AlertDescription>
         Nenhuma cobrança será feita agora.{' '}
-        {preview.current_period_end
-          ? `A partir de ${formatDate(preview.current_period_end)}, sua mensalidade passa a ser ${currencyFormatter.format(preview.monthly_price)}/mês.`
-          : `Sua mensalidade passa a ser ${currencyFormatter.format(preview.monthly_price)}/mês assim que a cobrança começar.`}
+        {effectiveDate
+          ? `A partir de ${formatDate(effectiveDate)}, sua mensalidade passa a ser ${newMonthlyPrice !== undefined ? currencyFormatter.format(newMonthlyPrice) : '—'}/mês${cycleSuffix}.`
+          : newMonthlyPrice !== undefined
+            ? `Sua mensalidade passa a ser ${currencyFormatter.format(newMonthlyPrice)}/mês assim que a cobrança começar.`
+            : ''}
       </AlertDescription>
     </Alert>
   )
@@ -334,7 +396,10 @@ function SubscriptionSummary({ subscription }: { subscription: Subscription }) {
         </div>
         <div className="flex-1 space-y-1">
           <div className="flex items-center gap-2">
-            <p className="font-semibold">Plano {SUBSCRIPTION_PLAN_LABEL[subscription.plan]}</p>
+            <p className="font-semibold">
+              Plano {SUBSCRIPTION_PLAN_LABEL[subscription.plan]} ·{' '}
+              {SUBSCRIPTION_BILLING_CYCLE_LABEL[subscription.billing_cycle]}
+            </p>
             <Badge variant={statusVariant[subscription.status]}>{SUBSCRIPTION_STATUS_LABEL[subscription.status]}</Badge>
           </div>
           <p className="text-sm text-muted-foreground">

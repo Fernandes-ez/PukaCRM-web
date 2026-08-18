@@ -1,10 +1,11 @@
-export type SubscriptionPlan = 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE'
+/** Reprecificação de 2026-08-19 - reduzido de 3 pra 2 planos (Starter/Professional/Enterprise saíram). */
+export type SubscriptionPlan = 'ESSENCIAL' | 'COMPLETO'
 export type SubscriptionStatus = 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED'
+export type SubscriptionBillingCycle = 'MONTHLY' | 'QUARTERLY' | 'SEMIANNUAL' | 'ANNUAL'
 
 export const SUBSCRIPTION_PLAN_LABEL: Record<SubscriptionPlan, string> = {
-  STARTER: 'Starter',
-  PROFESSIONAL: 'Professional',
-  ENTERPRISE: 'Enterprise',
+  ESSENCIAL: 'Essencial',
+  COMPLETO: 'Completo',
 }
 
 export const SUBSCRIPTION_STATUS_LABEL: Record<SubscriptionStatus, string> = {
@@ -14,10 +15,18 @@ export const SUBSCRIPTION_STATUS_LABEL: Record<SubscriptionStatus, string> = {
   CANCELED: 'Cancelada',
 }
 
+export const SUBSCRIPTION_BILLING_CYCLE_LABEL: Record<SubscriptionBillingCycle, string> = {
+  MONTHLY: 'Mensal',
+  QUARTERLY: 'Trimestral',
+  SEMIANNUAL: 'Semestral',
+  ANNUAL: 'Anual',
+}
+
 export interface Subscription {
   id: string
   company_id: string
   plan: SubscriptionPlan
+  billing_cycle: SubscriptionBillingCycle
   status: SubscriptionStatus
   trial_ends_at: string | null
   current_period_end: string | null
@@ -33,12 +42,23 @@ export interface Subscription {
 
 export interface SubscriptionPlanChangeRequest {
   plan: SubscriptionPlan
+  /** Opcional - só quando o usuário também troca o ciclo de cobrança na mesma ação. */
+  billing_cycle?: SubscriptionBillingCycle
 }
 
-/** Preço vigente de um plano - `GET /subscription/plans`, fonte única de verdade (nunca hardcode duplicado aqui). */
+/**
+ * Uma linha da matriz plano x ciclo (`GET /subscription/plans`, 2 planos x
+ * 4 ciclos = 8 linhas) - fonte única de verdade, nunca hardcode duplicado
+ * de preço/desconto aqui.
+ */
 export interface SubscriptionPlanOption {
   plan: SubscriptionPlan
-  monthly_price: number
+  billing_cycle: SubscriptionBillingCycle
+  /** "Por mês", só pra comparação visual entre ciclos - não é o valor cobrado de uma vez. */
+  monthly_equivalent: number
+  /** Valor cobrado de fato a cada ocorrência do ciclo (ex: trimestral cobra isso a cada 3 meses). */
+  total_charge: number
+  discount_percent: number
 }
 
 /**
