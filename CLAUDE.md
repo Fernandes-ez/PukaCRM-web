@@ -1862,6 +1862,28 @@ tela de Agenda pra cobrir esse caso.
 - Testado: `tsc -b`/`vite build`/`oxlint` limpos. **UI no navegador não
   verificada visualmente** (mesma ressalva de sempre nesta sessão).
 
+## ✅ Corrigido em 2026-08-19 — bloco de agendamento espremido na visão "Dia"
+
+Achado real do usuário com screenshot: o bloco de um agendamento de 30min
+(a duração padrão, "Atendimento") mostrava o texto cortado/sobreposto na
+Agenda. Causa: `AppointmentBlock.tsx` empilhava 3 linhas de texto
+(horário, nome do lead, tipo de atendimento) numa altura calculada
+proporcional à duração (`HOUR_HEIGHT_PX=56` em `WeekCalendar.tsx`) - 30min
+vira 28px de altura, mas 3 linhas em `text-[11px] leading-tight` com
+padding precisam de uns 49px. `overflow-hidden` escondia o estouro de
+forma feia em vez de simplesmente cortar.
+
+- **`AppointmentBlock.tsx`** ganhou um modo compacto - abaixo de 44px de
+  altura (`COMPACT_HEIGHT_THRESHOLD_PX`, cobre qualquer agendamento de
+  até ~45min com a duração padrão de 56px/hora), vira 1 linha só
+  (horário + nome do lead, sem o tipo) em vez de 3 empilhadas. Acima
+  disso, continua mostrando as 3 linhas normalmente - mesmo padrão que
+  calendários como o do Google usam (evento curto = menos detalhe
+  visível, evento longo = mais). Altura lida direto do `style.height`
+  que `WeekCalendar.tsx` já calculava e passava.
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos. **UI no navegador não
+  verificada visualmente** (mesma ressalva de sempre).
+
 ## Comandos úteis
 
 ```bash
