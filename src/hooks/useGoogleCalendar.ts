@@ -19,3 +19,8 @@ export function useDisconnectGoogleCalendar() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: googleCalendarStatusKey }),
   })
 }
+
+/** Backfill manual - agendamentos criados antes de conectar a conta. */
+export function useSyncGoogleCalendarNow() {
+  return useMutation({ mutationFn: googleCalendarService.syncNow })
+}

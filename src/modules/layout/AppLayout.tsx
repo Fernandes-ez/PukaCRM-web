@@ -52,7 +52,7 @@ export function AppLayout() {
       </div>
 
       {/* Senha temporária do primeiro acesso - some sozinho quando muda, `useChangeMyPassword` já atualiza o cache de `employee`. */}
-      <ChangePasswordDialog open={employee?.must_change_password === true} onOpenChange={() => {}} mandatory />
+      <ChangePasswordDialog open={employee?.must_change_password === true} onOpenChange={() => {}} />
     </div>
   )
 }

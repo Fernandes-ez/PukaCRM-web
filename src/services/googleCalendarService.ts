@@ -1,5 +1,5 @@
 import { api, normalizeApiError } from '@/services/apiClient'
-import type { GoogleCalendarConnectUrl, GoogleCalendarConnection } from '@/types/googleCalendar'
+import type { GoogleCalendarConnectUrl, GoogleCalendarConnection, GoogleCalendarSyncResult } from '@/types/googleCalendar'
 
 export const googleCalendarService = {
   async getStatus(): Promise<GoogleCalendarConnection | null> {
@@ -23,6 +23,15 @@ export const googleCalendarService = {
   async disconnect(): Promise<void> {
     try {
       await api.post('/google-calendar/disconnect')
+    } catch (error) {
+      throw normalizeApiError(error)
+    }
+  },
+
+  async syncNow(): Promise<GoogleCalendarSyncResult> {
+    try {
+      const { data } = await api.post<GoogleCalendarSyncResult>('/google-calendar/sync-now')
+      return data
     } catch (error) {
       throw normalizeApiError(error)
     }

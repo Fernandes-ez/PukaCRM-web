@@ -12,3 +12,8 @@ export interface GoogleCalendarConnection {
 export interface GoogleCalendarConnectUrl {
   authorize_url: string
 }
+
+/** Resultado do backfill manual (POST /google-calendar/sync-now). */
+export interface GoogleCalendarSyncResult {
+  synced_count: number
+}

@@ -1,27 +1,54 @@
 import { useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight, Plus, Settings } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, Loader2, Plus, RefreshCw, Settings } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useEmployees } from '@/hooks/useEmployees'
 import { useAppointments } from '@/hooks/useAppointments'
+import { useGoogleCalendarStatus, useSyncGoogleCalendarNow } from '@/hooks/useGoogleCalendar'
 import { WeekCalendar } from '@/components/agenda/WeekCalendar'
 import { AppointmentFormDialog } from '@/pages/agenda/AppointmentFormDialog'
 import { AppointmentTypesDialog } from '@/pages/agenda/AppointmentTypesDialog'
+import { ProfileSettingsDialog } from '@/pages/profile/ProfileSettingsDialog'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useToast } from '@/components/ui/toast'
+import { ApiError } from '@/services/apiClient'
 import { addDays, startOfWeek, toDateParam } from '@/utils/appointmentFormat'
 import type { Appointment } from '@/types/appointment'
 
 type View = 'day' | 'week'
 
 export function AgendaPage() {
-  const { hasPermission } = useAuth()
+  const { employee, hasPermission } = useAuth()
+  const { toast } = useToast()
   const [view, setView] = useState<View>('day')
   const [anchorDate, setAnchorDate] = useState(new Date())
   const [employeeFilter, setEmployeeFilter] = useState('')
   const [formState, setFormState] = useState<{ employeeId?: string; date?: Date; appointment?: Appointment } | null>(null)
   const [showTypesDialog, setShowTypesDialog] = useState(false)
+  const [showGoogleCalendarDialog, setShowGoogleCalendarDialog] = useState(false)
+
+  const { data: googleCalendarConnection } = useGoogleCalendarStatus()
+  const syncGoogleCalendarNow = useSyncGoogleCalendarNow()
+
+  async function handleSyncGoogleCalendarNow() {
+    try {
+      const { synced_count } = await syncGoogleCalendarNow.mutateAsync()
+      toast({
+        title:
+          synced_count > 0
+            ? `${synced_count} agendamento${synced_count > 1 ? 's' : ''} sincronizado${synced_count > 1 ? 's' : ''} com o Google Calendar`
+            : 'Tudo já estava sincronizado',
+        variant: 'success',
+      })
+    } catch (error) {
+      toast({
+        title: error instanceof ApiError ? error.message : 'Não foi possível sincronizar agora',
+        variant: 'destructive',
+      })
+    }
+  }
 
   const { data: employees, isLoading: loadingEmployees } = useEmployees()
   const activeEmployees = (employees ?? []).filter((e) => e.status === 'ACTIVE' && e.accepts_appointments)
@@ -61,6 +88,26 @@ export function AgendaPage() {
           <p className="text-sm text-muted-foreground capitalize">{rangeLabel}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {googleCalendarConnection ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSyncGoogleCalendarNow}
+              disabled={syncGoogleCalendarNow.isPending}
+            >
+              {syncGoogleCalendarNow.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3.5 w-3.5" />
+              )}
+              Sincronizar com Google Calendar
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" onClick={() => setShowGoogleCalendarDialog(true)}>
+              <CalendarDays className="h-3.5 w-3.5" />
+              Conectar Google Calendar
+            </Button>
+          )}
           {canManageTypes && (
             <Button variant="outline" size="sm" onClick={() => setShowTypesDialog(true)}>
               <Settings className="h-3.5 w-3.5" />
@@ -143,6 +190,15 @@ export function AgendaPage() {
       )}
 
       {showTypesDialog && <AppointmentTypesDialog open={showTypesDialog} onOpenChange={setShowTypesDialog} />}
+
+      {employee && (
+        <ProfileSettingsDialog
+          open={showGoogleCalendarDialog}
+          onOpenChange={setShowGoogleCalendarDialog}
+          employee={employee}
+          defaultTab="google-calendar"
+        />
+      )}
     </div>
   )
 }

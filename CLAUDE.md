@@ -1821,6 +1821,47 @@ useGoogleCalendar.ts`** (novos) - `getStatus`/`getConnectUrl`/
   disponível na sessão, e sem credencial real do Google configurada
   pra completar o fluxo ponta a ponta de qualquer forma).
 
+## ✅ Novo em 2026-08-18 — tela de perfil consolidada + backfill de sincronização na Agenda
+
+Dois pedidos do usuário na sequência da entrada acima: (1) usando o skill
+`ui-ux-pro-max` pra revisar a UX, o usuário apontou que "Meu perfil"/
+"Alterar senha"/"Google Calendar" deveriam estar na mesma tela em vez de
+3 diálogos separados, cada um só descobrível clicando num item de menu
+diferente; (2) perguntando sobre o estado da sincronização, percebeu que
+agendamento criado **antes** de conectar a conta nunca aparece no Google
+(o mecanismo de "auto-cura" documentado na entrada acima só corrige um
+agendamento se alguém *editar* ele de novo) - pediu um botão na própria
+tela de Agenda pra cobrir esse caso.
+
+- **`ProfileSettingsDialog.tsx`** (`src/pages/profile/`, novo) -
+  substitui `EditProfileDialog.tsx` e `GoogleCalendarDialog.tsx`
+  (**removidos**, conteúdo migrado pra cá) - um único `Dialog` com
+  `Tabs` (`@/components/ui/tabs`, mesmo padrão já usado em
+  `LeadDetailDialog.tsx`): "Dados pessoais", "Senha", "Google Calendar".
+  Aceita `defaultTab` opcional pra abrir direto numa aba específica -
+  usado pelo botão da Agenda (ver abaixo).
+- **`ChangePasswordDialog.tsx`** teve o formulário extraído pra
+  `ChangePasswordForm` (exportado) - reaproveitado tanto pela aba
+  "Senha" do `ProfileSettingsDialog` quanto pelo próprio
+  `ChangePasswordDialog`, que **deixou de ter a prop `mandatory`** (só
+  sobrou o caso obrigatório do primeiro acesso com senha temporária,
+  chamado de `AppLayout.tsx` - a troca voluntária virou a aba "Senha").
+- **`Topbar.tsx`** - os 3 itens de menu viraram 1 só ("Meu perfil"),
+  1 único estado (`settingsOpen`) abrindo o `ProfileSettingsDialog`.
+- **Botão na Agenda** (`AgendaPage.tsx`) - `useGoogleCalendarStatus()`
+  decide qual dos dois aparece no cabeçalho: **não conectado** →
+  "Conectar Google Calendar" (abre um `ProfileSettingsDialog` próprio
+  da página, `defaultTab="google-calendar"`); **já conectado** →
+  "Sincronizar com Google Calendar", chamando o novo
+  `POST /google-calendar/sync-now` (`useSyncGoogleCalendarNow()`) e
+  mostrando um toast com quantos agendamentos foram sincronizados (ou
+  "Tudo já estava sincronizado" quando `synced_count=0`).
+- **`googleCalendarService.ts`**/**`useGoogleCalendar.ts`** ganharam
+  `syncNow`/`useSyncGoogleCalendarNow` - mesmo formato dos outros
+  métodos do módulo.
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos. **UI no navegador não
+  verificada visualmente** (mesma ressalva de sempre nesta sessão).
+
 ## Comandos úteis
 
 ```bash
