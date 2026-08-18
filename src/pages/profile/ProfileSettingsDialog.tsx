@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Loader2 } from 'lucide-react'
 import { useUpdateMyProfile } from '@/hooks/useProfile'
-import { useConnectGoogleCalendar, useDisconnectGoogleCalendar, useGoogleCalendarStatus } from '@/hooks/useGoogleCalendar'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
 import type { EmployeeMe } from '@/types/auth'
@@ -14,26 +13,25 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Skeleton } from '@/components/ui/skeleton'
 import { ChangePasswordForm } from '@/pages/profile/ChangePasswordDialog'
-
-export type ProfileSettingsTab = 'personal' | 'password' | 'google-calendar'
+import { GoogleCalendarSettings } from '@/pages/profile/GoogleCalendarSettings'
 
 interface ProfileSettingsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   employee: EmployeeMe
-  /** Permite abrir direto numa aba específica (ex: link "Conectar Google Calendar" na Agenda). */
-  defaultTab?: ProfileSettingsTab
 }
 
 /**
- * Tela única de conta - substitui os 3 diálogos separados que existiam antes
- * (Meu perfil / Alterar senha / Google Calendar), cada um só descobrível
- * clicando num item de menu diferente. Mesmo padrão de Dialog+Tabs já usado
- * em `LeadDetailDialog.tsx`.
+ * Tela única de conta, acessada por "Meu perfil" no dropdown do avatar -
+ * substitui os 3 diálogos separados que existiam antes (Meu perfil /
+ * Alterar senha / Google Calendar), cada um só descobrível clicando num
+ * item de menu diferente. Mesmo padrão de Dialog+Tabs já usado em
+ * `LeadDetailDialog.tsx`. O botão "Conectar Google Calendar" da Agenda
+ * usa `GoogleCalendarDialog` (sem abas) em vez deste - ali o contexto é só
+ * conectar a agenda, não editar o resto da conta.
  */
-export function ProfileSettingsDialog({ open, onOpenChange, employee, defaultTab = 'personal' }: ProfileSettingsDialogProps) {
+export function ProfileSettingsDialog({ open, onOpenChange, employee }: ProfileSettingsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
@@ -41,7 +39,7 @@ export function ProfileSettingsDialog({ open, onOpenChange, employee, defaultTab
           <DialogTitle>Meu perfil</DialogTitle>
           <DialogDescription>Gerencie seus dados, sua senha e suas integrações pessoais.</DialogDescription>
         </DialogHeader>
-        <Tabs defaultValue={defaultTab}>
+        <Tabs defaultValue="personal">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="personal">Dados pessoais</TabsTrigger>
             <TabsTrigger value="password">Senha</TabsTrigger>
@@ -54,7 +52,7 @@ export function ProfileSettingsDialog({ open, onOpenChange, employee, defaultTab
             <ChangePasswordForm onSuccess={() => {}} />
           </TabsContent>
           <TabsContent value="google-calendar">
-            <GoogleCalendarTab />
+            <GoogleCalendarSettings />
           </TabsContent>
         </Tabs>
       </DialogContent>
@@ -131,82 +129,5 @@ function PersonalDataTab({ employee }: { employee: EmployeeMe }) {
         </Button>
       </div>
     </form>
-  )
-}
-
-function GoogleCalendarTab() {
-  const { data: connection, isLoading } = useGoogleCalendarStatus()
-  const connect = useConnectGoogleCalendar()
-  const disconnect = useDisconnectGoogleCalendar()
-  const { toast } = useToast()
-  const [disconnecting, setDisconnecting] = useState(false)
-
-  async function handleConnect() {
-    try {
-      const { authorize_url } = await connect.mutateAsync()
-      // Navegação de página inteira, não XHR - o próximo salto é o
-      // consentimento do Google, não algo que a SPA consiga tratar em XHR.
-      window.location.href = authorize_url
-    } catch {
-      toast({ title: 'Não foi possível iniciar a conexão com o Google Calendar', variant: 'destructive' })
-    }
-  }
-
-  async function handleDisconnect() {
-    setDisconnecting(true)
-    try {
-      await disconnect.mutateAsync()
-      toast({ title: 'Google Calendar desconectado', variant: 'success' })
-    } catch {
-      toast({ title: 'Não foi possível desconectar', variant: 'destructive' })
-    } finally {
-      setDisconnecting(false)
-    }
-  }
-
-  return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Conecte sua conta do Google pra que seus agendamentos do Puka apareçam automaticamente na sua agenda pessoal.
-        Só cria/atualiza/remove os eventos - nunca lê sua agenda de volta.
-      </p>
-
-      {isLoading ? (
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-        </div>
-      ) : connection ? (
-        <div className="rounded-md border bg-muted/40 p-3 text-sm">
-          <p className="font-medium">
-            Conectado{connection.google_account_email ? ` como ${connection.google_account_email}` : ''}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Desde{' '}
-            {new Date(connection.connected_at).toLocaleDateString('pt-BR', {
-              day: '2-digit',
-              month: 'long',
-              year: 'numeric',
-            })}
-          </p>
-        </div>
-      ) : (
-        <p className="text-sm text-muted-foreground">Nenhuma conta do Google conectada ainda.</p>
-      )}
-
-      <div className="flex justify-end">
-        {connection ? (
-          <Button type="button" variant="destructive" onClick={handleDisconnect} disabled={disconnecting}>
-            {disconnecting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Desconectar
-          </Button>
-        ) : (
-          <Button type="button" onClick={handleConnect} disabled={connect.isPending}>
-            {connect.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-            Conectar Google Calendar
-          </Button>
-        )}
-      </div>
-    </div>
   )
 }

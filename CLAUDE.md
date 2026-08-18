@@ -1884,6 +1884,24 @@ forma feia em vez de simplesmente cortar.
 - Testado: `tsc -b`/`vite build`/`oxlint` limpos. **UI no navegador não
   verificada visualmente** (mesma ressalva de sempre).
 
+## ✅ Corrigido em 2026-08-19 — botão da Agenda não deveria abrir as abas de perfil
+
+Achado do usuário testando: o botão "Conectar Google Calendar" da Agenda
+abria o `ProfileSettingsDialog` inteiro (com as abas "Dados pessoais"/
+"Senha" também visíveis), quando o contexto ali é só conectar a agenda -
+as outras abas não fazem sentido nesse fluxo.
+
+- **`GoogleCalendarSettings.tsx`** (novo) - o conteúdo de conexão (status +
+  botão Conectar/Desconectar) extraído da aba, sem Dialog/Tabs em volta.
+- **`GoogleCalendarDialog.tsx`** (recriado, dessa vez como wrapper fino) -
+  só um `Dialog` com `GoogleCalendarSettings` dentro, sem abas - usado
+  pelo botão da Agenda.
+- **`ProfileSettingsDialog.tsx`** (acessado por "Meu perfil") continua com
+  as 3 abas normalmente, agora só importando `GoogleCalendarSettings`
+  em vez de duplicar o conteúdo. Prop `defaultTab` removida (só existia
+  pra esse caso de uso da Agenda, que não precisa mais dela).
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos.
+
 ## Comandos úteis
 
 ```bash

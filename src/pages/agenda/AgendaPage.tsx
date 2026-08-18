@@ -7,7 +7,7 @@ import { useGoogleCalendarStatus, useSyncGoogleCalendarNow } from '@/hooks/useGo
 import { WeekCalendar } from '@/components/agenda/WeekCalendar'
 import { AppointmentFormDialog } from '@/pages/agenda/AppointmentFormDialog'
 import { AppointmentTypesDialog } from '@/pages/agenda/AppointmentTypesDialog'
-import { ProfileSettingsDialog } from '@/pages/profile/ProfileSettingsDialog'
+import { GoogleCalendarDialog } from '@/pages/profile/GoogleCalendarDialog'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
@@ -20,7 +20,7 @@ import type { Appointment } from '@/types/appointment'
 type View = 'day' | 'week'
 
 export function AgendaPage() {
-  const { employee, hasPermission } = useAuth()
+  const { hasPermission } = useAuth()
   const { toast } = useToast()
   const [view, setView] = useState<View>('day')
   const [anchorDate, setAnchorDate] = useState(new Date())
@@ -191,14 +191,7 @@ export function AgendaPage() {
 
       {showTypesDialog && <AppointmentTypesDialog open={showTypesDialog} onOpenChange={setShowTypesDialog} />}
 
-      {employee && (
-        <ProfileSettingsDialog
-          open={showGoogleCalendarDialog}
-          onOpenChange={setShowGoogleCalendarDialog}
-          employee={employee}
-          defaultTab="google-calendar"
-        />
-      )}
+      <GoogleCalendarDialog open={showGoogleCalendarDialog} onOpenChange={setShowGoogleCalendarDialog} />
     </div>
   )
 }
