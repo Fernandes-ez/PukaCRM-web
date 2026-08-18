@@ -1,5 +1,13 @@
 import { api, normalizeApiError } from '@/services/apiClient'
-import type { Charge, Subscription, SubscriptionPlanChangeRequest, SubscriptionStatusInfo } from '@/types/subscription'
+import type {
+  Charge,
+  Subscription,
+  SubscriptionPlan,
+  SubscriptionPlanChangeRequest,
+  SubscriptionPlanOption,
+  SubscriptionPlanPreview,
+  SubscriptionStatusInfo,
+} from '@/types/subscription'
 
 /** Recurso singular (1 por empresa) — sem {id} na URL. */
 export const subscriptionService = {
@@ -24,6 +32,24 @@ export const subscriptionService = {
   async changePlan(payload: SubscriptionPlanChangeRequest): Promise<Subscription> {
     try {
       const { data } = await api.patch<Subscription>('/subscription/plan', payload)
+      return data
+    } catch (error) {
+      throw normalizeApiError(error)
+    }
+  },
+
+  async listPlans(): Promise<SubscriptionPlanOption[]> {
+    try {
+      const { data } = await api.get<SubscriptionPlanOption[]>('/subscription/plans')
+      return data
+    } catch (error) {
+      throw normalizeApiError(error)
+    }
+  },
+
+  async previewPlanChange(plan: SubscriptionPlan): Promise<SubscriptionPlanPreview> {
+    try {
+      const { data } = await api.get<SubscriptionPlanPreview>('/subscription/plan-preview', { params: { plan } })
       return data
     } catch (error) {
       throw normalizeApiError(error)

@@ -35,6 +35,26 @@ export interface SubscriptionPlanChangeRequest {
   plan: SubscriptionPlan
 }
 
+/** Preço vigente de um plano - `GET /subscription/plans`, fonte única de verdade (nunca hardcode duplicado aqui). */
+export interface SubscriptionPlanOption {
+  plan: SubscriptionPlan
+  monthly_price: number
+}
+
+/**
+ * Prévia da troca de plano (`GET /subscription/plan-preview`) - não aplica
+ * nada, só mostra o valor real antes de confirmar. `prorated_charge: null`
+ * significa "sem cobrança agora" (downgrade, trial, ou plano ainda sem
+ * assinatura provisionada no Asaas) - só `monthly_price` passa a valer a
+ * partir de `current_period_end`.
+ */
+export interface SubscriptionPlanPreview {
+  plan: SubscriptionPlan
+  monthly_price: number
+  prorated_charge: number | null
+  current_period_end: string | null
+}
+
 /**
  * Versão minimalista de Subscription - só status/trial_ends_at, usada
  * pelo banner/popup de cobrança (`GET /subscription/status`, sem exigir

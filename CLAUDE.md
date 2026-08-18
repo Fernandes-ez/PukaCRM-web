@@ -1902,6 +1902,42 @@ as outras abas não fazem sentido nesse fluxo.
   pra esse caso de uso da Agenda, que não precisa mais dela).
 - Testado: `tsc -b`/`vite build`/`oxlint` limpos.
 
+## ✅ Novo em 2026-08-19 — preços/diferenças de plano + cobrança proporcional na troca
+
+Pedido do usuário: a tela de Assinatura precisava mostrar preço e
+diferenças entre os planos (antes só tinha uma frase curta por plano,
+sem valor nenhum), e a troca de plano precisava avisar sobre cobrança a
+mais com uma lógica de cobrança de verdade por trás - não só um aviso
+genérico. Ver decisão #53 do `CLAUDE.MD` do backend pro desenho completo
+(inclui um achado real: os preços que o backend cobrava via Asaas
+tinham ficado desatualizados em relação ao que a landing anuncia desde
+2026-08-14, corrigido junto).
+
+- **`SubscriptionPage.tsx`** - os 3 cards de plano agora mostram preço
+  (`GET /subscription/plans`, nunca hardcoded aqui - mesma lição do bug
+  de preço desatualizado que acabou de ser corrigido) e a lista completa
+  de diferenças (mesmo conteúdo já usado em `Pricing.tsx` do
+  `crm-landing`, com um ✕ explícito pro que falta em cada plano, ex: "Sem
+  Puka Copilot" no Starter).
+- **Fluxo de troca em 2 passos** - clicar "Selecionar" não troca na hora:
+  primeiro busca `GET /subscription/plan-preview?plan=X`
+  (`usePreviewPlanChange`) e só então abre o diálogo de confirmação,
+  já com o valor real calculado pelo backend (nunca uma fórmula
+  duplicada no frontend). Duas mensagens possíveis:
+  - **Upgrade no meio do ciclo** (`prorated_charge` preenchido) - `Alert`
+    `variant="warning"` explicando o valor exato cobrado agora
+    (proporcional aos dias restantes) e a partir de quando a mensalidade
+    cheia passa a valer.
+  - **Sem cobrança agora** (downgrade, trial, ou plano ainda sem
+    assinatura no Asaas) - `Alert` neutro só informando a partir de
+    quando o novo valor passa a valer.
+- **`useChangeSubscriptionPlan`** agora também invalida `chargesKey` -
+  uma cobrança de rateio criada pela troca aparece na lista de
+  Cobranças (`ChargesCard`, já existente) sem precisar recarregar a
+  página.
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos. **UI no navegador não
+  verificada visualmente** (mesma ressalva de sempre nesta sessão).
+
 ## Comandos úteis
 
 ```bash
