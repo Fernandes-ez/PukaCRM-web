@@ -35,8 +35,21 @@ export interface CampaignCreateRequest {
   recurrence_end_date?: string | null
 }
 
+export interface CampaignPreviewRequest {
+  filters: CampaignFilters
+  /** Opcional - só preenchido depois que o usuário escolhe o template (passo separado dos filtros). */
+  template_id?: string | null
+}
+
 export interface CampaignPreviewResponse {
   count: number
+  /**
+   * Custo estimado de repasse do Template (Meta, via Asaas) - só vem
+   * preenchido quando `template_id` foi informado no preview. Mostrado
+   * ANTES de confirmar o disparo, pra nunca surpreender com uma cobrança.
+   */
+  template_category?: 'MARKETING' | 'UTILITY' | 'AUTHENTICATION' | null
+  estimated_cost_brl?: number | null
 }
 
 export type CampaignRecipientStatus =

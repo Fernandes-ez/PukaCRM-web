@@ -2,7 +2,7 @@ import { api, normalizeApiError } from '@/services/apiClient'
 import type {
   Campaign,
   CampaignCreateRequest,
-  CampaignFilters,
+  CampaignPreviewRequest,
   CampaignPreviewResponse,
   CampaignRecipient,
 } from '@/types/campaign'
@@ -26,10 +26,10 @@ export const campaignService = {
     }
   },
 
-  /** Só a contagem de quem bateria no filtro - não cria nada. */
-  async preview(filters: CampaignFilters): Promise<CampaignPreviewResponse> {
+  /** Contagem de quem bateria no filtro - com `template_id`, também devolve o custo estimado. */
+  async preview(payload: CampaignPreviewRequest): Promise<CampaignPreviewResponse> {
     try {
-      const { data } = await api.post<CampaignPreviewResponse>('/campaigns/preview', filters)
+      const { data } = await api.post<CampaignPreviewResponse>('/campaigns/preview', payload)
       return data
     } catch (error) {
       throw normalizeApiError(error)

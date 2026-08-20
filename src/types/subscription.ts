@@ -86,6 +86,43 @@ export interface SubscriptionStatusInfo {
   trial_ends_at: string | null
   /** Derivado de asaas_subscription_id no backend (nunca o id em si). */
   has_billing_configured: boolean
+  /**
+   * Motivo de bloqueio SEPARADO de status/has_billing_configured acima -
+   * fatura de uso de Template do WhatsApp (Meta, repasse via Asaas)
+   * vencida bloqueia só o envio de Template, não a assinatura em si.
+   */
+  template_usage_overdue: boolean
+  template_usage_overdue_amount: number | null
+}
+
+export type TemplateUsageInvoiceStatus = 'PENDING' | 'PAID' | 'OVERDUE'
+
+export const TEMPLATE_USAGE_INVOICE_STATUS_LABEL: Record<TemplateUsageInvoiceStatus, string> = {
+  PENDING: 'Pendente',
+  PAID: 'Paga',
+  OVERDUE: 'Vencida',
+}
+
+export interface TemplateUsageInvoice {
+  id: string
+  period_start: string
+  period_end: string
+  message_count: number
+  amount_brl: number
+  status: TemplateUsageInvoiceStatus
+  invoice_url: string
+  created_at: string
+}
+
+/** Uso não faturado ainda (período corrente em aberto) - `GET /subscription/template-usage`. */
+export interface TemplateUsageSummary {
+  unbilled_message_count: number
+  estimated_cost_brl: number
+}
+
+export interface TemplateUsageOverview {
+  summary: TemplateUsageSummary
+  invoices: TemplateUsageInvoice[]
 }
 
 export type ChargeStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'REFUNDED' | 'OTHER'

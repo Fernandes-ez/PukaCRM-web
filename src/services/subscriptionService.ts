@@ -7,6 +7,7 @@ import type {
   SubscriptionPlanOption,
   SubscriptionPlanPreview,
   SubscriptionStatusInfo,
+  TemplateUsageOverview,
 } from '@/types/subscription'
 
 /** Recurso singular (1 por empresa) — sem {id} na URL. */
@@ -59,6 +60,15 @@ export const subscriptionService = {
   async listCharges(): Promise<Charge[]> {
     try {
       const { data } = await api.get<Charge[]>('/subscription/charges')
+      return data
+    } catch (error) {
+      throw normalizeApiError(error)
+    }
+  },
+
+  async getTemplateUsage(): Promise<TemplateUsageOverview> {
+    try {
+      const { data } = await api.get<TemplateUsageOverview>('/subscription/template-usage')
       return data
     } catch (error) {
       throw normalizeApiError(error)

@@ -37,7 +37,14 @@ export function ConversationsPage() {
   const { data: conversations, isLoading } = useConversations()
   const { data: activeConversation } = useConversation(id)
   const { employee, hasPermission } = useAuth()
-  const { blocked: billingBlocked, reason: billingBlockedReason } = useBillingGate()
+  const {
+    blocked: billingBlocked,
+    reason: billingBlockedReason,
+    templateUsageOverdue,
+    templateUsageReason,
+  } = useBillingGate()
+  const startConversationBlocked = billingBlocked || templateUsageOverdue
+  const startConversationBlockedReason = billingBlocked ? billingBlockedReason : templateUsageReason
   const [draftMessage, setDraftMessage] = useState('')
   const [startConversationOpen, setStartConversationOpen] = useState(false)
 
@@ -55,8 +62,8 @@ export function ConversationsPage() {
               variant="outline"
               onClick={() => setStartConversationOpen(true)}
               aria-label="Iniciar conversa"
-              disabled={billingBlocked}
-              title={billingBlocked ? (billingBlockedReason ?? undefined) : undefined}
+              disabled={startConversationBlocked}
+              title={startConversationBlocked ? (startConversationBlockedReason ?? undefined) : undefined}
             >
               <MessageSquarePlus className="h-4 w-4" />
             </Button>

@@ -30,8 +30,12 @@ export function BillingBanner() {
   const needsDocument = trialExpired && !data.has_billing_configured
   const awaitingPayment = trialExpired && data.has_billing_configured
   const pastDue = data.status === 'PAST_DUE'
+  // Motivo SEPARADO dos 3 acima (fatura de uso de Template, não a
+  // assinatura em si) - só mostrado quando nenhum dos outros já está
+  // sendo exibido, pra não empilhar dois avisos no mesmo espaço.
+  const templateUsageOverdue = !needsDocument && !awaitingPayment && !pastDue && data.template_usage_overdue
 
-  if (!needsDocument && !awaitingPayment && !pastDue) return null
+  if (!needsDocument && !awaitingPayment && !pastDue && !templateUsageOverdue) return null
 
   const canEditCompany = hasPermission('COMPANY', 'company', 'UPDATE')
   const canViewSubscription = hasPermission('SUBSCRIPTION', 'subscription', 'VIEW')
@@ -42,7 +46,7 @@ export function BillingBanner() {
         className={cn(
           'flex flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 py-2 text-center text-sm font-medium',
           needsDocument && 'bg-warning/15 text-warning-foreground dark:text-amber-300',
-          (awaitingPayment || pastDue) && 'bg-destructive/15 text-destructive dark:text-red-300',
+          (awaitingPayment || pastDue || templateUsageOverdue) && 'bg-destructive/15 text-destructive dark:text-red-300',
         )}
       >
         {needsDocument ? <AlertTriangle className="h-4 w-4 shrink-0" /> : <CreditCard className="h-4 w-4 shrink-0" />}
@@ -50,13 +54,17 @@ export function BillingBanner() {
           {needsDocument && 'O período de teste acabou e ainda não há cobrança configurada.'}
           {awaitingPayment && 'O período de teste acabou e há um débito em aberto.'}
           {pastDue && 'Sua assinatura está com pagamento pendente.'}
+          {templateUsageOverdue &&
+            `Há uma fatura de uso de mensagens do WhatsApp em aberto${
+              data.template_usage_overdue_amount ? ` (${data.template_usage_overdue_amount.toFixed(2).replace('.', ',')})` : ''
+            }.`}
         </span>
         {needsDocument && canEditCompany && (
           <button type="button" onClick={() => setSetupOpen(true)} className="underline underline-offset-2 hover:no-underline">
             Completar cadastro
           </button>
         )}
-        {(awaitingPayment || pastDue) && canViewSubscription && (
+        {(awaitingPayment || pastDue || templateUsageOverdue) && canViewSubscription && (
           <a href="/assinatura" className="underline underline-offset-2 hover:no-underline">
             Ver assinatura
           </a>

@@ -27,6 +27,8 @@ const MONTH_LABEL = [
 
 const ANY = '__any__'
 
+const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+
 type SendMode = 'now' | 'schedule' | 'recurring'
 
 const SEND_MODE_OPTIONS: { value: SendMode; label: string; description: string; icon: typeof Send }[] = [
@@ -127,13 +129,15 @@ export function CreateCampaignPage() {
     [gender, minAge, maxAge, birthdayMonth, pipelineStageId],
   )
 
-  // Busca a contagem toda vez que um filtro muda, com um pequeno debounce -
-  // evita disparar uma chamada a cada tecla digitada nos campos de idade.
+  // Busca a contagem (e o custo estimado, depois que um template é
+  // escolhido) toda vez que filtro ou template mudam, com um pequeno
+  // debounce - evita disparar uma chamada a cada tecla digitada nos
+  // campos de idade.
   useEffect(() => {
-    const timeout = setTimeout(() => preview.mutate(filters), 300)
+    const timeout = setTimeout(() => preview.mutate({ filters, template_id: templateId || null }), 300)
     return () => clearTimeout(timeout)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters])
+  }, [filters, templateId])
 
   const approvedTemplates = useMemo(() => templates?.filter((t) => t.status === 'APPROVED') ?? [], [templates])
   const selectedTemplate = approvedTemplates.find((t) => t.id === templateId)
@@ -141,8 +145,13 @@ export function CreateCampaignPage() {
   const scheduleValid = sendMode === 'now' || scheduleDate !== null
   const recurrenceValid = sendMode !== 'recurring' || (recurrenceDays.length > 0 && recurrenceEndDate !== null)
   const canAdvanceFromSchedule = scheduleValid && recurrenceValid
-  const { blocked: billingBlocked, reason: billingBlockedReason } = useBillingGate()
-  const canSubmit = name.trim() !== '' && canAdvanceFromSchedule && !billingBlocked
+  const {
+    blocked: billingBlocked,
+    reason: billingBlockedReason,
+    templateUsageOverdue,
+    templateUsageReason,
+  } = useBillingGate()
+  const canSubmit = name.trim() !== '' && canAdvanceFromSchedule && !billingBlocked && !templateUsageOverdue
 
   async function handleCreate() {
     if (!templateId || !canSubmit) return
@@ -172,6 +181,7 @@ export function CreateCampaignPage() {
   }
 
   const count = preview.data?.count ?? 0
+  const estimatedCostBrl = preview.data?.estimated_cost_brl ?? null
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -191,6 +201,11 @@ export function CreateCampaignPage() {
       {billingBlocked && (
         <Alert variant="destructive">
           <AlertDescription>{billingBlockedReason}</AlertDescription>
+        </Alert>
+      )}
+      {!billingBlocked && templateUsageOverdue && (
+        <Alert variant="destructive">
+          <AlertDescription>{templateUsageReason}</AlertDescription>
         </Alert>
       )}
 
@@ -352,6 +367,25 @@ export function CreateCampaignPage() {
                         momento do envio.
                       </p>
                     </div>
+                  )}
+
+                  {selectedTemplate && (
+                    <Alert variant="warning">
+                      <AlertDescription>
+                        {preview.isPending ? (
+                          'Calculando custo estimado...'
+                        ) : estimatedCostBrl !== null ? (
+                          <>
+                            Esse envio custa <strong>{currencyFormatter.format(estimatedCostBrl)}</strong> à Meta
+                            (repasse exato, sem margem - {count} {count === 1 ? 'contato' : 'contatos'} ×
+                            template de {preview.data?.template_category === 'MARKETING' ? 'Marketing' : 'Utility'}).
+                            Esse valor entra na sua próxima fatura de uso de mensagens.
+                          </>
+                        ) : (
+                          'Não foi possível calcular o custo estimado agora.'
+                        )}
+                      </AlertDescription>
+                    </Alert>
                   )}
                 </>
               )}
@@ -572,6 +606,18 @@ export function CreateCampaignPage() {
                     `Recorrente: toda(o) ${recurrenceDays.map((d) => WEEKDAY_LABEL[d]).join(', ')}, a partir de ${formatDateLabel(scheduleDate)} às ${scheduleTime}, até ${formatDateLabel(recurrenceEndDate)}`}
                 </p>
               </div>
+
+              {estimatedCostBrl !== null && (
+                <Alert variant="warning">
+                  <AlertDescription>
+                    Custo estimado desse disparo: <strong>{currencyFormatter.format(estimatedCostBrl)}</strong>{' '}
+                    (repasse do custo real cobrado pela Meta, sem margem). Entra na sua próxima fatura de uso de
+                    mensagens.
+                    {sendMode === 'recurring' &&
+                      ' Como é recorrente, cada nova ocorrência gera um custo semelhante.'}
+                  </AlertDescription>
+                </Alert>
+              )}
 
               <div className="flex justify-between border-t pt-4">
                 <Button type="button" variant="ghost" onClick={() => setStep('schedule')}>

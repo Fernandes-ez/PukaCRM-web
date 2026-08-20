@@ -1975,6 +1975,44 @@ completo (pesquisa de mercado, valores de desconto, enforcement real).
 - Testado: `tsc -b`/`vite build`/`oxlint` limpos. **UI no navegador não
   verificada visualmente** (mesma ressalva de sempre).
 
+## ✅ Novo em 2026-08-20 — repasse do custo de Template do WhatsApp pro cliente
+
+Pedido do usuário: calculando quanto a plataforma gasta por cliente,
+achado que o custo real de Template do WhatsApp (Meta) hoje cai na conta
+do operador, sem repasse - resolvido via Asaas. Ver decisão #55 do
+`CLAUDE.MD` do backend pro desenho completo (por que, modelo híbrido de
+cobrança, job mensal).
+
+- **Custo estimado antes de disparar Campanha** (`CreateCampaignPage.tsx`)
+  - o preview (`POST /campaigns/preview`, já existia pra contagem de
+    destinatários) ganhou `template_id` opcional; assim que o usuário
+    escolhe o template (passo "Template" do wizard), o mesmo preview
+    debounced já busca de novo e mostra `Alert variant="warning"` com o
+    custo estimado (contagem × preço da categoria do template, calculado
+    no backend - nunca uma tabela de preço duplicada aqui). O mesmo aviso
+    reaparece no passo final de confirmação, antes do botão de disparar -
+    pedido explícito do usuário pra nunca ter surpresa de cobrança.
+- **Nova seção "Uso de mensagens WhatsApp"** em `SubscriptionPage.tsx`
+  (`useTemplateUsage`, `GET /subscription/template-usage`) - logo acima
+  da lista de Cobranças existente, mas **deliberadamente separada** dela
+  (não misturada): mostra quantas mensagens já foram enviadas no período
+  corrente (ainda não faturadas) + custo estimado, e o histórico de
+  faturas mensais consolidadas com status (Pendente/Paga/Vencida) e link
+  pra cobrança no Asaas.
+- **`useBillingGate()` ganha `templateUsageOverdue`/`templateUsageReason`**
+  - motivo SEPARADO de `blocked`/`reason` (que continuam só sobre saúde
+    da assinatura em si, espelhando `require_active_billing` do backend).
+    Fatura de uso de Template vencida só bloqueia disparo de Template,
+    com mensagem própria - aplicado no botão "Iniciar conversa" de
+    `LeadsPage.tsx` e `ConversationsPage.tsx`, e no botão final de
+    `CreateCampaignPage.tsx`.
+- **`GET /subscription/status` ganha `template_usage_overdue`/`_amount`**
+  - `BillingBanner.tsx` mostra essa situação como 4ª faixa possível (só
+    quando nenhuma das outras 3 já está sendo exibida, pra não empilhar
+    dois avisos no mesmo espaço).
+- Testado: `tsc -b`/`vite build`/`oxlint` limpos. **UI no navegador não
+  verificada visualmente** (mesma ressalva de sempre nesta sessão).
+
 ## Comandos úteis
 
 ```bash

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { campaignService } from '@/services/campaignService'
-import type { CampaignCreateRequest, CampaignFilters } from '@/types/campaign'
+import type { CampaignCreateRequest, CampaignPreviewRequest } from '@/types/campaign'
 
 export const campaignsKey = ['campaigns'] as const
 
@@ -29,7 +29,7 @@ export function useCampaignRecipients(id: string | undefined, activelyProcessing
 }
 
 export function useCampaignPreview() {
-  return useMutation({ mutationFn: (filters: CampaignFilters) => campaignService.preview(filters) })
+  return useMutation({ mutationFn: (payload: CampaignPreviewRequest) => campaignService.preview(payload) })
 }
 
 export function useCreateCampaign() {

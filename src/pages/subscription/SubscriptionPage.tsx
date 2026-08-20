@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Loader2, CreditCard, ExternalLink, Receipt, Check, X } from 'lucide-react'
+import { Loader2, CreditCard, ExternalLink, Receipt, Check, X, MessageSquare } from 'lucide-react'
 import {
   useSubscription,
   useSubscriptionPlans,
   useChangeSubscriptionPlan,
   usePreviewPlanChange,
   useCharges,
+  useTemplateUsage,
 } from '@/hooks/useSubscription'
 import { ApiError } from '@/services/apiClient'
 import { useToast } from '@/components/ui/toast'
@@ -22,6 +23,7 @@ import {
   SUBSCRIPTION_STATUS_LABEL,
   SUBSCRIPTION_BILLING_CYCLE_LABEL,
   CHARGE_STATUS_LABEL,
+  TEMPLATE_USAGE_INVOICE_STATUS_LABEL,
   type Charge,
   type ChargeStatus,
   type Subscription,
@@ -30,6 +32,8 @@ import {
   type SubscriptionPlanOption,
   type SubscriptionPlanPreview,
   type SubscriptionStatus,
+  type TemplateUsageInvoice,
+  type TemplateUsageInvoiceStatus,
 } from '@/types/subscription'
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -57,6 +61,12 @@ const statusVariant: Record<SubscriptionStatus, 'success' | 'secondary' | 'warni
   ACTIVE: 'success',
   PAST_DUE: 'destructive',
   CANCELED: 'secondary',
+}
+
+const templateUsageStatusVariant: Record<TemplateUsageInvoiceStatus, 'success' | 'warning' | 'destructive'> = {
+  PAID: 'success',
+  PENDING: 'warning',
+  OVERDUE: 'destructive',
 }
 
 const PLAN_ORDER: SubscriptionPlan[] = ['ESSENCIAL', 'COMPLETO']
@@ -272,6 +282,7 @@ export function SubscriptionPage() {
               )}
             </div>
 
+            <TemplateUsageCard />
             <ChargesCard />
           </>
         )
@@ -446,6 +457,87 @@ function ChargesCard() {
         )}
       </CardContent>
     </Card>
+  )
+}
+
+function TemplateUsageCard() {
+  const { data, isLoading, isError, error } = useTemplateUsage()
+  const invoices = [...(data?.invoices ?? [])].sort((a, b) => compareDatesDesc(a.created_at, b.created_at))
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Uso de mensagens WhatsApp</CardTitle>
+        <CardDescription>
+          Repasse do custo real que a Meta cobra por Template enviado (campanha, lembrete de agendamento, iniciar
+          conversa) - sempre o valor exato, sem margem.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {isLoading ? (
+          <Skeleton className="h-24 w-full" />
+        ) : isError ? (
+          <Alert variant="destructive">
+            <AlertDescription>{error instanceof ApiError ? error.message : 'Erro ao carregar.'}</AlertDescription>
+          </Alert>
+        ) : (
+          <>
+            <div className="flex items-center gap-3 rounded-md border bg-muted p-3 text-sm">
+              <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
+              {data && data.summary.unbilled_message_count > 0 ? (
+                <span>
+                  <strong>{data.summary.unbilled_message_count}</strong>{' '}
+                  {data.summary.unbilled_message_count === 1 ? 'mensagem enviada' : 'mensagens enviadas'} neste
+                  período, ainda não faturada(s) - custo estimado até agora:{' '}
+                  <strong>{currencyFormatter.format(data.summary.estimated_cost_brl)}</strong>. Entra numa fatura
+                  consolidada mensal.
+                </span>
+              ) : (
+                <span className="text-muted-foreground">Nenhuma mensagem de Template não-faturada neste período.</span>
+              )}
+            </div>
+
+            {invoices.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-6 text-center text-sm text-muted-foreground">
+                <Receipt className="h-8 w-8" />
+                Nenhuma fatura de uso ainda
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {invoices.map((invoice) => (
+                  <TemplateUsageInvoiceRow key={invoice.id} invoice={invoice} />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function TemplateUsageInvoiceRow({ invoice }: { invoice: TemplateUsageInvoice }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-md border p-4">
+      <div>
+        <div className="flex items-center gap-2">
+          <p className="font-medium">{currencyFormatter.format(invoice.amount_brl)}</p>
+          <Badge variant={templateUsageStatusVariant[invoice.status]}>
+            {TEMPLATE_USAGE_INVOICE_STATUS_LABEL[invoice.status]}
+          </Badge>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {invoice.message_count} {invoice.message_count === 1 ? 'mensagem' : 'mensagens'} · período{' '}
+          {formatDate(invoice.period_start)} a {formatDate(invoice.period_end)}
+        </p>
+      </div>
+      <Button type="button" variant="outline" asChild>
+        <a href={invoice.invoice_url} target="_blank" rel="noopener noreferrer">
+          Ver cobrança
+          <ExternalLink className="h-4 w-4" />
+        </a>
+      </Button>
+    </div>
   )
 }
 

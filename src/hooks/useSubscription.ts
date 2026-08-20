@@ -48,3 +48,10 @@ export function useSubscriptionPlans() {
 export function usePreviewPlanChange() {
   return useMutation({ mutationFn: (plan: SubscriptionPlan) => subscriptionService.previewPlanChange(plan) })
 }
+
+/** Resumo de uso não faturado + histórico de faturas de Template do WhatsApp (Meta, repasse via Asaas). */
+export const templateUsageKey = ['subscription', 'template-usage'] as const
+
+export function useTemplateUsage() {
+  return useQuery({ queryKey: templateUsageKey, queryFn: subscriptionService.getTemplateUsage })
+}

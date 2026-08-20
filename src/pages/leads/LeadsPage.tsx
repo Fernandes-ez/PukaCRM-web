@@ -41,7 +41,14 @@ export function LeadsPage() {
   const importLeads = useImportLeads()
   const downloadTemplate = useDownloadImportTemplate()
   const { hasPermission } = useAuth()
-  const { blocked: billingBlocked, reason: billingBlockedReason } = useBillingGate()
+  const {
+    blocked: billingBlocked,
+    reason: billingBlockedReason,
+    templateUsageOverdue,
+    templateUsageReason,
+  } = useBillingGate()
+  const startConversationBlocked = billingBlocked || templateUsageOverdue
+  const startConversationBlockedReason = billingBlocked ? billingBlockedReason : templateUsageReason
   const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -256,8 +263,8 @@ export function LeadsPage() {
                           {hasPermission('CONVERSATIONS', 'conversation', 'CREATE') && (
                             <DropdownMenuItem
                               onClick={() => setStartConversationLead(lead)}
-                              disabled={billingBlocked}
-                              title={billingBlocked ? (billingBlockedReason ?? undefined) : undefined}
+                              disabled={startConversationBlocked}
+                              title={startConversationBlocked ? (startConversationBlockedReason ?? undefined) : undefined}
                             >
                               <MessageCircle className="mr-2 h-4 w-4" />
                               Iniciar conversa
