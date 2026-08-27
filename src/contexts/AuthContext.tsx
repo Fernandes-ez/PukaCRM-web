@@ -5,6 +5,7 @@ import { ApiError, getStoredToken, setStoredToken } from '@/services/apiClient'
 import { loginRequiresCompanySelection, type CompanyOption } from '@/types/auth'
 import type { EmployeeMe } from '@/types/auth'
 import type { Permission, PermissionAction, PermissionModule } from '@/types/role'
+import { identifyUser, resetUser } from '@/lib/telemetry'
 
 interface AuthContextValue {
   employee: EmployeeMe | null | undefined
@@ -49,6 +50,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   })
 
   useEffect(() => {
+    if (employeeQuery.data) {
+      identifyUser(employeeQuery.data)
+    }
+  }, [employeeQuery.data])
+
+  useEffect(() => {
     if (employeeQuery.isError) {
       const error = employeeQuery.error
       if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
@@ -86,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStoredToken(null)
     setHasToken(false)
     queryClient.clear()
+    resetUser()
   }
 
   function hasPermission(module: PermissionModule, resource: string, action: PermissionAction): boolean {

@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { captureException } from '@/lib/telemetry'
 
 interface ErrorBoundaryProps {
   children: ReactNode
@@ -19,6 +20,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('Erro não tratado na interface:', error, info.componentStack)
+    captureException(error, { componentStack: info.componentStack })
   }
 
   render() {

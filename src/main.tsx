@@ -7,6 +7,9 @@ import { ThemeProvider } from '@/contexts/ThemeContext'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ToastProvider } from '@/components/ui/toast'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { initTelemetry } from '@/lib/telemetry'
+
+initTelemetry()
 
 const queryClient = new QueryClient({
   defaultOptions: {

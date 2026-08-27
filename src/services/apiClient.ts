@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios'
 import { isValidationError, type ApiErrorBody, type ApiValidationErrorItem } from '@/types/common'
+import { captureException } from '@/lib/telemetry'
 
 export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
@@ -59,6 +60,12 @@ export function normalizeApiError(error: unknown): ApiError {
     const axiosError = error as AxiosError<ApiErrorBody>
     const status = axiosError.response?.status ?? 0
     const body = axiosError.response?.data
+
+    // Falha de rede ou erro real do servidor - captura no Sentry. Erro de
+    // validação/negócio (4xx normal, tratado abaixo) não é bug, não reporta.
+    if (status === 0 || status >= 500) {
+      captureException(error, { url: axiosError.config?.url, status })
+    }
 
     if (body && isValidationError(body)) {
       const fieldErrors = fieldErrorsFromValidation(body.detail)

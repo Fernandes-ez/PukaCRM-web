@@ -2013,6 +2013,75 @@ cobrança, job mensal).
 - Testado: `tsc -b`/`vite build`/`oxlint` limpos. **UI no navegador não
   verificada visualmente** (mesma ressalva de sempre nesta sessão).
 
+## ✅ Novo em 2026-08-27 — Sentry + PostHog (Fase 1 de 3)
+
+Mesmo pedido do `CLAUDE.md` do backend (decisão #56 de lá) - "melhor
+controle da plataforma": Sentry (erro) + PostHog (uso de produto) +
+log de auditoria + console de admin cross-tenant, passado por Plan Mode
+completo antes de qualquer código. Esta é só a Fase 1 (menor risco,
+independente do resto) - log de auditoria e o console de admin ainda não
+foram implementados.
+
+- **Novo `src/lib/telemetry.ts`** - wrapper fino (`initTelemetry`,
+  `captureException`, `identifyUser`, `resetUser`) em cima de
+  `@sentry/react`/`posthog-js`, os dois guardados por
+  `VITE_SENTRY_DSN`/`VITE_POSTHOG_KEY` vazios (mesma pendência graciosa de
+  sempre - sem as env vars, os dois SDKs nunca inicializam). Isolar isso
+  num arquivo só evita `AuthContext`/`apiClient`/`ErrorBoundary`
+  importando as duas libs direto em vários lugares.
+- **`src/main.tsx`** chama `initTelemetry()` antes de `createRoot(...)`.
+- **`src/components/ErrorBoundary.tsx`** - `componentDidCatch` agora
+  também chama `captureException`, ao lado do `console.error` que já
+  existia.
+- **`src/contexts/AuthContext.tsx`** - `useEffect` novo dispara
+  `identifyUser(employee)` assim que `employeeQuery.data` resolve (é
+  aqui, não no `ErrorBoundary`, porque o `ErrorBoundary` fica **acima**
+  do `AuthProvider` na árvore de `main.tsx` e não tem acesso a
+  `useAuth()`). `logout()` chama `resetUser()` - higiene de PII ao trocar
+  de conta numa máquina compartilhada.
+- **`src/services/apiClient.ts`** - dentro de `normalizeApiError` (o
+  único ponto realmente compartilhado hoje, chamado individualmente por
+  ~20 arquivos de service), captura no Sentry só `status === 0` (rede) ou
+  `status >= 500` - erro de validação 4xx é esperado, não bug, não
+  reporta.
+- Novas dependências `@sentry/react`, `posthog-js`; novas env vars
+  `VITE_SENTRY_DSN`/`VITE_POSTHOG_KEY`/`VITE_POSTHOG_HOST` em
+  `.env.example`.
+- Testado: `npm run build` (`tsc -b && vite build`) e `npm run lint`
+  limpos; app carregado num Chrome headless sem nenhuma das env vars
+  configuradas, console sem erro nenhum (confirma que os SDKs realmente
+  viram no-op quando ausentes, não só em teoria).
+
+## ✅ Novo em 2026-08-27 — tela de Auditoria (Fase 2 de 3)
+
+Continuação da decisão #57 do `CLAUDE.md` do backend - módulo `audit_log`
+novo lá, escopado à própria empresa (não cross-tenant - isso é a Fase 3,
+console de admin, ainda não implementada).
+
+- **`src/pages/audit-log/AuditLogPage.tsx`** (novo) - tabela simples
+  (quando/quem/ação/entidade) usando `Table`/`TableHeader`/`TableRow`/
+  `TableCell` (`components/ui/table.tsx`, primeiro uso desse componente
+  fora de contexto de dashboard/relatório). `src/types/auditLog.ts` tem
+  `AUDIT_ACTION_LABEL` traduzindo as `action` conhecidas do backend
+  (`employee.created`, `auth.login_failed` etc.) pra português - action
+  não mapeada cai no texto cru, não quebra.
+- Rota `/auditoria` em `App.tsx`, gateada por
+  `RequirePermission module="AUDIT_LOG" resource="audit_log"
+  action="VIEW"` - mesmo padrão de toda rota administrativa. Item de nav
+  novo em `Sidebar.tsx`, seção "Administrativo" (só aparece pra quem tem
+  a permissão - Owner e Administrador por padrão, não Supervisor/
+  Consultora/Recepção).
+- **`src/types/role.ts`** ganha `'AUDIT_LOG'` no union type
+  `PermissionModule` + label "Auditoria" em `PERMISSION_MODULE_LABEL`.
+  **Achado pelo `tsc -b`**: isso quebrou a build até eu perceber que
+  `RolePermissionsDialog.tsx` (tela de editar permissões de um Cargo)
+  tem um `Record<PermissionModule, LucideIcon>` que precisa de uma
+  entrada pra TODO módulo do union - o TypeScript pegou a falta sozinho,
+  não precisou de inspeção manual.
+- Testado: `npm run build` (`tsc -b && vite build`) e `npm run lint`
+  limpos. **UI no navegador não verificada visualmente** (mesma ressalva
+  de sempre nesta sessão).
+
 ## Comandos úteis
 
 ```bash

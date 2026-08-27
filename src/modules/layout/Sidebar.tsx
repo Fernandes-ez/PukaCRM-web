@@ -19,6 +19,7 @@ import {
   X,
   CalendarDays,
   CalendarClock,
+  ScrollText,
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { LogoMark } from '@/components/brand/LogoMark'
@@ -93,6 +94,7 @@ const allAdminItems: AdminNavEntry[] = [
   },
   { to: '/empresa', label: 'Minha empresa', icon: Building2, permission: { module: 'COMPANY', resource: 'company', action: 'VIEW' } },
   { to: '/assinatura', label: 'Assinatura', icon: CreditCard, permission: { module: 'SUBSCRIPTION', resource: 'subscription', action: 'VIEW' } },
+  { to: '/auditoria', label: 'Auditoria', icon: ScrollText, permission: { module: 'AUDIT_LOG', resource: 'audit_log', action: 'VIEW' } },
 ]
 
 /** Achata grupos em sub-itens — usado pra checar permissão/rota atual sem duplicar a lógica de percurso. */
