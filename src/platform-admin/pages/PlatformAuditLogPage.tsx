@@ -1,20 +1,39 @@
-import { ScrollText } from 'lucide-react'
-import { useAuditLog } from '@/hooks/useAuditLog'
+import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
+import { ArrowLeft, ScrollText } from 'lucide-react'
+import { platformAdminService } from '@/platform-admin/services/platformAdminService'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { AUDIT_ACTION_LABEL, resolveActorLabel } from '@/types/auditLog'
 
-export function AuditLogPage() {
-  const { data: entries, isLoading } = useAuditLog()
+/** Cross-tenant - lista de todas as empresas, sem filtro por company_id. */
+export function PlatformAuditLogPage() {
+  const navigate = useNavigate()
+
+  const { data: entries, isLoading } = useQuery({
+    queryKey: ['platform-admin', 'audit-log'],
+    queryFn: () => platformAdminService.listAuditLog(),
+  })
+
+  const { data: companies } = useQuery({
+    queryKey: ['platform-admin', 'companies'],
+    queryFn: platformAdminService.listCompanies,
+  })
+
+  const companyNameById = new Map((companies ?? []).map((c) => [c.id, c.name]))
 
   return (
     <div className="space-y-6">
+      <Button variant="ghost" size="sm" onClick={() => navigate('/platform-admin/companies')}>
+        <ArrowLeft className="h-4 w-4" />
+        Voltar
+      </Button>
+
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Auditoria</h1>
-        <p className="text-sm text-muted-foreground">
-          Quem fez o quê e quando — login, funcionários, assistente e permissões da sua empresa.
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">Auditoria — todas as empresas</h1>
+        <p className="text-sm text-muted-foreground">Ações sensíveis registradas em qualquer conta de cliente</p>
       </div>
 
       <Card>
@@ -39,6 +58,7 @@ export function AuditLogPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Quando</TableHead>
+                  <TableHead>Empresa</TableHead>
                   <TableHead>Quem</TableHead>
                   <TableHead>Ação</TableHead>
                   <TableHead>Entidade</TableHead>
@@ -50,6 +70,7 @@ export function AuditLogPage() {
                     <TableCell className="whitespace-nowrap text-muted-foreground">
                       {new Date(entry.created_at).toLocaleString('pt-BR')}
                     </TableCell>
+                    <TableCell>{companyNameById.get(entry.company_id) ?? entry.company_id}</TableCell>
                     <TableCell>{resolveActorLabel(entry)}</TableCell>
                     <TableCell>{AUDIT_ACTION_LABEL[entry.action] ?? entry.action}</TableCell>
                     <TableCell className="text-muted-foreground">{entry.entity_type}</TableCell>

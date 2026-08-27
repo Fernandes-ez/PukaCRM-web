@@ -2082,6 +2082,43 @@ console de admin, ainda não implementada).
   limpos. **UI no navegador não verificada visualmente** (mesma ressalva
   de sempre nesta sessão).
 
+## ✅ Novo em 2026-08-27 — console de admin da plataforma (Fase 3 de 3)
+
+Fecha a decisão #58 do `CLAUDE.md` do backend - console interno
+cross-tenant (Puka vê/administra todas as contas de cliente), parte mais
+sensível de toda a entrega "melhor controle da plataforma".
+
+- **`src/platform-admin/` é uma subárvore isolada**, de propósito **sem
+  importar nada** de `AuthContext`/`ProtectedRoute`/`apiClient` (o
+  "app normal"): `context/PlatformAdminAuthContext.tsx` (auth própria,
+  sem `GET /auth/me`, "autenticado" = "tem token salvo"),
+  `api/platformAdminClient.ts` (instância axios própria, chave de
+  `localStorage` **`crm.platform_admin_token`**, nunca
+  `crm.access_token` do Employee - as duas sessões nunca colidem mesmo
+  na mesma aba/bundle), `routes/PlatformAdminProtectedRoute.tsx`,
+  `layout/PlatformAdminLayout.tsx` (minimalista, sem nada da marca/UI de
+  venda - "Puka — Console interno"), `pages/` (login, lista de empresas,
+  detalhe de empresa com ação de suspender/reativar, auditoria
+  cross-tenant), `services/platformAdminService.ts`.
+- **Montado em `App.tsx` como ramo isolado** (`/platform-admin/login` +
+  `/platform-admin/*` dentro do próprio `PlatformAdminProtectedRoute`,
+  ambos dentro de um `PlatformAdminAuthProvider` que só envolve esse
+  ramo, não o app inteiro) - **sem nenhum link a partir da navegação
+  normal** (Sidebar/AppLayout), só alcançável por URL direta.
+- **Achado testando na tela de verdade** (não só build): a coluna
+  "Quem" da tela de auditoria (`AuditLogPage.tsx` e a nova
+  `PlatformAuditLogPage.tsx`) ficava em branco pra ação do admin da
+  plataforma - `actor_label` é `null` (não é `Employee`), a identidade
+  só estava em `metadata_json.platform_admin_email`. Corrigido com
+  `resolveActorLabel(entry)` novo em `src/types/auditLog.ts`,
+  reaproveitado nas duas telas.
+- Testado **num navegador real** (Chrome headless via CDP, form
+  preenchido de verdade, não só screenshot estático de HTML): login →
+  lista de 54 empresas reais do banco de dev → detalhe de empresa →
+  suspender com dialog de confirmação → reativar → auditoria
+  cross-tenant mostrando as 2 linhas geradas, com o "Quem" já corrigido.
+  `npm run build`/`npm run lint` limpos.
+
 ## Comandos úteis
 
 ```bash

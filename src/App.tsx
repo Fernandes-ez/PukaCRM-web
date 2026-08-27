@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import { RequirePermission } from '@/routes/RequirePermission'
@@ -23,6 +23,13 @@ import { CreateCampaignPage } from '@/pages/campaigns/CreateCampaignPage'
 import { CampaignDetailPage } from '@/pages/campaigns/CampaignDetailPage'
 import { AgendaPage } from '@/pages/agenda/AgendaPage'
 import { AuditLogPage } from '@/pages/audit-log/AuditLogPage'
+import { PlatformAdminAuthProvider } from '@/platform-admin/context/PlatformAdminAuthContext'
+import { PlatformAdminProtectedRoute } from '@/platform-admin/routes/PlatformAdminProtectedRoute'
+import { PlatformAdminLayout } from '@/platform-admin/layout/PlatformAdminLayout'
+import { PlatformAdminLoginPage } from '@/platform-admin/pages/PlatformAdminLoginPage'
+import { CompaniesListPage } from '@/platform-admin/pages/CompaniesListPage'
+import { CompanyDetailPage } from '@/platform-admin/pages/CompanyDetailPage'
+import { PlatformAuditLogPage } from '@/platform-admin/pages/PlatformAuditLogPage'
 
 function App() {
   return (
@@ -81,6 +88,27 @@ function App() {
             </Route>
             <Route element={<RequirePermission module="AUDIT_LOG" resource="audit_log" action="VIEW" />}>
               <Route path="/auditoria" element={<AuditLogPage />} />
+            </Route>
+          </Route>
+        </Route>
+
+        {/* Console de admin da plataforma - ramo isolado, com sua PRÓPRIA
+            auth (PlatformAdminAuthProvider), nunca a AuthProvider de
+            Employee acima. Sem link nenhum a partir da navegação normal do
+            app - só alcançável por URL direta. */}
+        <Route
+          element={
+            <PlatformAdminAuthProvider>
+              <Outlet />
+            </PlatformAdminAuthProvider>
+          }
+        >
+          <Route path="/platform-admin/login" element={<PlatformAdminLoginPage />} />
+          <Route element={<PlatformAdminProtectedRoute />}>
+            <Route element={<PlatformAdminLayout />}>
+              <Route path="/platform-admin/companies" element={<CompaniesListPage />} />
+              <Route path="/platform-admin/companies/:id" element={<CompanyDetailPage />} />
+              <Route path="/platform-admin/audit-log" element={<PlatformAuditLogPage />} />
             </Route>
           </Route>
         </Route>
