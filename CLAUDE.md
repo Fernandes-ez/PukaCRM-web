@@ -2119,6 +2119,56 @@ sensível de toda a entrega "melhor controle da plataforma".
   cross-tenant mostrando as 2 linhas geradas, com o "Quem" já corrigido.
   `npm run build`/`npm run lint` limpos.
 
+## ✅ Novo em 2026-08-27 — impersonação + erros de aplicação no console de admin
+
+Fecha a decisão #59 do `CLAUDE.md` do backend. Pedido do usuário na
+sequência da Fase 3: acessar a plataforma "por dentro" de cada conta de
+cliente (acesso completo, como Owner) e ver erros de aplicação (Sentry) -
+distinto da tela de Auditoria da Fase 2, que é "quem fez o quê", não "o
+que quebrou".
+
+- **Impersonação - hand-off por reload completo, não estado React**.
+  `AuthProvider` (Employee) só é montado uma vez na raiz
+  (`src/main.tsx`) e `PlatformAdminAuthProvider` só existe dentro de
+  `/platform-admin/*` - pra nunca coexistirem "ao vivo" na mesma árvore,
+  o botão **"Acessar plataforma"** em `CompanyDetailPage.tsx` (card novo
+  "Acesso à conta", `ConfirmDialog` avisando que fica registrado na
+  auditoria) grava o token recebido de `POST /platform-admin/companies/
+{id}/impersonate` na chave **normal** do Employee (`crm.access_token`,
+  via `setStoredToken` de `apiClient.ts`) + um marcador leve separado
+  (`crm.impersonation`, escrito/lido por `ImpersonationBanner.tsx` -
+  bookkeeping de UI, não é fronteira de segurança, mesmo raciocínio já
+  documentado no comentário de `platformAdminClient.ts` sobre separar
+  chaves) e faz `window.location.href = '/'` (reload cheio) - `main.tsx`
+  remonta do zero, `AuthProvider` lê o token novo como se fosse login
+  normal, e o token de platform-admin (`crm.platform_admin_token`)
+  continua intacto pra quando sair.
+- **`ImpersonationBanner.tsx`** (novo, montado em `AppLayout.tsx` logo
+  abaixo do `Topbar`, acima do `BillingBanner` já existente) - faixa
+  persistente ("Você está acessando como {owner} — {empresa} (sessão de
+  suporte)") enquanto o marcador existir, botão "Sair" limpa os dois e
+  volta pra `/platform-admin/companies`. Botão desabilitado em
+  `CompanyDetailPage.tsx` quando `company.status === 'INACTIVE'` (conta
+  encerrada - o backend também bloqueia, isso é só feedback antecipado).
+- **`PlatformErrorsPage.tsx`** (novo, `/platform-admin/errors`, link novo
+  em `CompaniesListPage.tsx` ao lado de "Auditoria") - mesmo shell visual
+  de `PlatformAuditLogPage.tsx` (Card + Table). Toggle Não resolvidos/
+  Resolvidos/Ignorados, colunas Quando/Origem (badge Backend/Frontend)/
+  Erro (linka pro Sentry via `permalink`)/Nível/Ocorrências/Usuários
+  afetados. Estado vazio distinto quando `GET /platform-admin/errors`
+  devolve `configured: false` (Sentry API não configurada em produção
+  ainda - ver `SENTRY_API_AUTH_TOKEN` no backend). **De propósito sem
+  botão de resolver/atribuir** - cada linha já linka pro Sentry de
+  verdade pra isso.
+- Testado ponta a ponta direto nos services do backend (token de
+  impersonação, propagação do claim, log de auditoria marcado "(acesso
+  via suporte)" automaticamente, bloqueio de empresa `INACTIVE`) - ver
+  decisão #59 do `CLAUDE.md` do backend pro desenho completo.
+  `tsc -b`/`vite build`/`oxlint` do frontend rodaram limpos. **UI no
+  navegador não verificada visualmente nesta entrega** (diferente da
+  Fase 3, que teve verificação real via CDP - não repetida aqui por
+  limitação de tempo/sessão).
+
 ## Comandos úteis
 
 ```bash

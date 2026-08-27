@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { Building2, ScrollText } from 'lucide-react'
+import { Building2, Bug, ScrollText } from 'lucide-react'
 import { platformAdminService } from '@/platform-admin/services/platformAdminService'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -30,10 +30,16 @@ export function CompaniesListPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Empresas</h1>
           <p className="text-sm text-muted-foreground">Todas as contas de clientes na plataforma</p>
         </div>
-        <Button variant="outline" onClick={() => navigate('/platform-admin/audit-log')}>
-          <ScrollText className="h-4 w-4" />
-          Auditoria (todas as empresas)
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate('/platform-admin/errors')}>
+            <Bug className="h-4 w-4" />
+            Erros de aplicação
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/platform-admin/audit-log')}>
+            <ScrollText className="h-4 w-4" />
+            Auditoria (todas as empresas)
+          </Button>
+        </div>
       </div>
 
       <Card>

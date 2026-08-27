@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, PauseCircle, PlayCircle } from 'lucide-react'
+import { ArrowLeft, LogIn, PauseCircle, PlayCircle } from 'lucide-react'
 import { platformAdminService } from '@/platform-admin/services/platformAdminService'
-import { ApiError } from '@/services/apiClient'
+import { ApiError, setStoredToken } from '@/services/apiClient'
+import { writeImpersonationMarker } from '@/modules/layout/ImpersonationBanner'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -18,6 +19,7 @@ export function CompanyDetailPage() {
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const [confirmToggle, setConfirmToggle] = useState(false)
+  const [confirmImpersonate, setConfirmImpersonate] = useState(false)
 
   const { data: company, isLoading } = useQuery({
     queryKey: ['platform-admin', 'companies', id],
@@ -42,6 +44,27 @@ export function CompanyDetailPage() {
     },
   })
 
+  const impersonate = useMutation({
+    mutationFn: () => platformAdminService.impersonate(id as string),
+    onSuccess: (data) => {
+      setStoredToken(data.access_token)
+      writeImpersonationMarker({
+        company_name: data.company_name,
+        owner_name: data.owner_name,
+        started_at: new Date().toISOString(),
+      })
+      window.location.href = '/'
+    },
+    onError: (error) => {
+      toast({
+        title: 'Não foi possível acessar a plataforma',
+        description: error instanceof ApiError ? error.message : undefined,
+        variant: 'destructive',
+      })
+      setConfirmImpersonate(false)
+    },
+  })
+
   if (isLoading || !company) {
     return (
       <div className="space-y-4">
@@ -52,6 +75,7 @@ export function CompanyDetailPage() {
   }
 
   const willSuspend = company.status !== 'SUSPENDED'
+  const isClosed = company.status === 'INACTIVE'
 
   return (
     <div className="space-y-6">
@@ -100,6 +124,23 @@ export function CompanyDetailPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Acesso à conta</CardTitle>
+          <CardDescription>
+            Entra na plataforma com acesso total de Dono desta empresa - útil pra suporte. Fica registrado na
+            auditoria da própria empresa.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button disabled={isClosed} onClick={() => setConfirmImpersonate(true)}>
+            <LogIn className="h-4 w-4" />
+            Acessar plataforma
+          </Button>
+          {isClosed && <p className="mt-2 text-xs text-muted-foreground">Conta encerrada - não é possível acessar.</p>}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Ações administrativas</CardTitle>
           <CardDescription>
             Alternar entre ativa e suspensa - bloqueia/libera o acesso da equipe dessa empresa à plataforma.
@@ -129,6 +170,17 @@ export function CompanyDetailPage() {
         variant={willSuspend ? 'destructive' : 'default'}
         isPending={toggleStatus.isPending}
         onConfirm={() => toggleStatus.mutate()}
+      />
+
+      <ConfirmDialog
+        open={confirmImpersonate}
+        onOpenChange={setConfirmImpersonate}
+        title="Acessar plataforma"
+        description={`Você vai acessar a plataforma com acesso total de Dono de "${company.name}". Essa ação fica registrada na auditoria.`}
+        confirmLabel="Acessar"
+        variant="default"
+        isPending={impersonate.isPending}
+        onConfirm={() => impersonate.mutate()}
       />
     </div>
   )

@@ -30,6 +30,7 @@ import { PlatformAdminLoginPage } from '@/platform-admin/pages/PlatformAdminLogi
 import { CompaniesListPage } from '@/platform-admin/pages/CompaniesListPage'
 import { CompanyDetailPage } from '@/platform-admin/pages/CompanyDetailPage'
 import { PlatformAuditLogPage } from '@/platform-admin/pages/PlatformAuditLogPage'
+import { PlatformErrorsPage } from '@/platform-admin/pages/PlatformErrorsPage'
 
 function App() {
   return (
@@ -109,6 +110,7 @@ function App() {
               <Route path="/platform-admin/companies" element={<CompaniesListPage />} />
               <Route path="/platform-admin/companies/:id" element={<CompanyDetailPage />} />
               <Route path="/platform-admin/audit-log" element={<PlatformAuditLogPage />} />
+              <Route path="/platform-admin/errors" element={<PlatformErrorsPage />} />
             </Route>
           </Route>
         </Route>
