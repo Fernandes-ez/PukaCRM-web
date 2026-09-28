@@ -5,14 +5,11 @@ interface HighlightWordProps {
   className?: string
 }
 
-/** Palavra com listra diagonal atrás, no lugar de gradiente no texto inteiro. */
+/** Palavra com sublinhado Ponto (a marca usa essa cor pra tudo que é IA). */
 export function HighlightWord({ children, className }: HighlightWordProps) {
   return (
     <span className={cn('relative inline-block', className)}>
-      <span
-        aria-hidden="true"
-        className="absolute inset-x-[-0.1em] bottom-[0.02em] h-[0.34em] bg-[repeating-linear-gradient(135deg,var(--brand-400)_0_3px,transparent_3px_7px)] opacity-80"
-      />
+      <span aria-hidden="true" className="absolute inset-x-0 bottom-[0.02em] h-[3px] bg-ponto-claro" />
       <span className="relative">{children}</span>
     </span>
   )
