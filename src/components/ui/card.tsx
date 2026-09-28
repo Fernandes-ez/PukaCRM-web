@@ -1,23 +1,11 @@
 import * as React from 'react'
 import { cn } from '@/utils/cn'
 
-export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  /** Corta um canto a 45° com a listra diagonal da marca — reservado pra grids de destaque (stat cards, features). */
-  notch?: 'tr' | 'bl'
-}
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, notch, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn(
-        'rounded-lg border bg-card text-card-foreground shadow-[0_1px_2px_rgb(0_0_0_/_4%),0_1px_0_rgb(0_0_0_/_2%)] transition-shadow dark:shadow-[0_1px_2px_rgb(0_0_0_/_20%)]',
-        notch === 'tr' && 'notch-tr rounded-none',
-        notch === 'bl' && 'notch-bl rounded-none',
-        className,
-      )}
-      {...props}
-    />
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn('border bg-card text-card-foreground', className)} {...props} />
   ),
 )
 Card.displayName = 'Card'

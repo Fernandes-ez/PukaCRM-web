@@ -140,8 +140,8 @@ export function Calendar({ value, onChange, minDate, className, 'aria-label': ar
                   className={cn(
                     'mx-auto my-0.5 flex h-8 w-8 items-center justify-center rounded-md text-sm transition-colors',
                     'hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    selected && 'bg-brand-600 text-white hover:bg-brand-700',
-                    !selected && isToday && 'font-semibold text-brand-600',
+                    selected && 'bg-primary text-primary-foreground hover:brightness-90',
+                    !selected && isToday && 'font-semibold text-primary',
                     disabled && 'pointer-events-none text-muted-foreground/40',
                   )}
                 >
