@@ -38,7 +38,7 @@ export function LeadsStatusChart({ leads, isLoading }: LeadsStatusChartProps) {
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <div className="flex items-center gap-2.5">
-          <span className="btn-cut-sm flex h-8 w-8 items-center justify-center bg-brand-100 text-brand-700 dark:bg-brand-900 dark:text-brand-200">
+          <span className="flex h-8 w-8 items-center justify-center border border-border text-primary">
             <PieChartIcon className="h-4 w-4" />
           </span>
           <div>

@@ -224,7 +224,7 @@ export function SubscriptionPage() {
                     return (
                       <Card
                         key={plan}
-                        className={cn('flex flex-col', plan === 'COMPLETO' && !isCurrentExact && 'border-brand-400')}
+                        className={cn('flex flex-col', plan === 'COMPLETO' && !isCurrentExact && 'border-t-[6px] border-t-foreground')}
                       >
                         <CardHeader>
                           <div className="flex items-center gap-2">
@@ -400,9 +400,9 @@ function PlanChangeSummary({
 
 function SubscriptionSummary({ subscription }: { subscription: Subscription }) {
   return (
-    <Card notch="tr">
+    <Card>
       <CardContent className="flex items-center gap-4 p-5">
-        <div className="btn-cut-sm flex h-11 w-11 shrink-0 items-center justify-center bg-brand-600 text-white">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-primary text-primary-foreground">
           <CreditCard className="h-5 w-5" />
         </div>
         <div className="flex-1 space-y-1">

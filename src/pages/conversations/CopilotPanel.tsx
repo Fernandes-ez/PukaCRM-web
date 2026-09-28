@@ -1,4 +1,4 @@
-import { Sparkles, Wand2 } from 'lucide-react'
+import { Wand2 } from 'lucide-react'
 import { useCopilotSuggestion, useMarkCopilotSuggestionUsed } from '@/hooks/useCopilotSuggestion'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -30,10 +30,10 @@ export function CopilotPanel({ conversationId, onUseSuggestion }: CopilotPanelPr
   }
 
   return (
-    <div className="flex w-80 shrink-0 flex-col rounded-lg border bg-card">
+    <div className="flex w-80 shrink-0 flex-col border-l-4 border-ribalta bg-card">
       <div className="border-b p-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+          <Wand2 className="h-4 w-4 text-ribalta-funda dark:text-ribalta-acesa" />
           <h2 className="font-semibold">Puka Copilot</h2>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">

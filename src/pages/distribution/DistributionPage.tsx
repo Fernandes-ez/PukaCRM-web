@@ -171,7 +171,7 @@ export function DistributionPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <Shuffle className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+        <Shuffle className="h-5 w-5 text-primary" />
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Distribuição</h1>
           <p className="text-sm text-muted-foreground">

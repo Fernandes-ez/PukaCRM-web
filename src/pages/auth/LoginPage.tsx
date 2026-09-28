@@ -97,33 +97,37 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen bg-background">
       {/* Painel de marca */}
-      <div className="relative hidden flex-1 flex-col justify-between overflow-hidden bg-gradient-to-br from-brand-900 to-brand-950 p-10 text-white lg:flex">
-        <div
+      <div className="relative hidden flex-1 flex-col justify-between overflow-hidden bg-coxia p-10 text-roteiro lg:flex">
+        {/* A deixa (curva da marca), sangrando pela borda direita — ver puka-marca/logo/puka-simbolo-cor.svg. */}
+        <svg
           aria-hidden="true"
-          className="dot-grid-invert pointer-events-none absolute inset-0 opacity-40"
-          style={{ maskImage: 'radial-gradient(60% 55% at 30% 20%, black, transparent)' }}
-        />
-        <div className="pointer-events-none absolute -left-24 -top-24 h-96 w-96 rounded-full bg-brand-400/20 blur-3xl" />
-        <div className="pointer-events-none absolute bottom-0 left-1/4 h-80 w-80 rounded-full bg-brand-600/20 blur-3xl" />
+          focusable="false"
+          viewBox="33 -694 479 694"
+          className="pointer-events-none absolute inset-y-0 right-0 h-full w-auto opacity-90"
+        >
+          <g transform="scale(1 -1)">
+            <path fill="#E8704A" d="M364 527C318 450 221.02 344 221.02 270C221.02 192 280 86 312 0H512C458 92 386 180 386 262C386 334 452 440 498 527Z" />
+          </g>
+        </svg>
 
         <div className="relative z-10 flex items-center gap-2.5">
-          <LogoMark />
-          <span className="text-lg font-semibold tracking-tight">Puka CRM</span>
+          <LogoMark invert />
+          <span className="font-display text-lg font-semibold tracking-tight">Puka</span>
         </div>
 
         <div className="relative z-10 max-w-md">
           <Eyebrow invert>Atendimento inteligente</Eyebrow>
-          <h1 className="mt-3 text-4xl font-bold leading-[1.1] tracking-tight">
+          <h1 className="mt-3 font-display text-4xl font-bold leading-[1.1] tracking-tight">
             Atendimento via WhatsApp com <HighlightWord>IA</HighlightWord>, tudo em um só lugar.
           </h1>
-          <p className="mt-4 text-white/70">
+          <p className="mt-4 text-roteiro/70">
             Centralize conversas, leads e sua equipe em uma plataforma feita para pequenas e médias empresas.
           </p>
 
           <ul className="mt-8 space-y-3">
             {features.map((feature) => (
-              <li key={feature.text} className="flex items-start gap-3 text-sm text-white/85">
-                <span className="btn-cut-sm mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center bg-white/10">
+              <li key={feature.text} className="flex items-start gap-3 text-sm text-roteiro/85">
+                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center border border-white/20">
                   <feature.icon className="h-3.5 w-3.5" />
                 </span>
                 {feature.text}
@@ -131,23 +135,23 @@ export function LoginPage() {
             ))}
           </ul>
 
-          <div className="divider-stripes mt-8 w-24 opacity-70" />
+          <div className="mt-8 h-px w-24 bg-white/30" />
 
           {/* Mockup de conversa */}
-          <div className="mt-6 w-80 border border-white/10 bg-white/[0.06] p-4 backdrop-blur-sm">
-            <div className="flex items-center gap-2 text-xs text-white/60">
-              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+          <div className="mt-6 w-80 border border-white/10 bg-white/[0.06] p-4">
+            <div className="flex items-center gap-2 text-xs text-roteiro/60">
+              <span className="h-2 w-2 rounded-full bg-success" />
               Conversa · agora
             </div>
             <div className="mt-3 space-y-2">
-              <div className="max-w-[80%] rounded-xl rounded-bl-sm bg-white/90 px-3 py-2 text-sm text-brand-950">
+              <div className="max-w-[80%] border border-white/10 bg-white/90 px-3 py-2 text-sm text-coxia">
                 Oi! Vocês têm horário disponível amanhã de manhã?
               </div>
               <div className="ml-auto flex max-w-[80%] flex-col items-end gap-1">
-                <div className="btn-cut-sm bg-brand-500 px-3 py-2 text-sm text-white">
+                <div className="border-l-4 border-ponto-claro bg-white/10 px-3 py-2 text-sm">
                   Consigo verificar aqui! Prefere 9h ou 10h?
                 </div>
-                <span className="flex items-center gap-1 pr-1 text-[10px] text-white/50">
+                <span className="flex items-center gap-1 pr-1 font-mono text-[10px] text-roteiro/50">
                   <Bot className="h-3 w-3" /> respondido pela IA
                 </span>
               </div>
@@ -155,7 +159,7 @@ export function LoginPage() {
           </div>
         </div>
 
-        <p className="relative z-10 text-sm text-white/50">© {new Date().getFullYear()} Puka CRM</p>
+        <p className="relative z-10 text-sm text-roteiro/50">© {new Date().getFullYear()} Puka</p>
       </div>
 
       {/* Formulário */}
@@ -163,10 +167,10 @@ export function LoginPage() {
         <div className="w-full max-w-sm">
           <div className="mb-6 flex items-center gap-2.5 lg:hidden">
             <LogoMark />
-            <span className="text-lg font-semibold tracking-tight">Puka CRM</span>
+            <span className="font-display text-lg font-semibold tracking-tight">Puka</span>
           </div>
 
-          <Card notch="tr" className="rounded-none drop-shadow-[var(--shadow-glow-filter)]">
+          <Card>
             {!companies ? (
               <>
                 <CardHeader className="pt-7">
@@ -221,9 +225,9 @@ export function LoginPage() {
                         type="button"
                         disabled={selectingCompanyId !== null}
                         onClick={() => handleSelectCompany(company.id)}
-                        className="flex w-full items-center gap-3 rounded-md border px-3 py-2.5 text-left text-sm transition-all hover:border-primary/50 hover:bg-accent disabled:opacity-60"
+                        className="flex w-full items-center gap-3 border px-3 py-2.5 text-left text-sm transition-all hover:border-primary/50 hover:bg-accent disabled:opacity-60"
                       >
-                        <div className="btn-cut-sm flex h-9 w-9 shrink-0 items-center justify-center bg-brand-100 text-brand-700 dark:bg-brand-900 dark:text-brand-200">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center border border-border text-primary">
                           <Building2 className="h-4 w-4" />
                         </div>
                         <span className="flex-1 font-medium">{company.name}</span>

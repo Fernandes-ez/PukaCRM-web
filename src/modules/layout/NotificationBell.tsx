@@ -83,7 +83,7 @@ export function NotificationBell() {
         <Button variant="ghost" size="icon" className="relative" aria-label="Notificações">
           <Bell className="h-5 w-5" />
           {count > 0 && (
-            <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-600 px-1 text-[10px] font-semibold leading-none text-white">
+            <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground">
               {count > 9 ? '9+' : count}
             </span>
           )}
@@ -126,17 +126,17 @@ export function NotificationBell() {
                 onClick={() => handleSelect(notification)}
                 className={cn(
                   'flex w-full items-start gap-2.5 px-3 py-2.5 text-left text-sm outline-none transition-colors hover:bg-accent',
-                  unread && 'bg-brand-50 dark:bg-brand-950/30',
+                  unread && 'bg-accent',
                 )}
               >
-                <Icon className={cn('mt-0.5 h-4 w-4 shrink-0', unread ? 'text-brand-600' : 'text-muted-foreground')} />
+                <Icon className={cn('mt-0.5 h-4 w-4 shrink-0', unread ? 'text-primary' : 'text-muted-foreground')} />
                 <span className="flex-1">
                   <span className={cn('block', unread && 'font-medium')}>{notification.message}</span>
                   <span className="mt-0.5 block text-xs text-muted-foreground">
                     {formatRelativeTime(notification.created_at)}
                   </span>
                 </span>
-                {unread && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brand-600" />}
+                {unread && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />}
               </button>
             )
           })}

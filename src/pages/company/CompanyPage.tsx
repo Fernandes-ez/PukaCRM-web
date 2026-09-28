@@ -244,7 +244,7 @@ export function CompanyPage() {
       ) : (
         company && (
           <>
-            <Card notch="tr">
+            <Card>
               <CardContent className="flex flex-wrap items-center justify-between gap-3 p-5">
                 <div>
                   <p className="font-semibold">{company.name}</p>
@@ -400,7 +400,7 @@ export function CompanyPage() {
                 {!company.scheduling_enabled && !canUseScheduling && (
                   <p className="text-xs text-muted-foreground">
                     Disponível só no plano Completo.{' '}
-                    <Link to="/assinatura" className="font-medium text-brand-600 underline underline-offset-2 dark:text-brand-400">
+                    <Link to="/assinatura" className="font-medium text-primary underline underline-offset-2">
                       Ver planos
                     </Link>
                   </p>

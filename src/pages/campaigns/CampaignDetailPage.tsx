@@ -125,7 +125,7 @@ export function CampaignDetailPage() {
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
             <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-              <div className="h-full rounded-full bg-brand-600 transition-all" style={{ width: `${pct}%` }} />
+              <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
             </div>
             <p className="text-xs text-muted-foreground">{pct}% processado</p>
           </div>

@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 
-const LINE_COLOR = { light: '#b105db', dark: '#d84cfb' }
+const LINE_COLOR = { light: '#2d3f9e', dark: '#8e9be0' }
 
 interface DotProps {
   cx?: number
@@ -77,7 +77,7 @@ export function LeadsTrendChart({ leads, isLoading }: LeadsTrendChartProps) {
     <Card className="lg:col-span-2">
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <div className="flex items-center gap-2.5">
-          <span className="btn-cut-sm flex h-8 w-8 items-center justify-center bg-brand-100 text-brand-700 dark:bg-brand-900 dark:text-brand-200">
+          <span className="flex h-8 w-8 items-center justify-center border border-border text-primary">
             <LineChartIcon className="h-4 w-4" />
           </span>
           <div>

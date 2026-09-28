@@ -66,7 +66,10 @@ export function WeekCalendar({ view, anchorDate, employees, appointments, onSlot
                     key={appointment.id}
                     type="button"
                     onClick={() => onAppointmentClick(appointment)}
-                    className="block w-full truncate rounded-md border border-brand-300 bg-brand-50 px-1.5 py-1 text-left text-[11px] text-brand-900 hover:opacity-90 dark:border-brand-700 dark:bg-brand-950 dark:text-brand-100"
+                    className={cn(
+                      'block w-full truncate border-l-4 bg-muted px-1.5 py-1 text-left text-[11px] text-foreground hover:opacity-90',
+                      appointment.created_by === 'AI' ? 'border-ponto dark:border-ponto-claro' : 'border-ribalta dark:border-ribalta-acesa',
+                    )}
                   >
                     <strong>{formatTimeOnly(appointment.starts_at)}</strong> {appointment.lead_full_name ?? appointment.lead_phone}
                   </button>

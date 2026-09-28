@@ -46,22 +46,14 @@ export function DashboardPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {stats.map((stat, index) => (
+        {stats.map((stat) => (
           <Link key={stat.label} to={stat.to} className="group">
-            <Card
-              notch={index % 2 === 0 ? 'tr' : 'bl'}
-              className={cn(
-                'transition-all group-hover:-translate-y-0.5',
-                stat.highlight
-                  ? 'group-hover:drop-shadow-[0_10px_22px_rgb(220_38_38_/_35%)]'
-                  : 'group-hover:drop-shadow-[var(--shadow-glow-filter)]',
-              )}
-            >
+            <Card className="transition-all group-hover:-translate-y-0.5">
               <CardContent className="flex items-center gap-4 p-6">
                 <div
                   className={cn(
-                    'btn-cut-sm flex h-11 w-11 shrink-0 items-center justify-center',
-                    stat.highlight ? 'bg-destructive/10 text-destructive' : 'bg-brand-600 text-white',
+                    'flex h-11 w-11 shrink-0 items-center justify-center',
+                    stat.highlight ? 'bg-destructive/10 text-destructive' : 'bg-primary text-primary-foreground',
                   )}
                 >
                   <stat.icon className="h-5 w-5" />
@@ -89,7 +81,7 @@ export function DashboardPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex-row items-center gap-2.5 space-y-0">
-            <span className="btn-cut-sm flex h-8 w-8 items-center justify-center bg-brand-100 text-brand-700 dark:bg-brand-900 dark:text-brand-200">
+            <span className="flex h-8 w-8 items-center justify-center border border-border text-primary">
               <Contact className="h-4 w-4" />
             </span>
             <div>
@@ -134,7 +126,7 @@ export function DashboardPage() {
 
         <Card>
           <CardHeader className="flex-row items-center gap-2.5 space-y-0">
-            <span className="btn-cut-sm flex h-8 w-8 items-center justify-center bg-destructive/10 text-destructive">
+            <span className="flex h-8 w-8 items-center justify-center border border-border bg-destructive/10 text-destructive">
               <MessageSquare className="h-4 w-4" />
             </span>
             <div>

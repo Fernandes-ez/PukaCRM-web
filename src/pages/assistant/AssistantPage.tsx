@@ -148,9 +148,9 @@ function StatusCard({ assistant }: { assistant: Assistant }) {
   }
 
   return (
-    <Card notch="tr">
+    <Card>
       <CardContent className="flex items-center gap-4 p-5">
-        <div className="btn-cut-sm flex h-11 w-11 shrink-0 items-center justify-center bg-brand-600 text-white">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center bg-ponto text-papel dark:bg-ponto-claro dark:text-coxia">
           <Bot className="h-5 w-5" />
         </div>
         <div className="flex-1">

@@ -88,7 +88,7 @@ function CampaignRow({ campaign, templateName }: { campaign: Campaign; templateN
       {campaign.total_recipients > 0 && (
         <div className="space-y-1">
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-            <div className="h-full rounded-full bg-brand-600 transition-all" style={{ width: `${pct}%` }} />
+            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
           </div>
           <p className="text-xs text-muted-foreground">
             {processed} de {campaign.total_recipients} processados

@@ -52,19 +52,19 @@ export function WhatsappHelpPage() {
         </p>
       </div>
 
-      <div className="divider-stripes w-24 opacity-70" />
+      <div className="h-px w-24 bg-border" />
 
       <ol className="space-y-3">
         {steps.map((step, index) => (
           <li key={step.title}>
-            <Card notch={index % 2 === 0 ? 'tr' : 'bl'}>
+            <Card>
               <CardContent className="flex gap-4 p-5">
-                <div className="btn-cut-sm flex h-10 w-10 shrink-0 items-center justify-center bg-brand-600 text-sm font-bold text-white">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center bg-primary text-sm font-bold text-primary-foreground">
                   {index + 1}
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <step.icon className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+                    <step.icon className="h-4 w-4 text-primary" />
                     <h2 className="font-semibold">{step.title}</h2>
                   </div>
                   <p className="text-sm text-muted-foreground">{step.description}</p>

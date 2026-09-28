@@ -1,4 +1,3 @@
-import { Sparkles } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { formatTimeOnly } from '@/utils/appointmentFormat'
 import type { Appointment } from '@/types/appointment'
@@ -21,6 +20,7 @@ export function AppointmentBlock({ appointment, style, onClick }: AppointmentBlo
   const heightPx = typeof style?.height === 'number' ? style.height : undefined
   const compact = heightPx !== undefined && heightPx < COMPACT_HEIGHT_THRESHOLD_PX
   const leadLabel = appointment.lead_full_name ?? appointment.lead_phone
+  const bookedByAi = appointment.created_by === 'AI'
 
   return (
     <button
@@ -31,14 +31,18 @@ export function AppointmentBlock({ appointment, style, onClick }: AppointmentBlo
       }}
       style={style}
       className={cn(
-        'absolute left-0.5 right-0.5 overflow-hidden rounded-md border px-1.5 text-left text-[11px] leading-tight shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'absolute left-0.5 right-0.5 overflow-hidden border-l-4 bg-card px-1.5 text-left text-[11px] leading-tight transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         compact ? 'flex items-center gap-1 py-0.5' : 'py-1',
-        dimmed ? 'border-border bg-muted text-muted-foreground line-through' : 'border-brand-300 bg-brand-50 text-brand-900 dark:border-brand-700 dark:bg-brand-950 dark:text-brand-100',
+        dimmed
+          ? 'border-l-border bg-muted text-muted-foreground line-through'
+          : bookedByAi
+            ? 'border-l-ponto text-foreground dark:border-l-ponto-claro'
+            : 'border-l-ribalta text-foreground dark:border-l-ribalta-acesa',
       )}
     >
-      <span className="flex shrink-0 items-center gap-1 font-semibold">
+      <span className="flex shrink-0 items-center gap-1 font-mono font-semibold">
         {formatTimeOnly(appointment.starts_at)}
-        {appointment.created_by === 'AI' && <Sparkles className="h-2.5 w-2.5 shrink-0" aria-label="Marcado pela IA" />}
+        {bookedByAi && <span className="text-ponto dark:text-ponto-claro" aria-label="Marcado pela IA">·IA</span>}
       </span>
       <span className={cn('truncate', !compact && 'block')}>{leadLabel}</span>
       {!compact && <span className="block truncate opacity-80">{appointment.appointment_type_name}</span>}

@@ -22,7 +22,7 @@ export function PlatformAdminLayout() {
     <div className="min-h-screen bg-background">
       <header className="flex items-center justify-between border-b px-6 py-3">
         <div className="flex items-center gap-2 text-sm font-semibold">
-          <ShieldHalf className="h-4 w-4 text-brand-600" />
+          <ShieldHalf className="h-4 w-4 text-primary" />
           Puka — Console interno
         </div>
         <Button variant="ghost" size="sm" onClick={handleLogout}>

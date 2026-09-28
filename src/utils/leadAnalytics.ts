@@ -14,7 +14,7 @@ export const LEAD_STATUS_ORDER: LeadStatus[] = ['ACTIVE', 'INACTIVE']
 
 export const LEAD_STATUS_COLOR: Record<LeadStatus, { light: string; dark: string }> = {
   ACTIVE: { light: '#008300', dark: '#008300' },
-  INACTIVE: { light: '#4a3aa7', dark: '#9085e9' },
+  INACTIVE: { light: '#5e5868', dark: '#b6acc1' },
 }
 
 const WINDOW: Record<Granularity, number> = { day: 14, week: 8, month: 6 }

@@ -196,14 +196,14 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
       >
         <div className="flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-2.5">
-            <LogoMark size="sm" />
-            <span className="text-[15px] font-semibold tracking-tight">Puka CRM</span>
+            <LogoMark size="sm" invert />
+            <span className="font-display text-[15px] font-semibold tracking-tight">Puka</span>
           </div>
           <button className="text-sidebar-foreground/70 hover:text-sidebar-foreground lg:hidden" onClick={onCloseMobile} aria-label="Fechar menu">
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="divider-stripes opacity-60" />
+        <div className="h-px bg-sidebar-border" />
 
         {hasAdminAccess && (
           <div className="grid grid-cols-2 gap-1 p-3 pb-0">
@@ -211,10 +211,10 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
               type="button"
               onClick={() => setTab('general')}
               className={cn(
-                'btn-cut-sm px-3 py-1.5 text-xs font-medium transition-colors',
+                'border-b-2 px-3 py-1.5 text-xs font-medium transition-colors',
                 tab === 'general'
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                  : 'text-sidebar-foreground/55 hover:bg-white/5 hover:text-sidebar-foreground',
+                  ? 'border-sidebar-primary text-sidebar-foreground'
+                  : 'border-transparent text-sidebar-foreground/55 hover:text-sidebar-foreground',
               )}
             >
               Geral
@@ -223,10 +223,10 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
               type="button"
               onClick={() => setTab('admin')}
               className={cn(
-                'btn-cut-sm flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors',
+                'flex items-center justify-center gap-1.5 border-b-2 px-3 py-1.5 text-xs font-medium transition-colors',
                 tab === 'admin'
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                  : 'text-sidebar-foreground/55 hover:bg-white/5 hover:text-sidebar-foreground',
+                  ? 'border-sidebar-primary text-sidebar-foreground'
+                  : 'border-transparent text-sidebar-foreground/55 hover:text-sidebar-foreground',
               )}
             >
               <ShieldHalf className="h-3.5 w-3.5" />
@@ -248,12 +248,18 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                     onClick={() => toggleGroup(item.label)}
                     aria-expanded={expanded}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-md py-2 pl-4 pr-3 text-sm font-medium transition-all',
+                      'relative flex w-full items-center gap-3 py-2 pl-4 pr-3 text-sm font-medium transition-all',
                       groupActive
-                        ? 'text-sidebar-accent-foreground'
+                        ? 'text-sidebar-foreground'
                         : 'text-sidebar-foreground/65 hover:bg-white/5 hover:text-sidebar-foreground',
                     )}
                   >
+                    <span
+                      className={cn(
+                        'absolute left-0 top-1/2 h-4 w-1 -translate-y-1/2 transition-opacity',
+                        groupActive ? 'bg-sidebar-primary opacity-100' : 'opacity-0',
+                      )}
+                    />
                     <Icon className={cn('h-4 w-4 shrink-0', groupActive && 'text-sidebar-primary')} />
                     <span className="flex-1 text-left">{item.label}</span>
                     <ChevronDown className={cn('h-3.5 w-3.5 shrink-0 transition-transform duration-200', expanded && 'rotate-180')} />
@@ -281,15 +287,21 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                             onClick={onCloseMobile}
                             className={({ isActive }) =>
                               cn(
-                                'flex items-center gap-2.5 rounded-md py-1.5 pl-3 pr-3 text-sm font-medium transition-all',
+                                'relative flex items-center gap-2.5 py-1.5 pl-3 pr-3 text-sm font-medium transition-all',
                                 isActive
-                                  ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_0_0_1px_var(--sidebar-border)]'
+                                  ? 'text-sidebar-foreground'
                                   : 'text-sidebar-foreground/65 hover:bg-white/5 hover:text-sidebar-foreground',
                               )
                             }
                           >
                             {({ isActive }) => (
                               <>
+                                <span
+                                  className={cn(
+                                    'absolute left-0 top-1/2 h-3.5 w-1 -translate-y-1/2 transition-opacity',
+                                    isActive ? 'bg-sidebar-primary opacity-100' : 'opacity-0',
+                                  )}
+                                />
                                 <ChildIcon className={cn('h-3.5 w-3.5 shrink-0', isActive && 'text-sidebar-primary')} />
                                 {label}
                               </>
@@ -312,9 +324,9 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
                 onClick={onCloseMobile}
                 className={({ isActive }) =>
                   cn(
-                    'group relative flex items-center gap-3 rounded-md py-2 pl-4 pr-3 text-sm font-medium transition-all',
+                    'group relative flex items-center gap-3 py-2 pl-4 pr-3 text-sm font-medium transition-all',
                     isActive
-                      ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-[0_0_0_1px_var(--sidebar-border)]'
+                      ? 'text-sidebar-foreground'
                       : 'text-sidebar-foreground/65 hover:bg-white/5 hover:text-sidebar-foreground',
                   )
                 }
@@ -337,7 +349,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }: SidebarProps) {
         </nav>
 
         <div className="p-3">
-          <div className="btn-cut-sm bg-white/5 px-3 py-2.5 text-xs text-sidebar-foreground/60">
+          <div className="border-l-4 border-sidebar-primary bg-white/5 px-3 py-2.5 text-xs text-sidebar-foreground/60">
             Atendimento com IA para pequenas e médias empresas
           </div>
         </div>

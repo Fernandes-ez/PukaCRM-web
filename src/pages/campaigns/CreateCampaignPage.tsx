@@ -71,8 +71,8 @@ function Stepper({ current }: { current: Step }) {
                 aria-current={isCurrent ? 'step' : undefined}
                 className={cn(
                   'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
-                  isDone && 'bg-brand-600 text-white',
-                  isCurrent && 'border-2 border-brand-600 text-brand-600',
+                  isDone && 'bg-primary text-primary-foreground',
+                  isCurrent && 'border-2 border-primary text-primary',
                   !isDone && !isCurrent && 'border border-border text-muted-foreground',
                 )}
               >
@@ -81,7 +81,7 @@ function Stepper({ current }: { current: Step }) {
               <span className={cn('text-sm', isCurrent ? 'font-medium' : 'text-muted-foreground')}>{step.label}</span>
             </div>
             {index < STEPS.length - 1 && (
-              <div className={cn('mx-3 h-px w-8 sm:w-12', isDone ? 'bg-brand-600' : 'bg-border')} />
+              <div className={cn('mx-3 h-px w-8 sm:w-12', isDone ? 'bg-primary' : 'bg-border')} />
             )}
           </div>
         )
@@ -421,7 +421,7 @@ export function CreateCampaignPage() {
                         key={option.value}
                         className={cn(
                           'flex cursor-pointer flex-col gap-1.5 rounded-lg border p-4 text-sm transition-colors hover:bg-accent',
-                          checked && 'border-brand-600 bg-brand-600/5 ring-1 ring-brand-600',
+                          checked && 'border-primary bg-primary/5 ring-1 ring-primary',
                         )}
                       >
                         <span className="flex items-center gap-2 font-medium">
@@ -431,7 +431,7 @@ export function CreateCampaignPage() {
                             value={option.value}
                             checked={checked}
                             onChange={() => setSendMode(option.value)}
-                            className="h-4 w-4 accent-brand-600"
+                            className="h-4 w-4 accent-primary"
                           />
                           <Icon className="h-4 w-4 text-muted-foreground" />
                           {option.label}

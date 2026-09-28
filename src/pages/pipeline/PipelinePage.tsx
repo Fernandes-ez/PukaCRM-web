@@ -134,7 +134,7 @@ function PipelineColumn({ id, title, leads, isWon, isLost, droppable = true, onS
       ref={setNodeRef}
       className={cn(
         'flex w-72 shrink-0 flex-col rounded-lg border bg-muted/30 transition-colors',
-        isOver && droppable && 'border-brand-500 bg-brand-50 dark:bg-brand-950/30',
+        isOver && droppable && 'border-ring bg-accent',
       )}
     >
       <div className="flex items-center justify-between border-b p-3">

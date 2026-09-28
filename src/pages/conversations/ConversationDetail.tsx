@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Send, UserPlus, UserX, CircleCheck, Loader2, Clock, Bot } from 'lucide-react'
+import { Send, UserPlus, UserX, CircleCheck, Loader2, Clock } from 'lucide-react'
 import {
   useConversation,
   useMessages,
@@ -179,19 +179,22 @@ export function ConversationDetail({ conversationId, draftMessage, onDraftMessag
             if (message.sender_type === 'SYSTEM') {
               return (
                 <div key={message.id} className="flex justify-center">
-                  <p className="max-w-[85%] rounded-full bg-muted px-3 py-1 text-center text-xs text-muted-foreground">
+                  <p className="max-w-[85%] border border-border bg-muted px-3 py-1 text-center text-xs text-muted-foreground">
                     {message.content}
                   </p>
                 </div>
               )
             }
             const isFromLead = message.sender_type === 'LEAD'
+            const isFromAi = message.sender_type === 'AI'
             return (
               <div key={message.id} className={cn('flex', isFromLead ? 'justify-start' : 'justify-end')}>
                 <div
                   className={cn(
-                    'max-w-[75%] rounded-lg px-3 py-2 text-sm',
-                    isFromLead ? 'bg-muted text-foreground' : 'bg-primary text-primary-foreground',
+                    'max-w-[75%] border px-3 py-2 text-sm',
+                    isFromLead && 'border-border bg-card text-card-foreground',
+                    isFromAi && 'msg-ia border-transparent',
+                    !isFromLead && !isFromAi && 'msg-humano border-transparent',
                   )}
                 >
                   {message.content_type === 'AUDIO' && (
@@ -200,18 +203,15 @@ export function ConversationDetail({ conversationId, draftMessage, onDraftMessag
                   <p className="whitespace-pre-wrap">{message.content}</p>
                   <div
                     className={cn(
-                      'mt-1 flex items-center gap-1 text-[10px] opacity-90',
+                      'mt-1 flex items-center gap-1 font-mono text-[10px] opacity-90',
                       isFromLead ? '' : 'justify-end',
+                      isFromAi && 'text-ponto dark:text-ponto-claro',
+                      !isFromLead && !isFromAi && 'text-ribalta-funda dark:text-ribalta-acesa',
                     )}
                   >
                     {message.status === 'PENDING' && <Clock className="h-3 w-3" />}
                     {new Date(message.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                    {message.sender_type === 'AI' && (
-                      <span className="flex items-center gap-0.5">
-                        <Bot className="h-3 w-3" />
-                        IA
-                      </span>
-                    )}
+                    {isFromAi && <span>· IA</span>}
                   </div>
                 </div>
               </div>
