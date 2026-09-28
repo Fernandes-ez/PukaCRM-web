@@ -3,46 +3,43 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --radius: 0.5rem;
+  --radius: 0px;
 
-  /* Marca — escala derivada de #C908F9 */
-  --brand-50: #faf3fb;
-  --brand-100: #f3e4f7;
-  --brand-200: #ebc2f5;
-  --brand-300: #e588fc;
-  --brand-400: #d84cfb;
-  --brand-500: #c908f9;
-  --brand-600: #b105db;
-  --brand-700: #9004b3;
-  --brand-800: #740490;
-  --brand-900: #600377;
-  --brand-950: #3a0547;
+  /* Marca "a deixa" — ver puka-marca/puka-manual.html. Ponto (azul) = IA,
+     Ribalta (laranja) = humano — nunca invertido em nenhuma tela. */
+  --puka-roteiro: #f4eee4;
+  --puka-coxia: #1e1b24;
+  --puka-ponto: #2d3f9e;
+  --puka-ribalta: #d2502d;
+  --puka-ribalta-funda: #a83a1c;
+  --puka-ribalta-acesa: #e8704a;
+  --puka-ponto-claro: #8e9be0;
+  --puka-rotunda: #e6dccb;
+  --puka-bastidor: #5e5868;
+  --puka-papel: #fbf8f2;
+  --puka-linha: #d9cdb9;
 
-  /* Acento — cyan, só pra detalhes pontuais (nunca compete com o roxo) */
-  --signal-400: #4cd9fb;
-  --signal-500: #17c4f4;
-  --signal-600: #0da4d0;
+  --background: var(--puka-roteiro);
+  --foreground: var(--puka-coxia);
+  --card: var(--puka-papel);
+  --card-foreground: var(--puka-coxia);
+  --popover: var(--puka-papel);
+  --popover-foreground: var(--puka-coxia);
+  --muted: var(--puka-rotunda);
+  --muted-foreground: var(--puka-bastidor);
+  --border: var(--puka-linha);
+  --input: var(--puka-linha);
 
-  /* Neutros (tema claro) — leve matiz de roxo, nunca cinza puro */
-  --background: #ffffff;
-  --foreground: #1c1526;
-  --card: #ffffff;
-  --card-foreground: #1c1526;
-  --popover: #ffffff;
-  --popover-foreground: #1c1526;
-  --muted: #f6f1f9;
-  --muted-foreground: #6b6178;
-  --border: #e9ddf0;
-  --input: #e9ddf0;
+  --primary: var(--puka-ribalta-funda);
+  --primary-foreground: var(--puka-papel);
+  --secondary: var(--puka-rotunda);
+  --secondary-foreground: var(--puka-coxia);
+  --accent: var(--puka-rotunda);
+  --accent-foreground: var(--puka-coxia);
+  --ring: var(--puka-ponto);
 
-  --primary: var(--brand-600);
-  --primary-foreground: #ffffff;
-  --secondary: var(--brand-50);
-  --secondary-foreground: var(--brand-700);
-  --accent: var(--brand-100);
-  --accent-foreground: var(--brand-700);
-  --ring: var(--brand-500);
-
+  /* Estados semânticos de sistema (erro/sucesso/alerta) - separados da
+     paleta da marca, de propósito, dessaturados. */
   --success: #16a34a;
   --success-foreground: #ffffff;
   --warning: #b45309;
@@ -50,39 +47,35 @@
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
 
-  /* Sidebar sempre roxo-escuro — identidade de marca, independente do tema */
-  --sidebar: var(--brand-950);
-  --sidebar-foreground: #f1ecf6;
-  --sidebar-primary: var(--brand-400);
-  --sidebar-primary-foreground: var(--brand-950);
-  --sidebar-accent: #d84cfb29;
+  /* Sidebar sempre Coxia — identidade de marca, independente do tema. */
+  --sidebar: var(--puka-coxia);
+  --sidebar-foreground: var(--puka-roteiro);
+  --sidebar-primary: var(--puka-ribalta-acesa);
+  --sidebar-primary-foreground: var(--puka-coxia);
+  --sidebar-accent: #ffffff14;
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #ffffff14;
-
-  --shadow-glow: 0 8px 26px -8px rgb(176 5 219 / 55%);
-  /* Sem 4º valor (spread) — compatível com filter: drop-shadow(), usado em elementos com clip-path */
-  --shadow-glow-filter: 0 6px 16px rgb(176 5 219 / 45%);
 }
 
 .dark {
-  --background: #121016;
-  --foreground: #f1ecf6;
-  --card: #1a1620;
-  --card-foreground: #f1ecf6;
-  --popover: #1a1620;
-  --popover-foreground: #f1ecf6;
-  --muted: #211b29;
-  --muted-foreground: #a79bb3;
-  --border: #2c2434;
-  --input: #2c2434;
+  --background: var(--puka-coxia);
+  --foreground: var(--puka-roteiro);
+  --card: #2a2632;
+  --card-foreground: var(--puka-roteiro);
+  --popover: #2a2632;
+  --popover-foreground: var(--puka-roteiro);
+  --muted: #2a2632;
+  --muted-foreground: #b6acc1;
+  --border: #3a3444;
+  --input: #3a3444;
 
-  --primary: var(--brand-400);
-  --primary-foreground: #2a0433;
-  --secondary: #2a1f33;
-  --secondary-foreground: #ecd6f6;
-  --accent: #331f3d;
-  --accent-foreground: #f0d6f8;
-  --ring: var(--brand-400);
+  --primary: var(--puka-ribalta-acesa);
+  --primary-foreground: var(--puka-coxia);
+  --secondary: #322c3c;
+  --secondary-foreground: var(--puka-roteiro);
+  --accent: #322c3c;
+  --accent-foreground: var(--puka-roteiro);
+  --ring: var(--puka-ponto-claro);
 
   --success: #22c55e;
   --success-foreground: #052e16;
@@ -91,16 +84,13 @@
   --destructive: #f87171;
   --destructive-foreground: #450a0a;
 
-  --sidebar: #250a2e;
-  --sidebar-foreground: #f1ecf6;
-  --sidebar-primary: var(--brand-400);
-  --sidebar-primary-foreground: #2a0433;
-  --sidebar-accent: #d84cfb24;
+  --sidebar: #16141b;
+  --sidebar-foreground: var(--puka-roteiro);
+  --sidebar-primary: var(--puka-ribalta-acesa);
+  --sidebar-primary-foreground: var(--puka-coxia);
+  --sidebar-accent: #ffffff12;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #ffffff12;
-
-  --shadow-glow: 0 8px 26px -8px rgb(216 76 251 / 45%);
-  --shadow-glow-filter: 0 6px 16px rgb(216 76 251 / 40%);
+  --sidebar-border: #ffffff10;
 }
 
 @theme inline {
@@ -136,31 +126,29 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
 
-  --color-brand-50: var(--brand-50);
-  --color-brand-100: var(--brand-100);
-  --color-brand-200: var(--brand-200);
-  --color-brand-300: var(--brand-300);
-  --color-brand-400: var(--brand-400);
-  --color-brand-500: var(--brand-500);
-  --color-brand-600: var(--brand-600);
-  --color-brand-700: var(--brand-700);
-  --color-brand-800: var(--brand-800);
-  --color-brand-900: var(--brand-900);
-  --color-brand-950: var(--brand-950);
+  /* Cores semânticas da marca — Ponto=IA / Ribalta=humano, par fixo,
+     nunca invertido. */
+  --color-ponto: var(--puka-ponto);
+  --color-ponto-claro: var(--puka-ponto-claro);
+  --color-ribalta: var(--puka-ribalta);
+  --color-ribalta-funda: var(--puka-ribalta-funda);
+  --color-ribalta-acesa: var(--puka-ribalta-acesa);
+  --color-coxia: var(--puka-coxia);
+  --color-roteiro: var(--puka-roteiro);
+  --color-rotunda: var(--puka-rotunda);
+  --color-bastidor: var(--puka-bastidor);
+  --color-papel: var(--puka-papel);
 
-  /* Acento cyan — nome "signal" pra não colidir com --accent (hover/seleção) */
-  --color-signal-400: var(--signal-400);
-  --color-signal-500: var(--signal-500);
-  --color-signal-600: var(--signal-600);
+  --font-sans: 'Atkinson Hyperlegible Next', system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque', var(--font-sans);
+  --font-mono: 'Atkinson Hyperlegible Mono', ui-monospace, 'SFMono-Regular', monospace;
 
-  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-sans);
-  --font-mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', monospace;
-
-  --radius-sm: calc(var(--radius) - 2px);
-  --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 4px);
-  --radius-xl: calc(var(--radius) + 8px);
+  /* Corte seco, raio zero — única exceção é avatar de pessoa (rounded-full
+     direto no componente, não este token). */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
 }
 
 @layer base {
@@ -179,6 +167,7 @@
   h1,
   h2,
   h3 {
+    font-family: var(--font-display);
     letter-spacing: -0.02em;
   }
 
@@ -204,83 +193,73 @@
     background-clip: padding-box;
   }
   *::-webkit-scrollbar-thumb:hover {
-    background-color: var(--brand-500);
+    background-color: var(--puka-ribalta-funda);
   }
 }
 
 /*
- * Motivo de marca: "sinal diagonal". Cortes a 45° no lugar de cantos
- * arredondados/pills — em @layer components pra ceder corretamente
- * a utilitários do Tailwind aplicados no mesmo elemento (ex: className
- * com "relative" ou "shadow-*" junto de ".btn-cut").
+ * Sistema "a deixa" — três peças tiradas do "k" do logo: haste (reta,
+ * o sistema), deixa (curva à mão, a pessoa) e lacuna (o espaço entre as
+ * duas, o momento da passagem). Ver puka-marca/puka-manual.html.
  */
 @layer components {
-  .stripes-diag {
-    background-image: repeating-linear-gradient(135deg, var(--brand-500) 0 3px, transparent 3px 7px);
+  /* Marcador de seção — uma haste antes do rótulo, no lugar do antigo
+     ícone de listras diagonais. */
+  .eyebrow-mark {
+    display: inline-block;
+    width: 4px;
+    height: 0.9em;
+    flex-shrink: 0;
+    background: currentColor;
   }
-  .stripes-diag-invert {
-    background-image: repeating-linear-gradient(135deg, rgb(255 255 255 / 70%) 0 3px, transparent 3px 7px);
-  }
-
-  .notch-tr {
-    position: relative;
-    clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 0 100%);
-  }
-  .notch-tr::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 26px;
-    height: 26px;
-    clip-path: polygon(100% 0, 0 0, 100% 100%);
-    background-image: repeating-linear-gradient(135deg, var(--brand-500) 0 3px, transparent 3px 7px);
-  }
-
-  .notch-bl {
-    position: relative;
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 26px 100%, 0 calc(100% - 26px));
-  }
-  .notch-bl::before {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 26px;
-    height: 26px;
-    clip-path: polygon(0 0, 0 100%, 100% 100%);
-    background-image: repeating-linear-gradient(135deg, var(--brand-500) 0 3px, transparent 3px 7px);
-  }
-
-  .btn-cut {
-    clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
-  }
-  .btn-cut-sm {
-    clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
-  }
-
-  .divider-stripes {
-    height: 8px;
-    background-image: repeating-linear-gradient(135deg, var(--brand-500) 0 2px, transparent 2px 10px);
-  }
-
-  .dot-grid {
-    background-image: radial-gradient(var(--brand-500) 1.6px, transparent 1.6px);
-    background-size: 22px 22px;
-  }
-  .dot-grid-invert {
-    background-image: radial-gradient(rgb(255 255 255 / 55%) 1.6px, transparent 1.6px);
-    background-size: 22px 22px;
-  }
-
   .eyebrow {
     @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em];
   }
-  .eyebrow-mark {
-    display: inline-block;
-    width: 0.75rem;
-    height: 0.75rem;
-    flex-shrink: 0;
-    background-image: repeating-linear-gradient(135deg, var(--brand-500) 0 2px, transparent 2px 5px);
+
+  /* Linha de passagem — o momento de handoff (IA → humano): segmento reto
+     em Ponto, lacuna, segmento curvo/à mão em Ribalta com ponta
+     arredondada. Usada em separador de mensagem/etapa, nunca decorativa. */
+  .linha-passagem {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+  .linha-passagem::before {
+    content: '';
+    flex: 1 1 auto;
+    height: 2px;
+    background: var(--puka-ponto);
+  }
+  .linha-passagem::after {
+    content: '';
+    flex: 1 1 auto;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--puka-ribalta-funda);
+  }
+  .dark .linha-passagem::before {
+    background: var(--puka-ponto-claro);
+  }
+  .dark .linha-passagem::after {
+    background: var(--puka-ribalta-acesa);
+  }
+
+  /* Mensagem da IA (Ponto) e de atendente humano (Ribalta) - conversas,
+     dashboard, qualquer lugar que precise distinguir quem respondeu. */
+  .msg-ia {
+    background: color-mix(in srgb, var(--puka-ponto) 12%, var(--card));
+    border-left: 4px solid var(--puka-ponto);
+  }
+  .dark .msg-ia {
+    background: color-mix(in srgb, var(--puka-ponto-claro) 16%, var(--card));
+    border-left-color: var(--puka-ponto-claro);
+  }
+  .msg-humano {
+    background: color-mix(in srgb, var(--puka-ribalta) 12%, var(--card));
+    border-left: 4px solid var(--puka-ribalta);
+  }
+  .dark .msg-humano {
+    background: color-mix(in srgb, var(--puka-ribalta-acesa) 16%, var(--card));
+    border-left-color: var(--puka-ribalta-acesa);
   }
 }
